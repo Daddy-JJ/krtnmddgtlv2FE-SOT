@@ -1,0 +1,19 @@
+# Internal source material is not part of the Vercel upload.
+docs/
+tests/
+qa/
+openapi/
+database/
+deploy/
+prompts/
+templates/
+backend/
+coverage/
+dist/
+*.md
+MANIFEST.json
+MANIFEST.sha256
+.cpanel.yml
+.env.example
+.gitignore
+.htaccess

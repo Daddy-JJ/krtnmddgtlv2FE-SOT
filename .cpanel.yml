@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/karj9582/public_html/
+    - npm run build:static
+    - /bin/cp -R dist/* "$DEPLOYPATH"
+    - /bin/cp .htaccess "$DEPLOYPATH"
+    - /bin/sh -c 'set -a; . ./.env; set +a; test -n "${PUBLIC_API_BASE_URL:-}"; case "$PUBLIC_API_BASE_URL" in https://*) ;; *) echo "PUBLIC_API_BASE_URL must be HTTPS" >&2; exit 1;; esac; case "${PUBLIC_API_TIMEOUT_MS:-12000}" in *[!0-9]*|"") echo "PUBLIC_API_TIMEOUT_MS must be numeric" >&2; exit 1;; esac; sed -e "s|__PUBLIC_API_BASE_URL__|$PUBLIC_API_BASE_URL|g" -e "s|__PUBLIC_API_TIMEOUT_MS__|${PUBLIC_API_TIMEOUT_MS:-12000}|g" dist/config/runtime-config.js > /home/karj9582/public_html/config/runtime-config.js'

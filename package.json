@@ -1,0 +1,17 @@
+{
+  "name": "@kartunamadigital/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:static": "node scripts/build-static.mjs",
+    "build:css": "tailwindcss -i assets/css/tailwind-input.css -o dist/assets/css/tailwind.css --minify",
+    "build": "npm run build:static && npm run build:css",
+    "test": "node --test tests/*.test.js",
+    "qa": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}
