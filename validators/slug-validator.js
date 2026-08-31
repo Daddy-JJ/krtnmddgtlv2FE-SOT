@@ -1,4 +1,11 @@
-const reserved = new Set(['api', 'app', 'admin', 'login', 'logout', 'register', 'pricing', 'create', 'manage', 'privacy', 'terms', 'assets', 'storage', 'health', 'favicon.ico', 'robots.txt', 'sitemap.xml']);
+const reserved = new Set([
+  'about', 'admin', 'api', 'app', 'assets', 'blog', 'components', 'config',
+  'contact', 'cookies', 'create', 'faq', 'forgot-password', 'health', 'layouts',
+  'locales', 'login', 'logout', 'manage', 'pages', 'pricing', 'privacy',
+  'public-card', 'refund', 'register', 'reset-password', 'services', 'specialist',
+  'starter', 'storage', 'terms', 'utils', 'validators', 'verify-email',
+  'favicon.ico', 'robots.txt', 'sitemap.xml',
+]);
 const format = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function normalizeSlug(value) {

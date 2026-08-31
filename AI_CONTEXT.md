@@ -49,12 +49,10 @@ dan hasil validasi final tetap authoritative di backend.
 
 ## Current priority gaps
 
-- Perbaikan open redirect pada normalisasi `returnTo`.
-- Satukan URL download API dengan API-base builder.
-- Lengkapi reserved route slug dan role redirect.
-- Perbaiki validator nama Starter.
-- Implementasikan kembali first-visit theme chooser.
-- Ganti copy checkout paused menjadi `Under development`.
-- Putuskan coupling test local-stack dari monorepo lama.
+- Lengkapi workflow edit/reorder social links dan catalog serta control kartu yang
+  masih termasuk locked frontend scope.
+- Lengkapi live preview form yang benar-benar mengikuti perubahan belum tersimpan.
+- Lengkapi operasi admin tersisa yang sudah termasuk approved frontend scope dan
+  didukung kontrak backend.
 
 Lihat `STATUS.md` untuk daftar lengkap dan status validasi terakhir.

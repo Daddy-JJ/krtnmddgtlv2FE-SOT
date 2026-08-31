@@ -1,3 +1,5 @@
+import { buildApiUrl } from './api-client.js';
+
 const slugPattern = /^[A-Za-z0-9][A-Za-z0-9-]{1,98}[A-Za-z0-9]$/;
 
 export function publicSlugFromPath(pathname) {
@@ -34,7 +36,7 @@ export function publicCardViewModel(card) {
 export function publicAssetLinks(slug) {
   const encoded = encodeURIComponent(slug);
   return Object.freeze({
-    vcard: `/api/v1/public/cards/${encoded}/vcard`,
-    qrDownload: `/api/v1/public/cards/${encoded}/qr?download=true`,
+    vcard: buildApiUrl(`/public/cards/${encoded}/vcard`),
+    qrDownload: buildApiUrl(`/public/cards/${encoded}/qr?download=true`),
   });
 }

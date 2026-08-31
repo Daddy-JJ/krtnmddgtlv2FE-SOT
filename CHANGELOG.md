@@ -5,7 +5,18 @@ Perubahan historis monorepo sebelum reintegrasi tersedia di
 
 ## Unreleased
 
-- Fase 5: security dan runtime defect remediation menunggu instruksi.
+- Menambahkan chooser Light/Dark yang wajib pada kunjungan pertama tanpa stored
+  preference, tetap dapat digunakan ketika browser menolak storage.
+- Menormalkan UI checkout paused ke note exact `Under development` dan menghapus
+  jalur pemanggilan checkout dari controller billing.
+- Mengunci runtime locale ke Bahasa Indonesia; resource English tetap sebagai
+  scaffold dormant.
+- Menutup open redirect melalui validasi same-origin `returnTo` yang fail-closed.
+- Menyatukan request dan link download pada configured API URL builder.
+- Memperbaiki validasi panjang nama Starter dan melengkapi reserved route slug.
+- Melengkapi post-login routing untuk seluruh role internal Resume Services.
+- Memindahkan helper local-stack test ke dalam repository frontend sehingga full
+  test suite tidak lagi bergantung pada tool monorepo lama.
 
 ## 0.4.0 — Frontend-only canonical SOT — 2026-09-01
 

@@ -158,7 +158,7 @@ function fileList(items){
     const li=document.createElement('li'),link=document.createElement('a');
     li.className='border-t border-white/10 pt-3 break-words';
     link.className='text-cyan-300 underline-offset-4 hover:underline';
-    link.href=`/api/v1/resume-requests/${encodeURIComponent(publicId)}/files/${encodeURIComponent(item.publicId)}/download`;
+    link.href=resumeService.fileDownloadUrl(publicId,item.publicId);
     link.textContent=`${item.role} · ${item.filename} · ${item.scanStatus}`;
     li.append(link);ul.append(li);
   }

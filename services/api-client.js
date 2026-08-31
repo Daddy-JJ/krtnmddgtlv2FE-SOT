@@ -5,6 +5,16 @@ import { ApiError } from './api-error.js';
 const unsafe = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const requestId = () => globalThis.crypto?.randomUUID?.() ?? `web-${Date.now()}`;
 
+export function buildApiUrl(path, baseUrl = appConfig.apiBaseUrl) {
+  const normalizedBase = String(baseUrl ?? '').replace(/\/+$/, '');
+  const relativePath = String(path ?? '');
+  if (!normalizedBase) throw new TypeError('API base URL is required.');
+  if (!relativePath.startsWith('/') || relativePath.startsWith('//') || relativePath.includes('\\')) {
+    throw new TypeError('API path must be a root-relative path.');
+  }
+  return `${normalizedBase}${relativePath}`;
+}
+
 export class ApiClient {
   #baseUrl;
   #fetch;
@@ -65,7 +75,7 @@ export class ApiClient {
         headers.set('Content-Type', 'application/json');
         body = JSON.stringify(body);
       }
-      const response = await Reflect.apply(this.#fetch, globalThis, [`${this.#baseUrl}${path}`, { method, headers, body, credentials: 'include', signal: options.signal ?? controller.signal }]);
+      const response = await Reflect.apply(this.#fetch, globalThis, [buildApiUrl(path, this.#baseUrl), { method, headers, body, credentials: 'include', signal: options.signal ?? controller.signal }]);
       const payload = response.status === 204 ? null : await response.json().catch(() => null);
       if (!response.ok) {
         const proxyError = payload?.error;

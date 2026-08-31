@@ -64,6 +64,7 @@ test('Starter validator builds strict backend contact payload', () => {
 
   assert.equal(input.contact.fullName, 'Arwan');
   assert.equal(input.contact.email, 'owner@example.com');
+  assert.equal(buildStarterInput({ fullName: 'Arwan', email: 'owner@example.com', websiteUrl: 'example.com' }, 'en').locale, 'id');
   assert.deepEqual(validateStarterInput(input), {});
   assert.equal(validateStarterInput(buildStarterInput({ fullName: '', email: 'bad', websiteUrl: 'ftp://bad.test' })).fullName, 'Nama wajib diisi.');
 });

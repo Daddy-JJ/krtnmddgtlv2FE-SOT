@@ -2,7 +2,7 @@
 
 Updated: 2026-09-01
 
-Overall: **SOT reintegration Phase 4 complete; frontend remediation and final UAT pending.**
+Overall: **SOT reintegration Phase 6 complete; remaining frontend implementation and final UAT pending.**
 
 ## Baseline
 
@@ -13,7 +13,7 @@ Overall: **SOT reintegration Phase 4 complete; frontend remediation and final UA
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
 | Static build | 152 allowlisted runtime files in `dist/` |
-| Automated tests | 103 passing; 1 known monorepo-coupling failure |
+| Automated tests | 110 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Paused |
@@ -34,26 +34,27 @@ Overall: **SOT reintegration Phase 4 complete; frontend remediation and final UA
 | API transport | Cookie credentials, CSRF contexts, timeout, refresh, normalized errors |
 | Deployment | `dist/` allowlist and Vercel HTTPS upstream proxy |
 
-## Locked decisions not yet fully reflected in runtime
+## Locked decisions reconciled in Phase 6
 
-- First visit currently follows stored/system theme and shows a toggle; mandatory
-  Light/Dark chooser has not been restored.
-- Checkout is disabled, but all paused copy has not yet been normalized to exact
-  `Under development` wording.
-- Locale loader and English JSON remain even though launch is Indonesian-only.
+- First visit tanpa stored preference menampilkan chooser Light/Dark yang dapat
+  dioperasikan dengan keyboard; toggle global tetap tersedia setelah memilih.
+- Checkout CTA tetap disabled, controller billing tidak memiliki jalur checkout,
+  dan seluruh note pause memakai exact `Under development`.
+- Runtime locale hanya `id`; English JSON tetap berada di repository sebagai
+  dormant scaffold dan permintaan locale `en` fail-safe ke Bahasa Indonesia.
 
-## Known defects for Phase 5
+## Phase 5 remediation completed
 
-1. `utils/auth-flow.js:safeReturnTo()` can accept backslash variants that resolve
-   as an external navigation target.
-2. Resume/admin/public download URLs contain duplicated hard-coded `/api/v1`
-   construction instead of one API URL builder.
-3. `validators/starter-validator.js` applies website normalization during name
-   length validation.
-4. `validators/slug-validator.js` does not reserve every current top-level route.
-5. Login role routing handles `super_admin` and `cv_specialist`, but not every
-   approved internal role.
-6. `tests/local-stack.test.js` imports missing `../../tools/local-stack.mjs`.
+1. `safeReturnTo()` accepts only normalized same-origin paths and rejects literal
+   or encoded slash-confusion variants.
+2. Request API serta resume/admin/public download links share `buildApiUrl()` and
+   the configured API base.
+3. Starter name length validation now operates on cleaned name text only.
+4. Every deployed top-level runtime directory is covered by reserved slug tests.
+5. Login routes Super Admin, CV Specialist, Resume Quality Reviewer, and Resume
+   Service Admin according to their approved workspace.
+6. Local-stack tests use a repository-local frontend helper and no longer import
+   a missing monorepo tool.
 
 ## Incomplete locked frontend scope
 
@@ -63,7 +64,6 @@ Overall: **SOT reintegration Phase 4 complete; frontend remediation and final UA
 - True unsaved-form live preview on design/editor flow.
 - Remaining admin plan/payment/theme/activity/QR operations where required by
   approved frontend scope and available backend API.
-- Role-specific routing for resume quality reviewer/service administrator.
 
 ## Reintegration phase status
 
@@ -73,16 +73,16 @@ Overall: **SOT reintegration Phase 4 complete; frontend remediation and final UA
 | 2. Deployment safety | Complete |
 | 3. Legacy quarantine | Complete |
 | 4. Canonical frontend SOT | Complete |
-| 5. Security/runtime remediation | Pending instruction |
-| 6. Product-rule reconciliation | Pending |
-| 7. Remaining frontend implementation | Pending |
+| 5. Security/runtime remediation | Complete |
+| 6. Product-rule reconciliation | Complete |
+| 7. Remaining frontend implementation | Pending instruction |
 | 8. Duplication/orphan cleanup | Pending |
 | 9. Documentation synchronization | Pending |
 | 10. Final validation/readiness report | Pending |
 
 ## Validation note
 
-`npm run build` passes. All 103 tests that do not depend on the missing monorepo
-helper pass. Full `npm test` reports only `tests/local-stack.test.js` as failed.
+`npm run build` passes and produces 152 allowlisted runtime files. Full `npm test`
+passes all 110 tests, including the repository-local same-origin stack/proxy test.
 No live Vercel deployment, external API mutation, or server cleanup was performed
 during SOT reintegration.

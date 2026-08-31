@@ -1,12 +1,11 @@
 import { paymentService } from '../../services/payment-service.js';
-import { billingStatusLabel, validatePlanCode } from '../../validators/payment-validator.js';
+import { billingStatusLabel } from '../../validators/payment-validator.js';
 import { showStatus } from '../../components/forms/form-utils.js';
 import { safeMembershipIntent } from '../../utils/auth-flow.js';
 
 const status = document.querySelector('[data-form-status]');
 const subscription = document.querySelector('[data-subscription-summary]');
 const history = document.querySelector('[data-payment-history]');
-const checkoutButtons = document.querySelectorAll('[data-checkout-plan]');
 const upgradeCards = document.querySelectorAll('[data-upgrade-card]');
 const upgradeNote = document.querySelector('[data-upgrade-note]');
 const proUpgradePrice = document.querySelector('[data-pro-upgrade-price]');
@@ -34,34 +33,13 @@ async function load() {
     state.subscription = sub;
     state.payments = Array.isArray(payments) ? payments : [];
     render();
-    showStatus(status, requestedIntent ? `Paket ${requestedIntent.toUpperCase()} sedang dalam persiapan.` : 'Billing siap.', 'success');
+    showStatus(status, requestedIntent ? 'Under development' : 'Tagihan siap.', 'success');
   } catch (error) {
     if (error.status === 401) {
       location.assign('/login/');
       return;
     }
     showStatus(status, error.message, 'error');
-  }
-}
-
-async function checkout(planCode) {
-  const message = validatePlanCode(planCode);
-  if (message) {
-    showStatus(status, message, 'error');
-    return;
-  }
-  toggleCheckout(true);
-  showStatus(status, `Menyiapkan checkout ${planCode.toUpperCase()}...`, 'info');
-  try {
-    const payment = await paymentService.checkout(planCode);
-    state.payments = [payment, ...state.payments.filter((item) => item.publicId !== payment.publicId)];
-    render();
-    showStatus(status, 'Checkout berhasil dibuat. Membership Anda akan aktif setelah pembayaran dikonfirmasi.', 'success');
-    if (payment.redirectUrl) window.open(payment.redirectUrl, '_blank', 'noopener,noreferrer');
-  } catch (error) {
-    showStatus(status, error.message, 'error');
-  } finally {
-    toggleCheckout(false);
   }
 }
 
@@ -89,10 +67,10 @@ function renderSubscription() {
   subscription.replaceChildren();
   const title = document.createElement('p');
   title.className = 'text-2xl font-black';
-  title.textContent = state.subscription?.planCode ? state.subscription.planCode.toUpperCase() : 'Starter / no active paid plan';
+  title.textContent = state.subscription?.planCode ? state.subscription.planCode.toUpperCase() : 'Starter / tidak ada paket berbayar aktif';
   const meta = document.createElement('p');
   meta.className = 'mt-2 text-sm text-slate-600';
-  meta.textContent = state.subscription?.endsAt ? `Annual subscription 365 hari · aktif sampai ${formatDate(state.subscription.endsAt)}` : 'Fitur membership akan tersedia setelah pembayaran berhasil dikonfirmasi.';
+  meta.textContent = state.subscription?.endsAt ? `Langganan tahunan 365 hari · aktif sampai ${formatDate(state.subscription.endsAt)}` : 'Fitur membership akan tersedia setelah pembayaran berhasil dikonfirmasi.';
   subscription.append(title, meta);
 }
 
@@ -109,9 +87,7 @@ function renderUpgradeOptions() {
     proUpgradePrice.textContent = 'Rp97.000';
     proUpgradePath.textContent = 'Starter ke Pro';
   }
-  upgradeNote.textContent = currentPlan === 'pro'
-    ? 'Paket membership baru sedang dalam persiapan. Benefit dan harga tetap dapat Anda lihat di bawah.'
-    : 'Paket dan pembayaran sedang kami persiapkan. Daftarkan minat Anda agar kami tahu paket yang paling ditunggu.';
+  upgradeNote.textContent = 'Under development';
 }
 
 function openNotifyEmail(event) {
@@ -130,7 +106,7 @@ function renderHistory() {
   if (!state.payments.length) {
     const empty = document.createElement('p');
     empty.className = 'rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600';
-    empty.textContent = 'Belum ada payment history.';
+    empty.textContent = 'Belum ada riwayat pembayaran.';
     history.append(empty);
     return;
   }
@@ -158,15 +134,11 @@ function renderHistory() {
     refresh.type = 'button';
     refresh.className = 'min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-semibold';
     refresh.dataset.reconcilePayment = payment.publicId;
-    refresh.textContent = 'Refresh status';
+    refresh.textContent = 'Perbarui status';
     actions.append(refresh);
     row.append(title, meta, actions);
     history.append(row);
   }
-}
-
-function toggleCheckout(disabled) {
-  checkoutButtons.forEach((button) => { button.disabled = disabled; });
 }
 
 function formatMoney(amount, currency = 'IDR') {

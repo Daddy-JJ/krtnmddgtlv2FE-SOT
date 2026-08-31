@@ -7,7 +7,7 @@ export const starterFields = ['fullName', 'jobTitle', 'organization', 'officePho
 export function buildStarterInput(values, locale = 'id') {
   const splitName = [clean(values.firstName), clean(values.lastName)].filter(Boolean).join(' ');
   return {
-    locale: locale === 'en' ? 'en' : 'id',
+    locale: 'id',
     contact: {
       fullName: splitName || clean(values.fullName),
       jobTitle: clean(values.jobTitle),
@@ -56,7 +56,7 @@ function clean(value) {
 }
 
 function requiredMax(value, label, max) {
-  const text = normalizeWebsiteUrl(value);
+  const text = clean(value);
   if (!text) return `${label} wajib diisi.`;
   if (text.length > max) return `${label} maksimal ${max} karakter.`;
   return '';

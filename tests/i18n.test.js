@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { appConfig } from '../config/app-config.js';
 import { I18n } from '../services/i18n.js';
 
 test('i18n falls back to Indonesian and resolves nested keys', async t => {
@@ -17,12 +18,19 @@ test('i18n falls back to Indonesian and resolves nested keys', async t => {
   assert.equal(i18n.t('unknown.key', 'Fallback'), 'Fallback');
 });
 
-test('i18n applies translations through textContent', async t => {
+test('English remains dormant and runtime translation stays Indonesian-only', async t => {
   const originalFetch = globalThis.fetch;
   t.after(() => { globalThis.fetch = originalFetch; });
-  globalThis.fetch = async () => new Response(JSON.stringify({ label: 'Safe text' }), { status: 200 });
+  let requestedUrl;
+  globalThis.fetch = async url => {
+    requestedUrl = url;
+    return new Response(JSON.stringify({ label: 'Teks aman' }), { status: 200 });
+  };
   const i18n = await new I18n().load('en');
   const element = { dataset: { i18n: 'label' }, textContent: 'Old' };
   i18n.apply({ querySelectorAll: () => [element] });
-  assert.equal(element.textContent, 'Safe text');
+  assert.deepEqual(appConfig.supportedLocales, ['id']);
+  assert.equal(i18n.locale, 'id');
+  assert.equal(requestedUrl, '/locales/id.json');
+  assert.equal(element.textContent, 'Teks aman');
 });

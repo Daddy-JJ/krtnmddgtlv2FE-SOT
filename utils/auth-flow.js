@@ -3,8 +3,20 @@ const pendingStarterClaimKey = 'knd.pendingStarterClaim';
 const starterPublicIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function safeReturnTo(value) {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return '';
-  return value;
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) return '';
+  if (/[\\\u0000-\u001f\u007f]/.test(value)) return '';
+
+  const rawPath = value.split(/[?#]/, 1)[0];
+  if (/%(?:2f|5c)/i.test(rawPath)) return '';
+
+  try {
+    const base = new URL(globalThis.location?.origin ?? 'http://localhost');
+    const target = new URL(value, base);
+    if (target.origin !== base.origin) return '';
+    return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return '';
+  }
 }
 
 export function starterPublicIdFromReturnTo(returnTo) {
@@ -33,6 +45,20 @@ export function forgetStarterClaim() {
 
 export function safeMembershipIntent(value) {
   return allowedIntents.has(value) ? value : '';
+}
+
+export function postLoginDestination(roles, { intent = '' } = {}) {
+  const assignedRoles = new Set(
+    (Array.isArray(roles) ? roles : [roles]).filter((role) => typeof role === 'string'),
+  );
+
+  if (assignedRoles.has('super_admin')) return '/admin/';
+  if (assignedRoles.has('resume_service_admin')) return '/admin/resume-services/';
+  if (assignedRoles.has('resume_quality_reviewer')) return '/admin/resume-services/?view=quality-review';
+  if (assignedRoles.has('cv_specialist')) return '/specialist/';
+
+  const safeIntent = safeMembershipIntent(intent);
+  return safeIntent ? `/app/billing/?intent=${encodeURIComponent(safeIntent)}` : '/app/';
 }
 
 export function withAuthContext(path, { returnTo = '', intent = '' } = {}) {

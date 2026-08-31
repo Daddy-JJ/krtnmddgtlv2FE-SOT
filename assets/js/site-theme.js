@@ -59,26 +59,87 @@
   }
 
   function mountThemeControls() {
-    if (!document.body || document.querySelector('[data-site-theme-toggle]')) return;
+    if (!document.body) return;
 
-    var toggle = createElement('button', 'site-theme-toggle');
-    toggle.type = 'button';
-    toggle.dataset.siteThemeToggle = '';
-    toggle.setAttribute('aria-live', 'polite');
+    var toggle = document.querySelector('[data-site-theme-toggle]');
+    if (!(toggle instanceof HTMLButtonElement)) {
+      toggle = createElement('button', 'site-theme-toggle');
+      toggle.type = 'button';
+      toggle.dataset.siteThemeToggle = '';
+      toggle.setAttribute('aria-live', 'polite');
 
-    var icon = createElement('span', 'site-theme-toggle__icon', '◐');
-    icon.setAttribute('aria-hidden', 'true');
-    var label = createElement('span', 'site-theme-toggle__label');
-    label.dataset.siteThemeLabel = '';
-    toggle.append(icon, label);
-    document.body.append(toggle);
+      var icon = createElement('span', 'site-theme-toggle__icon', '◐');
+      icon.setAttribute('aria-hidden', 'true');
+      var label = createElement('span', 'site-theme-toggle__label');
+      label.dataset.siteThemeLabel = '';
+      toggle.append(icon, label);
+      document.body.append(toggle);
+
+      toggle.addEventListener('click', function () {
+        var next = currentTheme() === 'dark' ? 'light' : 'dark';
+        savedPreference = next;
+        storePreference(next);
+        applyTheme(next);
+      });
+    }
+
     applyTheme(currentTheme());
+    if (!savedPreference) mountThemeChooser(toggle);
+  }
 
-    toggle.addEventListener('click', function () {
-      var next = currentTheme() === 'dark' ? 'light' : 'dark';
-      storePreference(next);
-      applyTheme(next);
+  function mountThemeChooser(toggle) {
+    if (document.querySelector('[data-site-theme-chooser]')) return;
+
+    var chooser = createElement('dialog', 'site-theme-chooser');
+    chooser.dataset.siteThemeChooser = '';
+    chooser.setAttribute('aria-labelledby', 'site-theme-chooser-title');
+    chooser.setAttribute('aria-describedby', 'site-theme-chooser-description');
+
+    var eyebrow = createElement('p', 'site-theme-chooser__eyebrow', 'Preferensi tampilan');
+    var title = createElement('h2', 'site-theme-chooser__title', 'Pilih tampilan Anda');
+    title.id = 'site-theme-chooser-title';
+    var description = createElement(
+      'p',
+      'site-theme-chooser__description',
+      'Pilih tema terang atau gelap. Pilihan ini tidak memengaruhi desain kartu nama Anda.',
+    );
+    description.id = 'site-theme-chooser-description';
+
+    var choices = createElement('div', 'site-theme-chooser__choices');
+    choices.append(
+      themeChoice('light', 'Terang', 'Latar terang dengan teks gelap'),
+      themeChoice('dark', 'Gelap', 'Latar gelap dengan teks terang'),
+    );
+    chooser.append(eyebrow, title, description, choices);
+    chooser.addEventListener('cancel', function (event) {
+      event.preventDefault();
     });
+
+    document.body.append(chooser);
+    if (typeof chooser.showModal === 'function') chooser.showModal();
+    else chooser.setAttribute('open', '');
+
+    var firstChoice = chooser.querySelector('[data-site-theme-choice="light"]');
+    if (firstChoice instanceof HTMLButtonElement) firstChoice.focus();
+
+    function themeChoice(theme, label, detail) {
+      var button = createElement('button', 'site-theme-chooser__choice');
+      button.type = 'button';
+      button.dataset.siteThemeChoice = theme;
+      button.append(
+        createElement('strong', 'site-theme-chooser__choice-title', label),
+        createElement('span', 'site-theme-chooser__choice-detail', detail),
+      );
+      button.addEventListener('click', function () {
+        savedPreference = theme;
+        storePreference(theme);
+        applyTheme(theme);
+        if (typeof chooser.close === 'function') chooser.close();
+        chooser.remove();
+        toggle.focus();
+      });
+      return button;
+    }
   }
 
   if (document.readyState === 'loading') {
@@ -88,7 +149,7 @@
   }
 
   function followSystemTheme(event) {
-    if (!readPreference()) applyTheme(event.matches ? 'dark' : 'light');
+    if (!savedPreference) applyTheme(event.matches ? 'dark' : 'light');
   }
 
   if (typeof systemQuery.addEventListener === 'function') {

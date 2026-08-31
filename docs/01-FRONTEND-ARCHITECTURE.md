@@ -24,7 +24,7 @@ HTML route shell
 | Page controller | `pages/` | DOM orchestration, events, view state, redirects |
 | Shared UI | `components/` | Application shell, form utilities, card templates |
 | Feature service | `services/` | Endpoint operations and presentation mapping |
-| Transport | `services/api-client.js` | API base, cookies, CSRF, refresh, timeout, errors |
+| Transport | `services/api-client.js` | API URL builder, cookies, CSRF, refresh, timeout, errors |
 | Validation | `validators/` | Fast browser validation matching consumer contract |
 | Utility | `utils/` | Cookie parsing, safe URL, auth navigation context |
 | Configuration | `config/` | Public runtime config and theme metadata |
@@ -83,6 +83,11 @@ must not appear in card artwork.
 credentials. On Vercel, browser traffic remains same-origin and the server-side
 Function uses `BACKEND_API_BASE_URL`.
 
+Runtime locale support is currently limited to `id`; English resources remain
+dormant scaffolding. `assets/js/site-theme.js` mounts an accessible Light/Dark
+chooser only when `knd.theme.preference` has no valid stored value, then keeps the
+global toggle available for later changes.
+
 ## Source and deployment boundary
 
 `scripts/build-static.mjs` copies an explicit list of runtime directories and
@@ -101,6 +106,7 @@ Adding a new public route or runtime directory therefore requires:
 
 - HTML shells do not contain business authority.
 - Page controllers do not construct backend origins.
+- API request dan download link memakai `buildApiUrl()` dengan configured API base.
 - Services do not manipulate unrelated page DOM.
 - API client does not encode feature-specific business rules.
 - Validators do not grant permission or entitlement.

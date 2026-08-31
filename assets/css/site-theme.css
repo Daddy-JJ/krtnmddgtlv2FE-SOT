@@ -72,6 +72,79 @@ body :focus-visible {
 .site-theme-toggle:hover { background: var(--site-surface); }
 .site-theme-toggle__icon { font-size: 1.05rem; line-height: 1; }
 
+.site-theme-chooser {
+  width: min(calc(100% - 2rem), 36rem);
+  max-width: 36rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.site-theme-chooser__eyebrow {
+  width: fit-content;
+  margin: 0 0 .85rem;
+  padding: .22rem .5rem;
+  border: 1px solid var(--site-line);
+  background: var(--site-ink);
+  color: var(--site-inverse);
+  font-size: .625rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.site-theme-chooser__title {
+  margin: 0;
+  font-family: var(--site-font-editorial);
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  font-style: italic;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.site-theme-chooser__description {
+  margin: 1rem 0 0;
+  color: var(--site-muted);
+  line-height: 1.6;
+}
+
+.site-theme-chooser__choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+  margin-top: 1.5rem;
+}
+
+.site-theme-chooser__choice {
+  min-height: 7rem;
+  padding: 1rem;
+  border: 1px solid var(--site-line);
+  background: var(--site-surface);
+  color: var(--site-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.site-theme-chooser__choice:hover,
+.site-theme-chooser__choice:focus-visible {
+  background: var(--site-accent);
+  color: #141414;
+}
+
+.site-theme-chooser__choice-title,
+.site-theme-chooser__choice-detail {
+  display: block;
+}
+
+.site-theme-chooser__choice-title {
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.site-theme-chooser__choice-detail {
+  margin-top: .55rem;
+  font-size: .75rem;
+  line-height: 1.5;
+}
+
 /* Landing page and article */
 html[data-site-theme="light"] .mono-page,
 html[data-site-theme="dark"] .mono-page {
@@ -634,6 +707,7 @@ html[data-site-theme="light"] .dashboard-shell .theme-option__meta {
 @media (max-width: 640px) {
   .site-theme-toggle__label { display: none; }
   .site-theme-toggle { width: 2.75rem; justify-content: center; padding-inline: 0; }
+  .site-theme-chooser__choices { grid-template-columns: 1fr; }
   .site-main { width: min(100% - 1.25rem, 76rem); }
 }
 

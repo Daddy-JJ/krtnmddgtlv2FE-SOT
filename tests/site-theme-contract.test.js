@@ -31,14 +31,22 @@ test('every substantive frontend shell except public card loads the global theme
   }
 });
 
-test('theme controller uses one non-sensitive preference key and safe DOM APIs', () => {
+test('theme controller requires an accessible first-visit choice and keeps one safe preference key', () => {
   assert.match(themeScript, /knd\.theme\.preference/);
   assert.match(themeScript, /localStorage\.getItem\(storageKey\)/);
   assert.match(themeScript, /localStorage\.setItem\(storageKey, theme\)/);
   assert.doesNotMatch(themeScript, /token|password|credential|innerHTML|outerHTML/i);
   assert.match(themeScript, /dataSiteThemeToggle|siteThemeToggle/);
-  assert.doesNotMatch(themeScript, /dataSiteThemeChooser|siteThemeChooser/);
-  assert.doesNotMatch(themeScript, /Pilih tampilan Anda/);
+  assert.match(themeScript, /dataSiteThemeChooser|siteThemeChooser/);
+  assert.match(themeScript, /createElement\('dialog'/);
+  assert.match(themeScript, /Pilih tampilan Anda/);
+  assert.match(themeScript, /aria-labelledby/);
+  assert.match(themeScript, /aria-describedby/);
+  assert.match(themeScript, /addEventListener\('cancel'[\s\S]*preventDefault/);
+  assert.match(themeScript, /siteThemeChoice/);
+  assert.match(themeScript, /themeChoice\('light'/);
+  assert.match(themeScript, /themeChoice\('dark'/);
+  assert.match(themeScript, /chooser\.remove\(\)/);
   assert.match(themeScript, /'#141414'/);
   assert.match(themeScript, /'#e4e3e0'/);
 });
@@ -50,6 +58,8 @@ test('theme stylesheet covers light, dark, public, auth, user, and admin shells'
   assert.match(themeStyles, /\.marketing-shell/);
   assert.match(themeStyles, /\.auth-shell/);
   assert.match(themeStyles, /\.dashboard-shell/);
+  assert.match(themeStyles, /\.site-theme-chooser/);
+  assert.match(themeStyles, /\.site-theme-chooser__choice:focus-visible/);
   assert.match(themeStyles, /prefers-reduced-motion: reduce/);
   const shadowValues = [...themeStyles.matchAll(/box-shadow:\s*([^;]+)/g)].map((match) => match[1].trim());
   assert.ok(shadowValues.every((value) => value.startsWith('none')));

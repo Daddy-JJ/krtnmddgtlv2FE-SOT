@@ -14,7 +14,9 @@ email, file storage, and response schema.
 - Server-side upstream: `BACKEND_API_BASE_URL`, HTTPS origin tanpa path.
 - Fallback direct base hanya melalui reviewed public runtime configuration.
 
-Feature services menerima path relatif setelah `/api/v1`.
+Feature services menerima path relatif setelah `/api/v1`. Request API dan link
+download runtime dibentuk melalui `buildApiUrl()` agar seluruhnya menghormati
+configured API base yang sama.
 
 ## Transport contract
 
@@ -145,7 +147,10 @@ Checkout must not be invoked while the product decision remains paused.
 Internal resume operations currently consume `/admin/resume-requests*` transitions
 for queue/detail, assign, information request, data complete, work start, revision
 start, deliverable registration, and release. Backend permission filtering is
-authoritative for Super Admin, Specialist, Reviewer, and Service Admin roles.
+authoritative untuk role code `super_admin`, `cv_specialist`,
+`resume_quality_reviewer`, dan `resume_service_admin`. Login mengarahkan dua role
+resume terakhir ke workspace Resume Services yang sesuai; backend tetap melakukan
+authorization setiap operasi.
 
 ### Super Admin
 

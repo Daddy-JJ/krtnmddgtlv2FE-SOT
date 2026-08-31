@@ -3,7 +3,7 @@ import { cardService } from '../../services/card-service.js';
 import { starterService } from '../../services/starter-service.js';
 import { validateLogin, normalizeEmail } from '../../validators/auth-validator.js';
 import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
-import { authErrorMessage, forgetStarterClaim, pendingStarterClaim, safeMembershipIntent, safeReturnTo, starterPublicIdFromReturnTo, withAuthContext } from '../../utils/auth-flow.js';
+import { authErrorMessage, forgetStarterClaim, pendingStarterClaim, postLoginDestination, safeMembershipIntent, safeReturnTo, starterPublicIdFromReturnTo, withAuthContext } from '../../utils/auth-flow.js';
 
 const form = document.querySelector('[data-login-form]');
 const status = document.querySelector('[data-form-status]');
@@ -38,13 +38,8 @@ form?.addEventListener('submit', async (event) => {
       return;
     }
     if (returnTo) { location.assign(returnTo); return; }
-    const roles = Array.isArray(result?.user?.roles) ? result.user.roles : [result?.user?.role];
-    const destination = roles.includes('super_admin')
-      ? '/admin/'
-      : roles.includes('cv_specialist')
-        ? '/specialist/'
-        : intent ? `/app/billing/?intent=${encodeURIComponent(intent)}` : '/app/';
-    location.assign(destination);
+    const roles = Array.isArray(result?.user?.roles) ? result.user.roles : result?.user?.role;
+    location.assign(postLoginDestination(roles, { intent }));
   } catch (error) {
     showFieldErrors(form, mapApiFieldErrors(error.details));
     showStatus(status, authErrorMessage(error), 'error');

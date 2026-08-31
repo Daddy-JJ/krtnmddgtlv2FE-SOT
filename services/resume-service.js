@@ -1,4 +1,4 @@
-import{api}from'./api-client.js';
+import{api,buildApiUrl}from'./api-client.js';
 export const resumeService={
   eligibility:()=>api.get('/resume-service/eligibility'),
   list:()=>api.get('/resume-requests'),
@@ -6,8 +6,8 @@ export const resumeService={
   create:(data)=>api.post('/resume-requests',data),
   revision:(id,notes)=>api.post(`/resume-requests/${encodeURIComponent(id)}/revision`,{notes}),
   upload:(id,role,file)=>{const form=new FormData();form.set('role',role);form.set('file',file);return api.post(`/resume-requests/${encodeURIComponent(id)}/files`,form);},
-  fileDownloadUrl:(id,fileId)=>`/api/v1/resume-requests/${encodeURIComponent(id)}/files/${encodeURIComponent(fileId)}/download`,
-  downloadUrl:(id)=>`/api/v1/resume-requests/${encodeURIComponent(id)}/deliverables/current/download`,
+  fileDownloadUrl:(id,fileId)=>buildApiUrl(`/resume-requests/${encodeURIComponent(id)}/files/${encodeURIComponent(fileId)}/download`),
+  downloadUrl:(id)=>buildApiUrl(`/resume-requests/${encodeURIComponent(id)}/deliverables/current/download`),
   adminQueue:()=>api.get('/admin/resume-requests'),
   adminDetail:(id)=>api.get(`/admin/resume-requests/${encodeURIComponent(id)}`),
   assign:(id,specialistPublicId,reason)=>api.post(`/admin/resume-requests/${encodeURIComponent(id)}/assign`,{specialistPublicId,reason}),

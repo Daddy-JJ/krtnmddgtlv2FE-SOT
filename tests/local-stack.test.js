@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import test from 'node:test';
-import { createLocalFrontendServer, localBackendEnvironment } from '../../tools/local-stack.mjs';
+import { createLocalFrontendServer, localBackendEnvironment } from './helpers/local-stack.mjs';
 
 async function listen(server) {
   await new Promise((resolve, reject) => {
