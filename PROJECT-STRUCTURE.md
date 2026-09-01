@@ -22,7 +22,7 @@ krtnmddgtlv2FE_SOT/
 ├── tests/                     # native Node tests
 ├── docs/                      # canonical SOT and operations
 ├── docs/_legacy-sot/          # read-only historical archive
-├── dist/                      # generated deployment output
+├── dist/                      # generated output saat build; tidak perlu disimpan lokal
 ├── package.json
 └── vercel.json
 ```

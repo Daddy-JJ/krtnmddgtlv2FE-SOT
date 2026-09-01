@@ -26,12 +26,26 @@ npm run qa
 
 `npm run qa` menjalankan static build, kompilasi Tailwind, lalu seluruh native
 Node test. Build membuat output publik di `dist/`; folder tersebut generated dan
-tidak boleh diedit atau di-commit.
+tidak boleh diedit atau di-commit. Folder `dist/` boleh tidak ada di working tree
+di antara build; Vercel membuatnya dari source saat deployment.
 
 Halaman statis harus dibuka melalui HTTP server, bukan `file://`. Pengujian alur
 autentikasi end-to-end memerlukan `/api/v1` yang diteruskan ke backend kompatibel.
 Test local-stack otomatis memakai helper yang berada di repository ini; lihat
 status baseline terbaru di `STATUS.md`.
+
+Untuk preview frontend di localhost tanpa membuat `dist/`, jalankan server dari
+root repository sehingga URL root-relative seperti `/assets/...` tetap mengarah
+ke source project:
+
+```powershell
+cd C:\xampp\htdocs\krtnmddgtlv2FE_SOT
+C:\xampp\php\php.exe -S 127.0.0.1:8080 -t .
+```
+
+Buka `http://127.0.0.1:8080/`. URL subfolder Apache
+`http://localhost/krtnmddgtlv2FE_SOT/` tidak cocok dengan path root-relative
+frontend tanpa konfigurasi VirtualHost/Alias tambahan.
 
 ## Source of truth
 
