@@ -1,4 +1,5 @@
 import { api } from '../../services/api-client.js';
+import { authService } from '../../services/auth-service.js';
 
 const root = document.querySelector('[data-landing-content-admin-root]');
 const sections = [
@@ -24,7 +25,7 @@ void load();
 
 async function load() {
   try {
-    const { user } = await api.get('/me');
+    const { user } = await authService.current();
     const roles = Array.isArray(user.roles) ? user.roles : [user.role];
     if (!roles.includes('super_admin')) { location.replace(roles.includes('cv_specialist') ? '/specialist/' : '/app/'); return; }
     render(await api.get('/admin/landing-content'));

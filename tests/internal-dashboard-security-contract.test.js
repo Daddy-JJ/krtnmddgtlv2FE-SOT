@@ -11,7 +11,7 @@ test('Super Admin dashboard guards role, redirects anonymous sessions, exposes l
     readFile(resolve(root, 'pages/auth/login.js'), 'utf8'),
     readFile(resolve(root, 'utils/auth-flow.js'), 'utf8'),
   ]);
-  assert.match(workspace, /api\.get\('\/me'\)/);
+  assert.match(workspace, /authService\.current\(\)/);
   assert.match(workspace, /roles\.includes\('super_admin'\)/);
   assert.match(workspace, /error\.status===401[\s\S]*\/login\//);
   assert.match(workspace, /authService\.logout\(\)/);

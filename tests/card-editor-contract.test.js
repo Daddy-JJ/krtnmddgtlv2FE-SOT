@@ -75,3 +75,29 @@ test('card editor composes structured name and address fields into the legacy AP
   assert.equal(input.contact.fullName, 'Bapak Phoenikz');
   assert.equal(input.contact.addressText, 'RT 03 RW 02 Jalan Kabupaten\nBandung\nJawa Barat\n40115\nIndonesia');
 });
+
+test('card editor accepts a nullable HTTP(S) Maps URL without dropping other contact data', () => {
+  const currentCard = {
+    locale: 'id',
+    contact: {
+      fullName: 'Bapak Phoenikz',
+      jobTitle: '',
+      organization: '',
+      officePhone: '',
+      mobilePhone: '08123',
+      email: 'a@example.com',
+      websiteUrl: 'https://example.com',
+      addressText: 'Bandung',
+      mapsUrl: 'https://maps.google.com/old',
+    },
+  };
+  const input = buildCardInput({ mapsUrl: 'https://maps.google.com/new' }, currentCard);
+  assert.equal(input.contact.mapsUrl, 'https://maps.google.com/new');
+  assert.equal(input.contact.mobilePhone, '08123');
+  assert.deepEqual(validateCardInput(input, ['mapsUrl']), {});
+
+  const cleared = buildCardInput({ mapsUrl: '' }, currentCard);
+  assert.equal(cleared.contact.mapsUrl, null);
+  const invalid = buildCardInput({ mapsUrl: 'javascript:alert(1)' }, currentCard);
+  assert.equal(validateCardInput(invalid, ['mapsUrl']).mapsUrl, 'Link Google Maps wajib memakai URL http atau https.');
+});

@@ -36,28 +36,33 @@ test('theme validator and orientation filter enforce locked catalog values', () 
 });
 
 test('design gallery renders isolated live templates before account entitlements resolve', async () => {
-  const [source, html, styles] = await Promise.all([
+  const [source, sharedPreview, html, styles] = await Promise.all([
     readFile(new URL('../pages/app/card-design.js', import.meta.url), 'utf8'),
+    readFile(new URL('../components/card-live-preview.js', import.meta.url), 'utf8'),
     readFile(new URL('../app/card/design/index.html', import.meta.url), 'utf8'),
     readFile(new URL('../assets/css/app.css', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(source, /fetch\('\/config\/theme-registry\.json'/);
-  assert.match(source, /fetch\('\/assets\/css\/card-themes\.css'/);
-  assert.match(source, /loadTemplateMarkup\(theme\.template\)/);
-  assert.match(source, /fetch\(path/);
-  assert.match(source, /state\.themes = await loadStaticCatalog\(\)/);
+  assert.match(source, /loadCardThemePreviewCatalog/);
+  assert.match(source, /mountCardThemePreview/);
+  assert.match(source, /const catalog = await loadCardThemePreviewCatalog\(\)/);
+  assert.doesNotMatch(source, /fetch\('\/config\/theme-registry\.json'/);
+  assert.doesNotMatch(source, /attachShadow/);
+  assert.match(sharedPreview, /fetch\('\/config\/theme-registry\.json'/);
+  assert.match(sharedPreview, /fetch\('\/assets\/css\/card-themes\.css'/);
+  assert.match(sharedPreview, /loadTemplateMarkup\(theme\.template\)/);
+  assert.match(sharedPreview, /fetch\(path/);
   assert.match(source, /mergeEntitlements\(state\.themes, entitledThemes\)/);
-  assert.match(source, /name:\s*theme\.name/);
+  assert.match(sharedPreview, /name:\s*theme\.name/);
   assert.match(source, /button\.className = 'theme-option'/);
-  assert.match(source, /attachShadow\(\{ mode: 'closed' \}\)/);
-  assert.match(source, /root\.querySelector\('script, iframe, object, embed'\)/);
-  assert.match(source, /\.replace\(':root \{', ':host \{'\)/);
-  assert.match(source, /\.replace\('@media \(max-width: 620px\)', '@media \(max-width: 0px\)'\)/);
-  assert.match(source, /renderCardTheme\(card, previewCardData\(\)\)/);
-  assert.match(source, /cache: 'no-cache'/);
+  assert.match(sharedPreview, /attachShadow\(\{ mode: 'closed' \}\)/);
+  assert.match(sharedPreview, /root\.querySelector\('script, iframe, object, embed'\)/);
+  assert.match(sharedPreview, /\.replace\(':root \{', ':host \{'\)/);
+  assert.match(sharedPreview, /\.replace\('@media \(max-width: 620px\)', '@media \(max-width: 0px\)'\)/);
+  assert.match(sharedPreview, /renderCardTheme\(root, initialCard\)/);
+  assert.match(sharedPreview, /cache: 'no-cache'/);
   assert.doesNotMatch(source, /button\.disabled = !theme\.isAvailable/);
   assert.match(html, /data-theme-preview-stage/);
   assert.doesNotMatch(html, /data-theme-preview-image/);
-  assert.match(styles, /\.theme-preview-host/);
+  assert.match(styles, /\.card-theme-preview__host/);
 });

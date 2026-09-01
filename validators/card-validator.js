@@ -17,12 +17,21 @@ export function buildCardInput(values, currentCard, locale = 'id') {
     addressText,
   };
   const input = buildStarterInput(merged, currentCard?.locale ?? locale);
-  input.contact.mapsUrl = currentCard?.contact?.mapsUrl ?? null;
+  const mapsUrl = Object.hasOwn(values, 'mapsUrl')
+    ? String(values.mapsUrl ?? '').trim()
+    : currentCard?.contact?.mapsUrl;
+  input.contact.mapsUrl = mapsUrl || null;
   return input;
 }
 
 export function validateCardInput(input, fields) {
-  const errors = validateStarterInput(input);
+  const mapsUrl = String(input?.contact?.mapsUrl ?? '').trim();
+  const errors = {
+    ...validateStarterInput(input),
+    ...(mapsUrl && (mapsUrl.length > 500 || !/^https?:\/\/[^\s]+$/i.test(mapsUrl))
+      ? { mapsUrl: 'Link Google Maps wajib memakai URL http atau https.' }
+      : {}),
+  };
   if (!fields) return errors;
   return Object.fromEntries(Object.entries(errors).filter(([field]) => fields.includes(field)));
 }

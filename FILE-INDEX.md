@@ -9,7 +9,9 @@
 | `AI_CONTEXT.md` | Konteks ringkas repository |
 | `LOCKED-PLAN.md` | Scope dan keputusan produk terkunci |
 | `SOT-MANIFEST.md` | Peta source of truth |
+| `PROJECT-STRUCTURE.md` | Peta turunan struktur repository aktual |
 | `STATUS.md` | Fakta implementasi, gap, dan validasi terakhir |
+| `REVIEW-REPORT.md` | Assessment reintegrasi dan readiness terakhir |
 
 ## Canonical frontend SOT
 
@@ -41,14 +43,17 @@
 |---|---|
 | `pages/` | Controller per halaman |
 | `services/` | API adapter dan presentation service |
-| `components/` | Shared shell, form helper, dan card template |
-| `validators/` | Client-side validation |
+| `components/` | Shared shell, form helper, live preview, dan card template |
+| `validators/` | Client-side validation, termasuk shared Resume DOCX rule |
 | `utils/` | Cookie, URL, dan auth-flow utilities |
 | `config/` | Runtime config dan theme registry |
 | `assets/` | Compiled CSS, source CSS, image, icon, theme preview |
 | `locales/` | Locale resources; English saat ini deferred |
 | `tests/` | Native Node contract/security tests |
 | `scripts/build-static.mjs` | Allowlisted static build |
+
+Verified Phase 10 inventory: 60 route shells, 27 page controllers, dan 10 card
+theme templates. Angka ini bersifat turunan dan harus mengikuti repository.
 
 ## Deployment files
 
@@ -62,3 +67,9 @@
 `docs/_legacy-sot/` adalah snapshot read-only dari SOT monorepo lama. Gunakan
 hanya untuk provenance atau audit. Jangan mengikuti path, status, atau precedence
 di dalamnya sebagai instruksi aktif.
+
+## Maintenance rule
+
+Perbarui indeks ini setelah perubahan struktur atau entry point. Bila indeks
+berbeda dari kode, test, atau dokumen authority, repository aktual dan precedence
+di `AGENTS.md` menentukan fakta; indeks kemudian wajib dikoreksi.

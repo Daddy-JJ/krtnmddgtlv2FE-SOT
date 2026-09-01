@@ -55,7 +55,7 @@ test('static deployment output contains runtime files and excludes internal mate
     'vercel.json',
     '.env.example',
     '.cpanel.yml',
-    'components/CardFieldEditor/README.md',
+    'CHANGELOG.md',
   ]) {
     assert.ok(!outputFiles.includes(forbiddenPath), `${forbiddenPath} must stay private`);
   }
@@ -83,5 +83,6 @@ test('deployment configuration uses an explicit static output boundary', async (
   assert.ok(!PUBLIC_DIRECTORIES.includes('docs'));
   assert.ok(!PUBLIC_DIRECTORIES.includes('tests'));
   assert.ok(!PUBLIC_DIRECTORIES.includes('api'));
+  assert.ok(!PUBLIC_DIRECTORIES.includes('layouts'));
   assert.deepEqual(PUBLIC_ROOT_FILES, ['index.html', 'robots.txt', 'sitemap.xml']);
 });

@@ -15,7 +15,7 @@ load();
 
 async function load(){
   try{
-    const {user:actor}=await api.get('/me');
+    const {user:actor}=await authService.current();
     const roles=Array.isArray(actor.roles)?actor.roles:[actor.role];
     if(!roles.includes('super_admin')){location.replace(roles.includes('cv_specialist')?'/specialist/':'/app/');return;}
     if(['dashboard','reports'].includes(view))return renderObject(await api.get('/admin/statistics'));

@@ -1,6 +1,9 @@
 import { api } from './api-client.js';
 
 export const authService = {
+  current() {
+    return api.get('/me');
+  },
   register(input) {
     return api.post('/auth/register', input, { csrfContext: null, skipRefresh: true });
   },

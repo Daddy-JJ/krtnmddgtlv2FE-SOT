@@ -5,6 +5,28 @@ Perubahan historis monorepo sebelum reintegrasi tersedia di
 
 ## Unreleased
 
+- Menyelesaikan Phase 10 re-check dengan 154 file build dan 117 test lulus,
+  menambahkan baseline security headers pada Vercel, memverifikasi parity dengan
+  Apache, serta mengunci session-storage claim ke public ID tervalidasi.
+- Menyinkronkan root governance, onboarding, arsitektur, deployment, security,
+  file index, project structure, status, dan review report terhadap implementasi
+  aktual hingga Phase 9 serta menambahkan aturan pencegahan SOT drift.
+- Menyatukan loader, validasi template, Shadow DOM, renderer, dan scaling preview
+  tema untuk design gallery serta unsaved card-editor preview.
+- Menyatukan rule upload Resume DOCX maksimal 10 MB ke satu validator reusable
+  dan kepemilikan `GET /me` ke `authService.current()`.
+- Menghapus 29 `.gitkeep`, dua README pseudo-komponen stale, entry deployment dan
+  reserved-slug `layouts/` kosong, serta direktori kosong hasil scaffold lama.
+- Menambahkan runtime module-graph regression untuk broken import, orphan module,
+  dan kepemilikan tunggal atas tanggung jawab frontend yang dibagikan.
+- Menambahkan input Google Maps tervalidasi dan preview tema aktif yang mengikuti
+  perubahan form kartu sebelum data disimpan.
+- Menjelaskan CTA WhatsApp sebagai output turunan backend dari nomor mobile tanpa
+  menerima URL WhatsApp dari browser.
+- Merapikan social/catalog create-list-delete dengan urutan deterministik, posisi,
+  status publik, dan copy Bahasa Indonesia; edit/reorder tetap menunggu API.
+- Mencatat batas kontrak logo serta admin plan/payment/theme/QR agar frontend tidak
+  menciptakan endpoint atau otoritas baru.
 - Menambahkan chooser Light/Dark yang wajib pada kunjungan pertama tanpa stored
   preference, tetap dapat digunakan ketika browser menolak storage.
 - Menormalkan UI checkout paused ke note exact `Under development` dan menghapus

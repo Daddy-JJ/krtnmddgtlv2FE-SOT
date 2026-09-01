@@ -55,6 +55,22 @@ API di repository ini hanya mendefinisikan kebutuhan frontend sebagai consumer.
 
 ## Work protocol
 
+Sebelum membuat struktur atau abstraksi baru, periksa implementasi, reference
+graph, dan owner tanggung jawab yang sudah ada. Cari ekuivalen terlebih dahulu;
+business rule yang sama tidak boleh mempunyai implementasi paralel.
+
+Sinkronisasi repository wajib mengikuti aturan berikut:
+
+- Perubahan business rule memperbarui authority terkait dan Decision Log bila
+  keputusan product owner berubah.
+- Perubahan arsitektur memperbarui `docs/01-FRONTEND-ARCHITECTURE.md`,
+  `PROJECT-STRUCTURE.md`, dan peta turunan bila terdampak.
+- Perubahan API memperbarui service/consumer terkait,
+  `docs/03-API-CONSUMER-CONTRACT.md`, dan test kontraknya.
+- `FILE-INDEX.md` selalu mengikuti kenyataan repository dan tidak pernah menjadi
+  authority arsitektur atau produk.
+- Kode, test, dan SOT harus diserahkan dalam keadaan saling konsisten.
+
 Sebelum perubahan:
 
 1. Nyatakan fase, scope, dan daftar file.

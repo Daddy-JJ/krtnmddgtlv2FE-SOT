@@ -1,12 +1,8 @@
 import { cardService } from '../../services/card-service.js';
-import { renderCardTheme } from '../../services/card-theme-renderer.js';
+import { loadCardThemePreviewCatalog, mountCardThemePreview } from '../../components/card-live-preview.js';
 import { filterThemes, validateThemeCode } from '../../validators/theme-validator.js';
 import { showStatus } from '../../components/forms/form-utils.js';
 
-const PREVIEW_SIZES = Object.freeze({
-  landscape: Object.freeze({ width: 980, height: 980 * 54 / 85 }),
-  portrait: Object.freeze({ width: 460, height: 460 * 85 / 54 }),
-});
 const SAMPLE_CARD = Object.freeze({
   fullName: 'Begitu Indah, SE',
   jobTitle: 'Digital Marketer & Social Media Specialist',
@@ -43,11 +39,7 @@ const nodes = {
   save: document.querySelector('[data-save-theme]'),
   filters: document.querySelectorAll('[data-orientation-filter]'),
 };
-const previewFrames = new WeakMap();
-const observedStages = new Set();
-const previewObserver = typeof ResizeObserver === 'function'
-  ? new ResizeObserver((entries) => entries.forEach(({ target }) => fitPreview(target)))
-  : null;
+const mountedPreviews = new Set();
 
 init();
 
@@ -63,7 +55,9 @@ function init() {
 async function load() {
   showStatus(nodes.status, 'Memuat varian desain...', 'info');
   try {
-    state.themes = await loadStaticCatalog();
+    const catalog = await loadCardThemePreviewCatalog();
+    state.themes = catalog.themes;
+    state.themeStyles = catalog.stylesheet;
     state.previewCode = state.themes[0]?.code ?? '';
     render();
   } catch {
@@ -95,65 +89,6 @@ async function load() {
   }
 }
 
-async function loadStaticCatalog() {
-  const [response, stylesheetResponse] = await Promise.all([
-    fetch('/config/theme-registry.json', {
-      headers: { Accept: 'application/json' },
-      credentials: 'same-origin',
-      cache: 'no-cache',
-    }),
-    fetch('/assets/css/card-themes.css', {
-      headers: { Accept: 'text/css' },
-      credentials: 'same-origin',
-      cache: 'no-cache',
-    }).catch(() => null),
-  ]);
-  if (!response.ok) throw new Error('Theme catalog unavailable.');
-  const registry = await response.json();
-  state.themeStyles = stylesheetResponse?.ok ? await stylesheetResponse.text() : '';
-  const version = String(registry?.version ?? 'current');
-  const themes = (Array.isArray(registry?.themes) ? registry.themes : [])
-    .filter((theme) => theme.active === true)
-    .sort((left, right) => left.displayOrder - right.displayOrder);
-
-  return Promise.all(themes.map(async (theme) => {
-    return {
-      code: theme.code,
-      name: theme.name,
-      orientation: theme.orientation,
-      previewPath: versionedAsset(theme.previewImage, version),
-      templateMarkup: await loadTemplateMarkup(theme.template),
-      displayOrder: theme.displayOrder,
-      minimumPlan: theme.minimumPlan,
-      isAvailable: false,
-    };
-  }));
-}
-
-async function loadTemplateMarkup(path) {
-  if (!isTrustedTemplatePath(path)) return '';
-  try {
-    const response = await fetch(path, {
-      headers: { Accept: 'text/html' },
-      credentials: 'same-origin',
-      cache: 'no-cache',
-    });
-    return response.ok ? response.text() : '';
-  } catch {
-    return '';
-  }
-}
-
-function isTrustedTemplatePath(value) {
-  return typeof value === 'string'
-    && /^\/components\/card-themes\/[a-z0-9-]+\.html$/.test(value);
-}
-
-function versionedAsset(path, version) {
-  if (typeof path !== 'string' || !path.startsWith('/assets/images/themes/')) return '';
-  return `${path}?v=${encodeURIComponent(version)}`;
-}
-
 function svgDataUri(source) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(source)}`;
 }
@@ -171,47 +106,15 @@ function previewCardData() {
   };
 }
 
-function parseThemeCard(theme) {
-  const parsed = new DOMParser().parseFromString(theme.templateMarkup, 'text/html');
-  const root = parsed.body.firstElementChild;
-  if (
-    root?.tagName !== 'ARTICLE'
-    || root.dataset.themeCode !== theme.code
-    || root.dataset.orientation !== theme.orientation
-    || root.querySelector('script, iframe, object, embed')
-  ) return null;
-  return document.importNode(root, true);
-}
-
 function mountThemePreview(stage, theme) {
   stage.replaceChildren();
   stage.className = `theme-option__preview theme-option__preview--${theme.orientation}`;
   stage.hidden = false;
-  const card = parseThemeCard(theme);
-  if (!card || !state.themeStyles) {
+  try {
+    mountedPreviews.add(mountCardThemePreview(stage, theme, state.themeStyles, previewCardData()));
+  } catch {
     mountPreviewFallback(stage, theme);
-    return;
   }
-
-  const host = document.createElement('span');
-  host.className = 'theme-preview-host';
-  host.setAttribute('aria-hidden', 'true');
-  host.inert = true;
-  const shadow = host.attachShadow({ mode: 'closed' });
-  const styles = document.createElement('style');
-  styles.textContent = isolatedThemeStyles(state.themeStyles);
-  shadow.append(styles, card);
-  stage.append(host);
-  renderCardTheme(card, previewCardData());
-  card.querySelectorAll('a').forEach((link) => link.setAttribute('tabindex', '-1'));
-  previewFrames.set(stage, { card, orientation: theme.orientation });
-  observePreview(stage);
-}
-
-function isolatedThemeStyles(source) {
-  return source
-    .replace(':root {', ':host {')
-    .replace('@media (max-width: 620px)', '@media (max-width: 0px)');
 }
 
 function mountPreviewFallback(stage, theme) {
@@ -222,33 +125,9 @@ function mountPreviewFallback(stage, theme) {
   stage.append(image);
 }
 
-function observePreview(stage) {
-  observedStages.add(stage);
-  previewObserver?.observe(stage);
-  requestAnimationFrame(() => fitPreview(stage));
-}
-
-function fitPreview(stage) {
-  const frame = previewFrames.get(stage);
-  const size = PREVIEW_SIZES[frame?.orientation];
-  if (!frame || !size || !stage.clientWidth || !stage.clientHeight) return;
-  const scale = Math.min(stage.clientWidth / size.width, stage.clientHeight / size.height);
-  Object.assign(frame.card.style, {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    width: `${size.width}px`,
-    maxWidth: 'none',
-    margin: '0',
-    pointerEvents: 'none',
-    transform: `translate(-50%, -50%) scale(${scale})`,
-    transformOrigin: 'center',
-  });
-}
-
-function resetPreviewObservers() {
-  for (const stage of observedStages) previewObserver?.unobserve(stage);
-  observedStages.clear();
+function resetPreviewMounts() {
+  for (const preview of mountedPreviews) preview.destroy();
+  mountedPreviews.clear();
 }
 
 function mergeEntitlements(catalog, entitledThemes) {
@@ -265,7 +144,7 @@ function mergeEntitlements(catalog, entitledThemes) {
 }
 
 function render() {
-  resetPreviewObservers();
+  resetPreviewMounts();
   nodes.gallery.replaceChildren();
   for (const theme of filterThemes(state.themes, state.orientation)) {
     const button = document.createElement('button');

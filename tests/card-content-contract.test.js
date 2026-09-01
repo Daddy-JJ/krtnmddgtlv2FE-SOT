@@ -35,7 +35,7 @@ test('social and catalog validators match backend-facing minimum contract', () =
   const catalog = buildCatalogInput({ title: 'Produk', description: '', targetUrl: '', sortOrder: '1', isPublished: 'on' });
   assert.deepEqual(catalog, { title: 'Produk', description: null, targetUrl: null, sortOrder: 1, isPublished: true });
   assert.deepEqual(validateCatalogInput(catalog), {});
-  assert.equal(validateCatalogInput(buildCatalogInput({ title: '', targetUrl: 'ftp://bad.test' })).title, 'Title wajib diisi.');
+  assert.equal(validateCatalogInput(buildCatalogInput({ title: '', targetUrl: 'ftp://bad.test' })).title, 'Judul wajib diisi.');
 });
 
 test('social and catalog deletion requires explicit user confirmation', async () => {
@@ -49,4 +49,19 @@ test('Starter content limits use the membership preparation message', async () =
   assert.match(source, /planCode === 'starter'/);
   assert.match(source, /PLAN_LIMIT_REACHED/);
   assert.match(source, /Sedang kami siapkan\./);
+});
+
+test('social and catalog creation assigns deterministic append order without exposing a fake reorder control', async () => {
+  const [source, social, catalog] = await Promise.all([
+    readFile(new URL('../pages/app/card-content.js', import.meta.url), 'utf8'),
+    readFile(new URL('../app/card/social/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../app/card/catalog/index.html', import.meta.url), 'utf8'),
+  ]);
+  assert.match(source, /sortOrder: nextSortOrder\(\)/);
+  assert.match(source, /\.sort\(compareItems\)/);
+  assert.match(source, /data-content-count/);
+  assert.doesNotMatch(social, /name="sortOrder"/);
+  assert.doesNotMatch(catalog, /name="sortOrder"/);
+  assert.match(social, /Edit dan ubah urutan belum tersedia/);
+  assert.match(catalog, /Edit dan ubah urutan belum tersedia/);
 });

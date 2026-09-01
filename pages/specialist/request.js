@@ -1,5 +1,4 @@
 import { authService } from '../../services/auth-service.js';
-import { api } from '../../services/api-client.js';
 import { resumeService } from '../../services/resume-service.js';
 
 const id = new URLSearchParams(location.search).get('id');
@@ -68,7 +67,7 @@ void init();
 async function init() {
   if (!id) { status.textContent = 'Request ID tidak valid.'; return; }
   try {
-    const { user: actor } = await api.get('/me');
+    const { user: actor } = await authService.current();
     const roles = Array.isArray(actor.roles) ? actor.roles : [actor.role];
     if (!roles.includes('cv_specialist') || roles.includes('super_admin')) { location.replace(roles.includes('super_admin') ? '/admin/' : '/app/'); return; }
     await load();

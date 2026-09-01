@@ -36,6 +36,8 @@ ignored, and is the only Vercel static Output Directory.
 - Framework: Other (`null`).
 - Build command: `npm run build`.
 - Output directory: `dist`.
+- Baseline response headers: HSTS, `nosniff`, frame denial, strict-origin
+  referrer policy, dan restrictive permissions policy untuk seluruh route.
 - `/api/v1/:path*` rewrite to the Vercel proxy Function.
 - One-segment public slug rewrite to `/public-card/index.html`.
 
@@ -80,8 +82,7 @@ Before Preview:
 
 ```bash
 npm ci
-npm run build
-npm test
+npm run qa
 ```
 
 Then verify:
@@ -94,7 +95,7 @@ Then verify:
 - Public card exact-case slug, vCard, and QR.
 - Resume authorized upload/download.
 - Disabled checkout and exact paused copy.
-- Light/Dark first-visit chooser after its implementation.
+- Light/Dark chooser pada fresh storage serta stored `light`/`dark` preference.
 - Mobile, keyboard, reduced motion, Android/iOS/Safari evidence.
 
 Promote the exact accepted deployment artifact. Backend health alone does not

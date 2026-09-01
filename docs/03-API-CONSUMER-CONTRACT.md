@@ -96,6 +96,13 @@ the URL or Web Storage.
 | GET | `/cards/{publicId}/themes` | Theme catalog/access |
 | PATCH | `/cards/{publicId}/theme` | Save theme selection |
 
+`PUT /cards/{publicId}` may submit nullable `contact.mapsUrl`; the frontend
+accepts only an HTTP(S) URL and the backend remains authoritative for Basic/Pro
+access. `whatsappUrl` is a read-only public aggregate value derived by the
+backend from the saved mobile number for eligible Pro cards; the browser must not
+submit or persist a WhatsApp URL. A saved `logoUrl` may be rendered, but no logo
+upload/delete operation is approved in this consumer contract yet.
+
 ### Social and catalog
 
 | Method | Path | Use |
@@ -159,6 +166,11 @@ cards, subscriptions, usage, interventions, settings/activity, mail outbox,
 CV specialists, landing content, and Resume Services. High-risk mutations require
 backend permission, CSRF, confirmation/reason where applicable, recent auth when
 required, and immutable audit.
+
+The current activity surface is read-only through `GET /admin/activity`. No exact
+method/path/payload is approved here for plan mutation, admin payment mutation,
+theme-catalog mutation, or QR regeneration. Those controls must not be added until
+the backend contract and its authorization/audit behavior are synchronized.
 
 ## Contract change procedure
 

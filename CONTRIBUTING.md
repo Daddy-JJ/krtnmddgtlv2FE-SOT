@@ -24,13 +24,13 @@
 Minimal:
 
 ```bash
-npm run build
-npm test
+npm run qa
 ```
 
-Jika full suite terkena known issue `local-stack.test.js`, jalankan semua test
-lainnya dan laporkan pengecualian tersebut secara eksplisit; jangan menyembunyikan
-kegagalan.
+`npm run qa` menjalankan build dan seluruh test, termasuk local same-origin stack.
+Test terfokus boleh dipakai selama development, tetapi full QA wajib lulus sebelum
+handoff. Setiap pengecualian harus dilaporkan secara eksplisit beserta dampaknya;
+jangan menyembunyikan kegagalan.
 
 ## Commit convention
 

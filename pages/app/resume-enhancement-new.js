@@ -1,6 +1,6 @@
 import { resumeService } from '../../services/resume-service.js';
+import { validateResumeSourceDocx } from '../../validators/resume-file-validator.js';
 
-const MAX_DOCX_BYTES = 10 * 1024 * 1024;
 const form = document.querySelector('[data-form]');
 const status = document.querySelector('[data-status]');
 const fileInput = form.elements.sourceResume;
@@ -16,7 +16,7 @@ fileInput.addEventListener('change', () => {
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const file = fileInput.files?.[0];
-  const fileError = validateSourceDocx(file);
+  const fileError = validateResumeSourceDocx(file);
   if (fileError) {
     status.textContent = fileError;
     fileInput.focus();
@@ -58,13 +58,6 @@ form.addEventListener('submit', async (event) => {
     setBusy(false);
   }
 });
-
-function validateSourceDocx(file) {
-  if (!(file instanceof File) || !file.size) return 'Pilih file CV .docx terlebih dahulu.';
-  if (!file.name.toLowerCase().endsWith('.docx')) return 'CV sumber wajib menggunakan format .docx.';
-  if (file.size > MAX_DOCX_BYTES) return 'Ukuran file melebihi batas maksimum 10 MB.';
-  return '';
-}
 
 function setBusy(busy, message) {
   const button = form.querySelector('button[type="submit"]');

@@ -21,16 +21,17 @@ Gunakan Node.js 22 dan npm:
 
 ```bash
 npm ci
-npm run build
-npm test
+npm run qa
 ```
 
-`npm run build` membuat output publik di `dist/`. Folder tersebut generated dan
+`npm run qa` menjalankan static build, kompilasi Tailwind, lalu seluruh native
+Node test. Build membuat output publik di `dist/`; folder tersebut generated dan
 tidak boleh diedit atau di-commit.
 
 Halaman statis harus dibuka melalui HTTP server, bukan `file://`. Pengujian alur
-autentikasi memerlukan `/api/v1` yang diteruskan ke backend kompatibel. Helper
-monorepo lama belum tersedia di repository ini; lihat status test di `STATUS.md`.
+autentikasi end-to-end memerlukan `/api/v1` yang diteruskan ke backend kompatibel.
+Test local-stack otomatis memakai helper yang berada di repository ini; lihat
+status baseline terbaru di `STATUS.md`.
 
 ## Source of truth
 
@@ -59,8 +60,8 @@ repository, dan source proxy tidak dimasukkan ke output tersebut.
 
 - Launch menggunakan Bahasa Indonesia; English ditunda.
 - Checkout membership masih paused dan harus menampilkan `Under development`.
-- First-visit Light/Dark chooser wajib tetapi belum diimplementasikan kembali.
-- Satu kegagalan test lama masih tersisa karena `tests/local-stack.test.js`
-  mengimpor helper monorepo yang tidak ada.
+- First-visit Light/Dark chooser sudah diimplementasikan dan diuji.
+- Build dan test lokal lulus; staging API, Vercel Preview, serta UAT perangkat
+  nyata tetap diperlukan sebelum production-readiness disetujui.
 
 Detail implementasi dan defect aktif dicatat di `STATUS.md`.

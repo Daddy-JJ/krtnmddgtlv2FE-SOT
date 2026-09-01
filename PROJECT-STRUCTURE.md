@@ -11,7 +11,7 @@ krtnmddgtlv2FE_SOT/
 ├── public-card/               # root-slug public card shell
 ├── pages/                     # page controllers
 ├── services/                  # API/presentation boundaries
-├── components/                # shared UI and card templates
+├── components/                # shared UI, live preview, card templates
 ├── validators/                # browser validation
 ├── utils/                     # browser utilities
 ├── config/                    # runtime config and theme registry
@@ -43,6 +43,16 @@ Examples:
 Compatibility shells such as `/app/card/contact/` may redirect to a canonical
 editor and are intentional when tested.
 
+## Current inventory
+
+- 60 route `index.html` shells.
+- 27 page-controller modules under `pages/`.
+- 10 allowlisted card-theme templates.
+- Static build baseline: 154 runtime files in `dist/`.
+
+Counts describe the verified Phase 10 repository and must be refreshed when the
+runtime inventory changes.
+
 ## Service boundary
 
 `services/api-client.js` owns base URL, cookie credentials, timeout, refresh,
@@ -51,6 +61,15 @@ operations. Page controllers should not duplicate API transport logic.
 
 Direct `fetch()` is reserved for static resources or specialized download
 handling documented in the architecture/API contract.
+
+Shared responsibility owners include:
+
+- `components/card-live-preview.js` for isolated member theme previews.
+- `services/auth-service.js` for current-user `GET /me` access.
+- `validators/resume-file-validator.js` for DOCX-only 10 MB source validation.
+
+Search for an existing owner before adding a module; repeated business rules must
+be consolidated instead of maintained in parallel.
 
 ## Generated and historical directories
 

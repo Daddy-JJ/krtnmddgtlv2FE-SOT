@@ -47,12 +47,13 @@ non-secret yang diizinkan secara eksplisit; tidak pernah credential.
 Payment, entitlement, plan access, role, slug availability, file authorization,
 dan hasil validasi final tetap authoritative di backend.
 
-## Current priority gaps
+## Current readiness gaps
 
-- Lengkapi workflow edit/reorder social links dan catalog serta control kartu yang
-  masih termasuk locked frontend scope.
-- Lengkapi live preview form yang benar-benar mengikuti perubahan belum tersimpan.
-- Lengkapi operasi admin tersisa yang sudah termasuk approved frontend scope dan
-  didukung kontrak backend.
+- Edit/reorder social links dan catalog menunggu method, path, payload, serta
+  authorization backend yang disinkronkan.
+- Logo upload/delete serta mutasi admin plan/payment/theme dan QR regeneration
+  belum mempunyai kontrak API frontend yang disetujui.
+- Vercel Preview, browser integration terhadap backend staging, dan UAT perangkat
+  nyata masih diperlukan sebelum production-readiness dapat disetujui.
 
 Lihat `STATUS.md` untuk daftar lengkap dan status validasi terakhir.

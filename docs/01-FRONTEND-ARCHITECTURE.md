@@ -22,7 +22,7 @@ HTML route shell
 |---|---|---|
 | Route shell | route directories | Semantic HTML, accessible states, module/style loading |
 | Page controller | `pages/` | DOM orchestration, events, view state, redirects |
-| Shared UI | `components/` | Application shell, form utilities, card templates |
+| Shared UI | `components/` | Application shell, form utilities, live preview, card templates |
 | Feature service | `services/` | Endpoint operations and presentation mapping |
 | Transport | `services/api-client.js` | API URL builder, cookies, CSRF, refresh, timeout, errors |
 | Validation | `validators/` | Fast browser validation matching consumer contract |
@@ -67,9 +67,11 @@ slug fallback. Nested unknown routes are not public-card slugs.
 template paths, and preview assets. `services/card-theme-renderer.js` binds a
 normalized card view-model into template nodes through safe DOM operations.
 
-The public-card page and member design gallery should share the registry,
-stylesheet, templates, and renderer. Tier labels are authorization metadata and
-must not appear in card artwork.
+The public-card page, member design gallery, and unsaved card-editor preview share
+the registry, stylesheet, templates, and renderer. `components/card-live-preview.js`
+owns allowlisted template loading, closed Shadow DOM isolation, preview updates,
+and scaling for member previews. Tier labels are authorization metadata and must
+not appear in card artwork.
 
 ## Configuration
 
@@ -94,6 +96,9 @@ global toggle available for later changes.
 root files into `dist/`. It skips Markdown/hidden placeholders, rejects symlinks
 and unknown extensions, and refuses to clean any directory other than project
 `dist/`.
+
+`tests/runtime-module-graph.test.js` verifies HTML entry modules, relative import
+resolution, classified dormant modules, and single-owner shared responsibilities.
 
 Adding a new public route or runtime directory therefore requires:
 

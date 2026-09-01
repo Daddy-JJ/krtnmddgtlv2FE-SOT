@@ -5,7 +5,15 @@ import { ApiClient } from '../services/api-client.js';
 import { buildStarterInput, validateStarterCreateValues, validateStarterInput } from '../validators/starter-validator.js';
 import { validateLogin, validateRegister, validateResetPassword, validateVerifyOtp } from '../validators/auth-validator.js';
 import { normalizeWebsiteUrl } from '../utils/website-url.js';
-import { authErrorMessage, safeMembershipIntent, starterPublicIdFromReturnTo, withAuthContext } from '../utils/auth-flow.js';
+import {
+  authErrorMessage,
+  forgetStarterClaim,
+  pendingStarterClaim,
+  rememberStarterClaim,
+  safeMembershipIntent,
+  starterPublicIdFromReturnTo,
+  withAuthContext,
+} from '../utils/auth-flow.js';
 
 test('public auth and Starter create POST can opt out of CSRF header', async () => {
   const observed = [];
@@ -107,6 +115,37 @@ test('Starter handoff and membership intent preserve only safe navigation contex
   assert.equal(withAuthContext('/login/', { returnTo, intent: 'basic' }), `/login/?returnTo=${encodeURIComponent(returnTo)}&intent=basic`);
   assert.equal(safeMembershipIntent('pro'), 'pro');
   assert.equal(safeMembershipIntent('enterprise'), '');
+});
+
+test('Starter claim session storage keeps only a validated public ID navigation context', () => {
+  const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+  const stored = new Map();
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: {
+      getItem: (key) => stored.get(key) ?? null,
+      setItem: (key, value) => stored.set(key, value),
+      removeItem: (key) => stored.delete(key),
+    },
+  });
+
+  try {
+    rememberStarterClaim('opaque-edit-token');
+    assert.equal(stored.size, 0);
+
+    const publicId = '3d2f31a4-7c83-47e1-b938-d5c1c7e7d160';
+    rememberStarterClaim(publicId);
+    assert.deepEqual([...stored], [['knd.pendingStarterClaim', publicId]]);
+    assert.equal(pendingStarterClaim(), publicId);
+
+    stored.set('knd.pendingStarterClaim', 'opaque-edit-token');
+    assert.equal(pendingStarterClaim(), '');
+    forgetStarterClaim();
+    assert.equal(stored.size, 0);
+  } finally {
+    if (originalStorage) Object.defineProperty(globalThis, 'sessionStorage', originalStorage);
+    else delete globalThis.sessionStorage;
+  }
 });
 
 test('Starter management page has account-only actions and no anonymous edit controls', async () => {

@@ -2,7 +2,7 @@
 
 Review date: 2026-09-01
 
-Status: **SOT RECOVERED THROUGH PHASE 4; IMPLEMENTATION REMEDIATION PENDING**
+Status: **LOCAL REINTEGRATION VALIDATION COMPLETE; PRODUCTION READINESS PENDING EXTERNAL EVIDENCE**
 
 ## Repository classification
 
@@ -11,7 +11,7 @@ di luar repository dan hanya terhubung melalui API. Stack aktual adalah Vanilla
 JavaScript ES modules, compiled Tailwind CSS, browser Fetch/DOM, Node tests, dan
 Vercel Function proxy.
 
-## Recovery completed
+## Reintegration completed
 
 1. Product owner menyelesaikan tujuh keputusan high-risk.
 2. Deployment output dipindahkan dari root ke allowlisted `dist/`.
@@ -19,6 +19,18 @@ Vercel Function proxy.
    mismatch.
 4. Frontend-only SOT, Decision Log, arsitektur, membership contract, API consumer
    contract, dan deployment contract dibentuk kembali.
+5. Security/runtime defect yang teridentifikasi diremediasi dan diberi regression
+   coverage.
+6. Checkout pause, first-visit Light/Dark, dan Indonesian-only launch diselaraskan
+   dengan keputusan product owner.
+7. Maps, derived WhatsApp guidance, unsaved theme preview, serta social/catalog
+   create-list-delete dilengkapi dalam batas API aktif.
+8. Preview theme, rule DOCX 10 MB, dan current-user lookup mempunyai satu owner;
+   duplicate scaffold dan orphan terverifikasi dibersihkan.
+9. Root governance, SOT kanonis, onboarding, security, dan status disinkronkan
+   kembali terhadap implementasi aktual.
+10. Final re-check memvalidasi source/configuration, dependency tree, module dan
+    document references, static security, deployment boundary, build, serta test.
 
 ## Confirmed implementation strengths
 
@@ -27,29 +39,55 @@ Vercel Function proxy.
 - Sepuluh template kartu beserta registry dan responsive renderer.
 - Root public-card route, QR/vCard links, safe URL helpers, dan SEO coverage.
 - Billing UI sudah fail-closed selama checkout paused.
-- Resume UI sudah memakai DOCX maksimal 10 MB.
-- Test suite luas untuk contract, security, accessibility, routing, dan themes.
+- First-visit chooser, Indonesian-only runtime, Maps, dan unsaved form preview
+  sudah memiliki contract coverage.
+- Resume UI memakai satu shared validator DOCX maksimal 10 MB.
+- Runtime module graph memeriksa broken import, orphan module, dan shared owner.
+- Vercel dan fallback Apache menetapkan baseline browser security headers yang
+  sama; session storage claim hanya menerima public ID tervalidasi.
+- Test suite mencakup contract, security, accessibility, routing, themes, proxy,
+  dan repository-local same-origin stack.
 
-## Priority defects retained for Phase 5
+## Remaining API-bound scope
 
-- `safeReturnTo()` belum menolak seluruh bentuk backslash/network-path redirect.
-- Beberapa download URL mengabaikan configured API base.
-- Starter validator menggunakan normalisasi URL pada field nama.
-- Reserved slug frontend belum mencakup seluruh route top-level.
-- Login routing belum mencakup semua internal role.
-- Test local stack masih tergantung helper di parent monorepo.
+- Edit/reorder social links dan catalog memerlukan kontrak backend yang belum
+  tersedia dalam frontend consumer contract.
+- Logo upload/delete memerlukan endpoint multipart dan file-policy yang disetujui.
+- Admin plan/payment/theme mutations dan QR regeneration menunggu kontrak method,
+  path, payload, permission, dan audit backend.
 
-## Product gaps retained for later phases
+Fitur tersebut tidak boleh dibuat melalui endpoint tebakan atau otoritas browser.
 
-- First-visit Light/Dark chooser wajib tetapi belum ada di runtime saat ini.
-- Copy checkout belum memakai teks final `Under development` secara konsisten.
-- English resource ada tetapi English launch ditunda.
-- Social/catalog belum mempunyai complete edit/reorder workflow.
-- Maps/logo/WhatsApp presentation support belum lengkap di editor.
-- Beberapa admin surface dan unsaved live preview masih belum lengkap.
+## Final local re-check
+
+| Check | Result |
+|---|---|
+| JavaScript syntax | PASS — 95 `.js`/`.mjs` files |
+| JSON configuration | PASS — 6 parsed files |
+| Dependency tree | PASS — `npm ls --depth=0` clean |
+| Documentation references | PASS — 16 local Markdown references, 0 missing |
+| Runtime inventory | PASS — 60 route shells, 27 controllers, 10 card templates |
+| Static security scan | PASS — no potential secret or unsafe runtime DOM sink found |
+| Deployment controls | PASS — allowlisted `dist/`, fail-closed proxy, Vercel/Apache headers |
+| Clean QA | PASS — 154 build files, 117/117 tests |
+
+Phase 10 menemukan satu local deployment defect: security headers sebelumnya
+hanya teruji pada fallback Apache. `vercel.json` dan regression test sekarang
+memastikan baseline yang sama pada host kanonis. Re-check juga menambahkan test
+bahwa `sessionStorage` hanya menerima public ID claim tervalidasi.
+
+## External validation still required
+
+- Vercel Preview dari exact commit/artifact yang akan dipromosikan.
+- Same-origin `/api/v1` smoke terhadap backend staging HTTPS yang stabil.
+- Cookie, CSRF, refresh/logout, Starter claim, public slug, QR/vCard, dan Resume
+  upload/download dengan role dan data uji yang sah.
+- Keyboard, mobile, reduced-motion, serta Android/iOS/Safari UAT.
+- Product-owner acceptance dan bukti rollback/deployment sebelum produksi.
 
 ## Assessment
 
-Dokumentasi dan deployment boundary sudah cukup jelas untuk melanjutkan remediation
-secara bertahap. Repository belum dinyatakan production-ready sampai Phase 5–10,
-remote Vercel/API smoke, real-device UAT, dan known defects selesai.
+Reintegrasi lokal selesai dan repository aman untuk dibuat checkpoint commit,
+di-push, lalu dijadikan Vercel Preview. Production promotion belum disetujui:
+external staging/deployment smoke dan human UAT di atas masih wajib diselesaikan
+terhadap exact commit/artifact yang akan dipromosikan.

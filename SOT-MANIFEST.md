@@ -14,9 +14,14 @@ repository ini dibatasi pada kontrak yang dibutuhkan browser dan deployment prox
 | Membership dan feature limits | `docs/02-PRODUCT-AND-MEMBERSHIP.md` |
 | API yang dikonsumsi frontend | `docs/03-API-CONSUMER-CONTRACT.md` |
 | Struktur dan dependency frontend | `docs/01-FRONTEND-ARCHITECTURE.md` |
+| UI/UX conventions dan accessibility | `docs/01-FRONTEND-ARCHITECTURE.md`, lalu contract halaman/test |
 | Deployment frontend | `docs/04-DEPLOYMENT.md` |
 | Implementasi aktual dan known gaps | kode, test, lalu `STATUS.md` |
 | Operasional hosting | `docs/hosting-handover.md` |
+
+`FILE-INDEX.md` dan `PROJECT-STRUCTURE.md` adalah peta turunan dari repository
+aktual. Keduanya membantu navigasi, tetapi tidak boleh membuat scope, business
+rule, atau arsitektur baru.
 
 ## Machine-readable implementation sources
 

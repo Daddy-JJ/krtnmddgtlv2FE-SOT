@@ -44,11 +44,18 @@ commit, screenshot, dan log.
 - Hanya `dist/` yang dipublikasikan sebagai static output.
 - Source docs, tests, `.env*`, repository metadata, dan historical SOT tidak boleh
   menjadi public asset.
+- Vercel kanonis dan fallback Apache menetapkan HSTS, `nosniff`, frame denial,
+  strict-origin referrer policy, dan restrictive permissions policy.
 - Proxy menolak localhost, HTTP, credentialed URL, path tambahan, dan temporary
   tunnel sebagai upstream production.
 
-## Known security work
+## Validation status
 
-Open redirect `returnTo`, API-base duplication pada download, reserved slug drift,
-dan local-stack test coupling tercatat di `STATUS.md` dan harus diselesaikan pada
-fase remediation sebelum production readiness.
+Remediasi lokal untuk open redirect `returnTo`, konsistensi configured API base,
+reserved route slug, role routing, dan local-stack test coupling sudah memiliki
+regression coverage dan lulus pada final local re-check Phase 10.
+
+Production security tetap memerlukan validasi Vercel Preview dan backend staging
+untuk cookie/CSRF, refresh/logout, authorization per role, upload/download privat,
+security headers, serta konfigurasi `BACKEND_API_BASE_URL`. Kelulusan test frontend
+lokal tidak menggantikan validasi server-side atau approval produksi.

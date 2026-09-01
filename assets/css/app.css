@@ -614,7 +614,7 @@ html:not([data-site-theme="light"]) .app-shell-page .app-shell__main textarea {
   background: linear-gradient(145deg, #eef2f7, #dbe4ef);
 }
 
-.theme-preview-host {
+.card-theme-preview__host {
   position: absolute;
   inset: 0;
   display: block;
@@ -645,6 +645,19 @@ html:not([data-site-theme="light"]) .app-shell-page .app-shell__main textarea {
   margin-top: .25rem;
   color: #94a3b8;
   font-size: .8rem;
+}
+
+.card-editor-preview {
+  position: relative;
+  min-height: 15rem;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, .24);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #eef2f7, #dbe4ef);
+}
+
+.card-editor-preview[data-preview-orientation="portrait"] {
+  min-height: 32rem;
 }
 
 /* Shared public and authentication surfaces */

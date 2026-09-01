@@ -11,8 +11,8 @@ export function buildSocialInput(values) {
 export function validateSocialInput(input) {
   return compact({
     platform: platforms.has(input.platform) ? '' : 'Platform tidak valid.',
-    url: http(input.url, 'URL social'),
-    sortOrder: input.sortOrder < 0 || input.sortOrder > 100000 ? 'Sort order harus 0-100000.' : '',
+    url: http(input.url, 'Link sosial'),
+    sortOrder: input.sortOrder < 0 || input.sortOrder > 100000 ? 'Urutan harus 0-100000.' : '',
   });
 }
 
@@ -28,10 +28,10 @@ export function buildCatalogInput(values) {
 
 export function validateCatalogInput(input) {
   return compact({
-    title: input.title ? (input.title.length > 150 ? 'Title maksimal 150 karakter.' : '') : 'Title wajib diisi.',
-    description: input.description && input.description.length > 2000 ? 'Description maksimal 2000 karakter.' : '',
-    targetUrl: input.targetUrl ? http(input.targetUrl, 'Target URL') : '',
-    sortOrder: input.sortOrder < 0 || input.sortOrder > 100000 ? 'Sort order harus 0-100000.' : '',
+    title: input.title ? (input.title.length > 150 ? 'Judul maksimal 150 karakter.' : '') : 'Judul wajib diisi.',
+    description: input.description && input.description.length > 2000 ? 'Deskripsi maksimal 2000 karakter.' : '',
+    targetUrl: input.targetUrl ? http(input.targetUrl, 'Link tujuan') : '',
+    sortOrder: input.sortOrder < 0 || input.sortOrder > 100000 ? 'Urutan harus 0-100000.' : '',
   });
 }
 

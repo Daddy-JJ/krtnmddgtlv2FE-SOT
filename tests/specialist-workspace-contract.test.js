@@ -16,7 +16,7 @@ test('CV Specialist workspace is assignment-scoped and excludes privileged contr
   assert.match(login, /postLoginDestination/);
   assert.match(authFlow, /cv_specialist[\s\S]*\/specialist\//);
   assert.match(dashboard, /roles\.includes\('cv_specialist'\)/);
-  assert.match(dashboard + request, /\{ user: actor \} = await api\.get\('\/me'\)/);
+  assert.match(dashboard + request, /\{ user: actor \} = await authService\.current\(\)/);
   assert.match(dashboard, /adminQueue\(\)/);
   assert.match(request, /adminDetail\(id\)/);
   assert.match(request, /fileDownloadUrl\(id, value\.publicId\)/);

@@ -17,7 +17,6 @@ export const PUBLIC_DIRECTORIES = Object.freeze([
   'create',
   'faq',
   'forgot-password',
-  'layouts',
   'locales',
   'login',
   'pages',
