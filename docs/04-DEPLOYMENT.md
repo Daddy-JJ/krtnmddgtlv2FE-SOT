@@ -29,6 +29,29 @@ api/v1/[...path].js
 The build does not modify tracked `assets/css/tailwind.css`. `dist/` is generated,
 ignored, and is the only Vercel static Output Directory.
 
+## Local development
+
+Use the repository Node development server for local work. It serves the
+allowlisted frontend routes and assets, maps a case-sensitive one-segment slug
+such as `/YAjXHrF` to `public-card/index.html`, and proxies `/api/v1` to the
+local backend:
+
+    cd C:\xampp\htdocs\krtnmddgtlv2FE-SOT
+    npm.cmd run dev
+
+Open `http://127.0.0.1:8080/` and run the separate Express backend on port 3000.
+With the public runtime placeholder untouched, the browser API base remains
+`http://127.0.0.1:3000/api/v1`. Verify backend health at
+`http://127.0.0.1:3000/api/v1/health`. The backend CORS policy must allow
+credentialed requests from `http://127.0.0.1:8080`; if `localhost:8080` is
+used instead, it must be allowed separately.
+
+An HTML 404 from `http://127.0.0.1:8080/api/v1/...` indicates the PHP server
+or another static server is being used instead of `npm run dev`, or the
+frontend runtime API override is wrong. Inspect the browser Network panel and
+confirm the API request reaches port 3000. PHP built-in server remains a
+static-only fallback and does not provide slug routing or an API proxy.
+
 ## Vercel configuration
 
 `vercel.json` locks:

@@ -51,6 +51,8 @@
 | `locales/` | Locale resources; English saat ini deferred |
 | `tests/` | Native Node contract/security tests |
 | `scripts/build-static.mjs` | Allowlisted static build |
+| `scripts/local-server.mjs` | Local route, asset, slug, and API proxy server |
+| `scripts/dev-server.mjs` | npm run dev entry point on 127.0.0.1:8080 |
 
 Verified Phase 10 inventory: 60 route shells, 27 page controllers, dan 10 card
 theme templates. Angka ini bersifat turunan dan harus mengikuti repository.

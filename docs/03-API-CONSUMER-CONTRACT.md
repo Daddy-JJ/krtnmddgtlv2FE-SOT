@@ -10,9 +10,20 @@ email, file storage, and response schema.
 ## Base URL
 
 - Browser default: `/api/v1`.
+- Local development: when the public placeholder is still active and the
+  frontend hostname is exactly `127.0.0.1` or `localhost`, the browser uses
+  `http://127.0.0.1:3000/api/v1` so the separate Express backend is reached
+  directly. Both local hostnames intentionally use the backend hostname
+  `127.0.0.1` for cookie consistency.
 - Vercel: same-origin `/api/v1` diteruskan oleh `api/v1/[...path].js`.
 - Server-side upstream: `BACKEND_API_BASE_URL`, HTTPS origin tanpa path.
 - Fallback direct base hanya melalui reviewed public runtime configuration.
+
+Runtime precedence is server-owned `globalThis.__KND_CONFIG__`, then an injected
+public API base, then the local-host fallback above, and finally same-origin
+`/api/v1`. An injected non-placeholder value is never replaced by local host
+detection. The backend must allow credentialed CORS from the active local frontend
+origin; prefer `http://127.0.0.1:8080` for development.
 
 Feature services menerima path relatif setelah `/api/v1`. Request API dan link
 download runtime dibentuk melalui `buildApiUrl()` agar seluruhnya menghormati
@@ -82,6 +93,15 @@ SQL, storage path, token, atau internal exception.
 
 The UI must not expose anonymous edit controls. Handoff tokens must not persist in
 the URL or Web Storage.
+
+Starter creation permits up to 30 seconds for the synchronous SMTP attempt.
+The client must not retry this POST after a timeout because the card may already
+be persisted. A successful card response is rendered even when
+data.emailSent is false or absent; only an explicit boolean true is shown as
+email delivered. The email handoff is posted to /starter/access with
+{ publicId, token }, credentials included, and no CSRF header. A successful
+exchange removes the token fragment from browser history; HTTP 401 is presented
+as an invalid, expired, or already-used link.
 
 ### Cards and design
 

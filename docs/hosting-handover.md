@@ -18,6 +18,33 @@ Frontend tidak mengetahui credential backend. Proxy hanya membutuhkan
 `BACKEND_API_BASE_URL`, misalnya `https://api.kartunamadigital.id`, tanpa path
 `/api/v1`, query, fragment, username, atau password.
 
+## Local integration
+
+Untuk pengembangan lokal, jalankan frontend source pada
+`http://127.0.0.1:8080` dan backend Express pada `http://127.0.0.1:3000`.
+Frontend mendeteksi hostname lokal ketika public API placeholder belum diganti
+dan menggunakan `http://127.0.0.1:3000/api/v1` secara langsung. PHP built-in
+server tidak menyediakan reverse proxy.
+
+Server development yang direkomendasikan adalah npm run dev dari root frontend.
+Server ini melayani route dan aset source, mempertahankan case slug publik seperti
+/YAjXHrF, serta menyediakan proxy /api/v1 ke backend port 3000:
+
+    cd C:\xampp\htdocs\krtnmddgtlv2FE-SOT
+    npm.cmd run dev
+
+Health check yang dipakai:
+
+```text
+http://127.0.0.1:3000/api/v1/health
+```
+
+Jika browser menerima HTML 404 dari `/api/v1`, periksa bahwa request tidak
+menuju port frontend `8080`; request harus menuju port backend `3000`. Backend
+harus mengizinkan credentialed CORS dari `http://127.0.0.1:8080`. Hostname
+`localhost:8080` dipetakan ke backend `127.0.0.1:3000`, tetapi Origin tersebut
+tetap harus diizinkan backend; penggunaan `127.0.0.1` adalah jalur kanonis.
+
 ## Vercel project settings
 
 | Setting | Value |

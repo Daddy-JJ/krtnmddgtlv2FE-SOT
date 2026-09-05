@@ -46,6 +46,17 @@ test('local stack serves frontend routes and proxies /api/v1 on one origin', asy
     assert.equal(proxy.status, 200);
     assert.deepEqual(await proxy.json(), { path: '/api/v1/health?probe=1' });
 
+    const publicSlug = await fetch(origin + '/YAjXHrF');
+    assert.equal(publicSlug.url, origin + '/YAjXHrF');
+    assert.equal(publicSlug.status, 200);
+    const publicSlugHtml = await publicSlug.text();
+    assert.match(publicSlugHtml, /data-public-content/);
+    assert.doesNotMatch(publicSlugHtml, /data-landing-content/);
+
+    const publicCardCss = await fetch(origin + '/assets/css/public-card.css');
+    assert.equal(publicCardCss.status, 200);
+    assert.match(publicCardCss.headers.get('content-type') ?? '', /^text\/css/i);
+
     const publicCard = await fetch(`${origin}/QaStart`);
     assert.equal(publicCard.status, 200);
     assert.match(await publicCard.text(), /data-public-content/);

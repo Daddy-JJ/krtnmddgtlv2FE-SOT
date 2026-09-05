@@ -1,6 +1,6 @@
 # Frontend Repository Status
 
-Updated: 2026-09-01
+Updated: 2026-09-05
 
 Overall: **SOT reintegration Phase 10 complete; local readiness passed, production approval pending external Vercel/backend/UAT evidence.**
 
@@ -13,7 +13,7 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
 | Static build | 154 allowlisted runtime files in `dist/` |
-| Automated tests | 117 passing; no known test failure |
+| Automated tests | 125 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Paused |
@@ -120,9 +120,20 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
   did not explicitly mirror the baseline browser security headers from Apache.
 - Added regression coverage for Vercel/Apache header parity and for keeping only a
   validated Starter public ID—not a token—in claim `sessionStorage`.
-- Clean QA produces 154 allowlisted files and passes all 117 tests.
+- Clean QA produces 154 allowlisted files and passes all 125 tests.
 - Local verdict is PASS for checkpoint commit and Vercel Preview; production
   promotion remains blocked by the external validation evidence listed above.
+
+## Local Starter and development-server remediation
+
+- Added the Node local server entry point through npm run dev on
+  127.0.0.1:8080, with one-segment case-preserving public slug routing,
+  allowlisted asset serving, and an optional /api/v1 proxy to backend port 3000.
+- Starter creation now gives SMTP up to 30 seconds and never retries the POST
+  after a timeout; a card result remains visible when email delivery fails.
+- Email delivery notices require data.emailSent to be the boolean true.
+- Added routing, asset, email handoff, fragment cleanup, and timeout contract
+  coverage. No real Starter record was created during QA.
 
 ## Reintegration phase status
 
@@ -142,7 +153,7 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 ## Validation note
 
 `npm run build` passes and produces 154 allowlisted runtime files. Full `npm test`
-passes all 117 tests, including the repository-local same-origin stack/proxy and
-runtime module-graph tests.
+passes all 125 tests, including public slug routing, asset serving, Starter email
+handoff, and the repository-local same-origin stack/proxy.
 No live Vercel deployment, external API mutation, or server cleanup was performed
 during SOT reintegration.

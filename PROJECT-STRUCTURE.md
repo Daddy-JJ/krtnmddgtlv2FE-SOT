@@ -1,7 +1,7 @@
 # Frontend Project Structure
 
 ```text
-krtnmddgtlv2FE_SOT/
+krtnmddgtlv2FE-SOT/
 ├── index.html                 # landing page
 ├── about/, blog/, ...         # public route shells
 ├── login/, register/, ...     # auth/onboarding shells
@@ -19,6 +19,8 @@ krtnmddgtlv2FE_SOT/
 ├── locales/                   # locale resources
 ├── api/v1/[...path].js        # Vercel backend proxy
 ├── scripts/build-static.mjs   # public-output allowlist
+├── scripts/local-server.mjs   # local static routes and /api/v1 proxy
+├── scripts/dev-server.mjs     # npm run dev entry point (127.0.0.1:8080)
 ├── tests/                     # native Node tests
 ├── docs/                      # canonical SOT and operations
 ├── docs/_legacy-sot/          # read-only historical archive

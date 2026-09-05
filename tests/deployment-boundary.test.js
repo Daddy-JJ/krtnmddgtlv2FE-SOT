@@ -71,6 +71,7 @@ test('deployment configuration uses an explicit static output boundary', async (
   const vercelIgnore = await readFile(path.join(PROJECT_ROOT, '.vercelignore'), 'utf8');
 
   assert.equal(packageJson.scripts['build:static'], 'node scripts/build-static.mjs');
+  assert.equal(packageJson.scripts.dev, 'node scripts/dev-server.mjs');
   assert.match(packageJson.scripts.build, /build:static/);
   assert.equal(vercelConfig.outputDirectory, 'dist');
   assert.equal(vercelConfig.buildCommand, 'npm run build');

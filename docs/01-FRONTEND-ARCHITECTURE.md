@@ -77,18 +77,31 @@ not appear in card artwork.
 
 `config/app-config.js` reads `globalThis.__KND_CONFIG__` and defaults to:
 
-- API base `/api/v1`.
+- API base `http://127.0.0.1:3000/api/v1` only for local `localhost` or
+  `127.0.0.1` hosts while the public placeholder is active; other environments
+  retain `/api/v1`.
 - Request timeout 12 seconds.
 - Locale `id`.
 
 `config/runtime-config.js` is public configuration only. It must never contain
-credentials. On Vercel, browser traffic remains same-origin and the server-side
-Function uses `BACKEND_API_BASE_URL`.
+credentials. Server-owned `globalThis.__KND_CONFIG__` remains authoritative;
+injected public values take precedence over local detection. On Vercel, browser
+traffic remains same-origin and the server-side Function uses
+`BACKEND_API_BASE_URL`.
 
 Runtime locale support is currently limited to `id`; English resources remain
 dormant scaffolding. `assets/js/site-theme.js` mounts an accessible Light/Dark
 chooser only when `knd.theme.preference` has no valid stored value, then keeps the
 global toggle available for later changes.
+
+## Local development server
+
+scripts/local-server.mjs is the single owner for local static-file resolution,
+case-sensitive one-segment public slug routing, asset content types, and the
+optional /api/v1 proxy to the separate Express backend. scripts/dev-server.mjs
+binds the server to 127.0.0.1:8080 by default and is exposed through npm run dev.
+The test local-stack imports this same implementation so routing QA cannot drift
+from the developer server.
 
 ## Source and deployment boundary
 

@@ -34,18 +34,42 @@ autentikasi end-to-end memerlukan `/api/v1` yang diteruskan ke backend kompatibe
 Test local-stack otomatis memakai helper yang berada di repository ini; lihat
 status baseline terbaru di `STATUS.md`.
 
-Untuk preview frontend di localhost tanpa membuat `dist/`, jalankan server dari
-root repository sehingga URL root-relative seperti `/assets/...` tetap mengarah
-ke source project:
+Untuk development lokal, gunakan server Node bawaan repository. Server ini
+mempertahankan route aplikasi, melayani aset, meneruskan /api/v1 ke backend
+lokal, dan me-route slug publik seperti /YAjXHrF ke public-card/index.html
+tanpa mengubah pathname atau case:
 
-```powershell
-cd C:\xampp\htdocs\krtnmddgtlv2FE_SOT
-C:\xampp\php\php.exe -S 127.0.0.1:8080 -t .
+    cd C:\xampp\htdocs\krtnmddgtlv2FE-SOT
+    npm.cmd run dev
+
+Buka http://127.0.0.1:8080/. Backend Express harus aktif pada
+http://127.0.0.1:3000. Port dapat dioverride dengan FRONTEND_PORT dan backend
+dengan BACKEND_ORIGIN. PHP built-in server tetap hanya menyajikan file statis
+dan tidak menyediakan routing slug atau reverse proxy API.
+
+### Integrasi backend lokal
+
+Jalankan backend Express secara terpisah pada `http://127.0.0.1:3000`. Saat
+placeholder public API masih aktif, `config/runtime-config.js` otomatis memilih
+`http://127.0.0.1:3000/api/v1` untuk hostname frontend `127.0.0.1` maupun
+`localhost`. Gunakan `127.0.0.1` secara konsisten agar hostname cookie backend
+tidak berubah-ubah.
+
+Health check backend:
+
+```text
+http://127.0.0.1:3000/api/v1/health
 ```
 
-Buka `http://127.0.0.1:8080/`. URL subfolder Apache
-`http://localhost/krtnmddgtlv2FE_SOT/` tidak cocok dengan path root-relative
-frontend tanpa konfigurasi VirtualHost/Alias tambahan.
+PHP built-in server hanya menyajikan file frontend; server tersebut bukan reverse
+proxy `/api/v1`. Jika Network panel menunjukkan request API ke
+`http://127.0.0.1:8080/api/v1/...` dan responsnya HTML 404, pastikan frontend
+dijalankan dari `127.0.0.1:8080`, backend aktif di port `3000`, lalu lakukan hard
+refresh. Request yang benar harus menuju `http://127.0.0.1:3000/api/v1/...`.
+
+Untuk membuka frontend melalui `http://localhost:8080`, backend harus mengizinkan
+Origin tersebut pada CORS. Jika CORS atau cookie gagal, gunakan URL kanonis
+`http://127.0.0.1:8080/` dan backend `http://127.0.0.1:3000/`.
 
 ## Source of truth
 
