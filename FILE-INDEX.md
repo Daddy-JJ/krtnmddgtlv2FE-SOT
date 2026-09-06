@@ -24,6 +24,16 @@
 | `docs/05-DECISION-LOG.md` | Keputusan frontend yang disetujui product owner |
 | `docs/hosting-handover.md` | Handover operasional non-secret |
 
+## Approved feature specifications and handoff
+
+| File | Purpose |
+|---|---|
+| `docs/06-EMAIL-TEMPLATE-MANAGEMENT.md` | Email inventory, implemented editor, confirmed API, and Stage 4 validation evidence |
+| `docs/EMAIL-TEMPLATES-BACKEND-HANDOFF.md` | Completed backend Stage 2 brief and returned integration evidence; not backend OpenAPI |
+
+These documents follow canonical SOT precedence. The backend API is active
+locally; planned frontend runtime files are not included in the inventory below.
+
 ## Runtime entry points
 
 | Path | Purpose |
@@ -54,8 +64,8 @@
 | `scripts/local-server.mjs` | Local route, asset, slug, and API proxy server |
 | `scripts/dev-server.mjs` | npm run dev entry point on 127.0.0.1:8080 |
 
-Verified Phase 10 inventory: 60 route shells, 27 page controllers, dan 10 card
-theme templates. Angka ini bersifat turunan dan harus mengikuti repository.
+Current inventory: 61 route shells, 28 page controllers, dan 10 card theme
+templates. Angka ini bersifat turunan dan harus mengikuti repository.
 
 ## Deployment files
 

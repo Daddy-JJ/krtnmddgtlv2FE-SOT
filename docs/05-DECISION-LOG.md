@@ -80,6 +80,47 @@ Status: Accepted
 Vercel serves `dist/`, not repository root. A deterministic build copies only
 runtime files; docs, tests, governance, and repository metadata stay private.
 
+## FE-D-010 - Super Admin transactional email template management
+
+Date: 2026-09-06
+Status: Product direction accepted; Stage 1 specification/handoff authorized.
+Historical Stage 1 status: editor and backend template APIs were not implemented.
+
+Owner approved the plan after requesting editable welcome wording and all
+existing user email templates in Super Admin. Extend the existing email area,
+retain Mail Outbox, and use structured content/formatting with draft, preview,
+dummy test-send, explicit publication, history, and restoration to draft.
+
+This extends the locked internal-workspace scope, without superseding FE-D-001
+(frontend-only), FE-D-002 (verified claim before editing), FE-D-004 (checkout
+paused), or FE-D-007 (Indonesian launch). Existing email/token/security policies
+are not editable business rules in the template editor.
+
+Stage 1 inventory identifies seven template entries, including three existing
+Resume retention keys. The specification and proposed API operations live in
+`06-EMAIL-TEMPLATE-MANAGEMENT.md`; `EMAIL-TEMPLATES-BACKEND-HANDOFF.md` is the
+separate backend work brief. Exact schemas/paths/limits are engineering proposals
+pending backend confirmation, not approved existing endpoints. No backend edit,
+database change, real email send, or later implementation stage is authorized
+by this Stage 1 handoff alone.
+
+Subsequent implementation record (2026-09-06): owner separately approved backend
+Stage 2 activation and frontend Stages 3-4. Migration 010 and the local backend
+feature flag are active. The Super Admin editor is implemented at
+`/admin/mail/templates/`; no mailbox UAT email was sent during implementation.
+
+## FE-D-011 - Retire Resume Quality Reviewer role
+
+Date: 2026-09-06
+Status: Accepted
+
+Frontend follows the backend role consolidation documented in backend
+`docs/ROLES.md`. The only canonical Resume administration role is
+`resume_service_admin`; it owns queue, assignment, quality review, final release,
+specialist management, and audit access. `resume_quality_reviewer` is retired and
+must not appear in role choices or receive privileged navigation from an old
+claim. Backend permissions and request-state checks remain authoritative.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

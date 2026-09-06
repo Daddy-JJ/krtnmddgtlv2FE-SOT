@@ -49,6 +49,9 @@ dan hasil validasi final tetap authoritative di backend.
 
 ## Current readiness gaps
 
+- Super Admin email template management has an active local backend contract and
+  an implemented editor/service adapter at `/admin/mail/templates/`. Authenticated
+  browser and designated-mailbox UAT remain external readiness evidence.
 - Edit/reorder social links dan catalog menunggu method, path, payload, serta
   authorization backend yang disinkronkan.
 - Logo upload/delete serta mutasi admin plan/payment/theme dan QR regeneration

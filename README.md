@@ -42,10 +42,17 @@ tanpa mengubah pathname atau case:
     cd C:\xampp\htdocs\krtnmddgtlv2FE-SOT
     npm.cmd run dev
 
-Buka http://127.0.0.1:8080/. Backend Express harus aktif pada
-http://127.0.0.1:3000. Port dapat dioverride dengan FRONTEND_PORT dan backend
-dengan BACKEND_ORIGIN. PHP built-in server tetap hanya menyajikan file statis
-dan tidak menyediakan routing slug atau reverse proxy API.
+Buka frontend hanya melalui http://127.0.0.1:8080/. Backend Express/API tetap
+berjalan terpisah pada http://127.0.0.1:3000 dengan base
+http://127.0.0.1:3000/api/v1. Port 8080 adalah UI browser; port 3000 bukan halaman
+frontend. Port dapat dioverride dengan FRONTEND_PORT dan backend dengan
+BACKEND_ORIGIN.
+
+Jangan menjalankan PHP built-in server pada port 8080 untuk development proyek
+ini. PHP hanya menyajikan file statis dan tidak menyediakan routing slug atau
+reverse proxy API. Jika URL seperti /PCiZZvU menampilkan landing page, hentikan
+PHP pada port 8080 lalu jalankan kembali npm.cmd run dev. Server yang benar
+mempertahankan pathname/case dan menyajikan public-card/index.html.
 
 ### Integrasi backend lokal
 
@@ -84,6 +91,22 @@ Mulai dari:
 Dokumen rinci berada di `docs/01-FRONTEND-ARCHITECTURE.md` sampai
 `docs/05-DECISION-LOG.md`. Dokumen lama dipertahankan sebagai snapshot read-only
 di `docs/_legacy-sot/` dan tidak mempunyai precedence.
+
+## Template Email Super Admin
+
+Tahap 1-3 selesai: kontrak backend lokal aktif dan menu editor tersedia bagi
+Super Admin di http://127.0.0.1:8080/admin/mail/templates/. Mail Outbox tetap
+berfungsi seperti sebelumnya. Inventaris mencakup tujuh template: Starter, OTP,
+reset password, Resume selesai, dan pengingat unduh 30/7/1 hari.
+
+- [Spesifikasi editor dan kontrak API](docs/06-EMAIL-TEMPLATE-MANAGEMENT.md).
+- [Handoff dan bukti backend](docs/EMAIL-TEMPLATES-BACKEND-HANDOFF.md).
+
+Editor mendukung draft, preview backend, test-send terkonfirmasi, publish,
+history, dan restore-to-draft. Aksi sensitif memerlukan login terbaru. Test-send
+masuk antrean backend; jalankan npm.cmd run mail:work dari repository backend
+hanya ketika mailbox UAT memang disetujui. Jangan menjalankan worker hanya untuk
+melihat preview.
 
 ## Deployment
 

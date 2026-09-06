@@ -1,9 +1,10 @@
 import { api } from '../../services/api-client.js';
 import { authService } from '../../services/auth-service.js';
+import { renderEmailTemplateManager } from './email-templates.js';
 
 const view=document.body.dataset.adminView??'dashboard';
 const root=document.querySelector('[data-admin-root]');
-const links=[['Dashboard','/admin/'],['Users','/admin/users/'],['Kartu','/admin/cards/'],['Subscriptions','/admin/subscriptions/'],['Usage','/admin/usage/'],['Interventions','/admin/interventions/'],['Settings','/admin/settings/'],['Landing page','/admin/landing-content/'],['Mail outbox','/admin/mail/'],['Reports','/admin/reports/'],['System','/admin/system/'],['Security','/admin/security/'],['Resume Services','/admin/resume-services/'],['CV Specialists','/admin/cv-specialists/']];
+const links=[['Dashboard','/admin/'],['Users','/admin/users/'],['Kartu','/admin/cards/'],['Subscriptions','/admin/subscriptions/'],['Usage','/admin/usage/'],['Interventions','/admin/interventions/'],['Settings','/admin/settings/'],['Landing page','/admin/landing-content/'],['Mail outbox','/admin/mail/'],['Template email','/admin/mail/templates/'],['Reports','/admin/reports/'],['System','/admin/system/'],['Security','/admin/security/'],['Resume Services','/admin/resume-services/'],['CV Specialists','/admin/cv-specialists/']];
 const header=document.createElement('header'),nav=document.createElement('nav'),title=document.createElement('h1'),content=document.createElement('section'),status=document.createElement('p');
 header.className='dashboard-panel p-6';nav.className='mt-5 flex flex-wrap gap-2';title.className='text-3xl font-black';title.textContent=view.replaceAll('-',' ');
 for(const[label,href]of links){const link=document.createElement('a');link.className='dashboard-action';link.href=href;link.textContent=label;nav.append(link);}
@@ -27,6 +28,7 @@ async function load(){
     if(view==='interventions')return renderRows(await api.get('/admin/interventions'));
     if(view==='settings')return renderRows(await api.get('/admin/settings'));
     if(view==='mail')return renderMail(await api.get('/admin/mail/outbox?limit=100'));
+    if(view==='email-templates')return renderEmailTemplateManager({content,status});
     if(view==='cv-specialists')return renderRows(await api.get('/admin/cv-specialists'));
     if(view==='user-detail')return renderUser(await api.get(`/admin/users/${encodeURIComponent(new URLSearchParams(location.search).get('id')??'')}`));
     if(['system','security'].includes(view))return renderRows(await api.get('/admin/activity'));
@@ -98,7 +100,7 @@ function renderUser(data){
   const form=document.createElement('form');form.className='rounded-2xl border border-white/10 p-5';form.dataset.intervention='';
   const formTitle=document.createElement('h2');formTitle.className='text-xl font-black';formTitle.textContent='Controlled intervention';
   const action=document.createElement('select');action.name='action';for(const value of['SUSPEND_USER','ACTIVATE_USER','GRANT_ROLE','EXTEND_SUBSCRIPTION','RESET_RESUME_ENTITLEMENT']){const option=document.createElement('option');option.value=value;option.textContent=value;action.append(option);}
-  const role=document.createElement('input');role.name='roleCode';role.placeholder='roleCode jika diperlukan';
+  const role=document.createElement('select');role.name='roleCode';for(const [value,label] of [['','Pilih role jika diperlukan'],['member','Member'],['cv_specialist','CV Specialist'],['resume_service_admin','Resume Service Admin'],['super_admin','Super Admin']]){const option=document.createElement('option');option.value=value;option.textContent=label;role.append(option);}
   const days=document.createElement('input');days.name='days';days.type='number';days.min='1';days.max='3650';days.placeholder='days jika diperlukan';
   const reason=document.createElement('textarea');reason.name='reason';reason.required=true;reason.minLength=10;reason.maxLength=1000;reason.placeholder='Alasan wajib (min. 10 karakter)';
   const submit=document.createElement('button');submit.type='submit';submit.className='dashboard-action';submit.textContent='Confirm intervention';

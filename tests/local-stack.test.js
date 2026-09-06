@@ -53,6 +53,13 @@ test('local stack serves frontend routes and proxies /api/v1 on one origin', asy
     assert.match(publicSlugHtml, /data-public-content/);
     assert.doesNotMatch(publicSlugHtml, /data-landing-content/);
 
+    const reportedSlug = await fetch(origin + '/PCiZZvU');
+    assert.equal(reportedSlug.url, origin + '/PCiZZvU');
+    assert.equal(reportedSlug.status, 200);
+    const reportedSlugHtml = await reportedSlug.text();
+    assert.match(reportedSlugHtml, /data-public-content/);
+    assert.doesNotMatch(reportedSlugHtml, /data-landing-content/);
+
     const publicCardCss = await fetch(origin + '/assets/css/public-card.css');
     assert.equal(publicCardCss.status, 200);
     assert.match(publicCardCss.headers.get('content-type') ?? '', /^text\/css/i);

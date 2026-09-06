@@ -100,6 +100,21 @@ dari backend. Browser tidak boleh mengaktifkan membership.
 - Payment status, role, plan, entitlement, dan authorization selalu ditentukan
   backend.
 
+## Super Admin email templates
+
+FE-D-010 approves managing existing transactional email wording and structured
+formatting through Super Admin. Stage 1 produced the inventory and editor
+specification. Backend Stage 2 implemented and activated the confirmed consumer
+contract locally. Frontend Stage 3 implements the editor through the existing
+Super Admin shell at `/admin/mail/templates/`.
+See `docs/06-EMAIL-TEMPLATE-MANAGEMENT.md`.
+
+Draft, preview, dummy test-send, explicit publish, and version restoration must
+preserve existing mail triggers and mandatory security content. SMTP settings,
+tokens, rendering authority, persistence, and authorization remain backend-owned.
+This approval does not authorize backend edits from this repository, new email
+campaigns, or checkout activation. Each later stage requires owner instruction.
+
 ## Change policy
 
 Perubahan locked scope memerlukan persetujuan product owner dan entry baru pada

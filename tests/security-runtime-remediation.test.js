@@ -75,13 +75,10 @@ test('every deployed top-level runtime directory is reserved from custom slugs',
   }
 });
 
-test('post-login role routing covers every approved internal role with safe precedence', () => {
+test('post-login role routing covers canonical internal roles and rejects retired reviewer access', () => {
   assert.equal(postLoginDestination('super_admin'), '/admin/');
   assert.equal(postLoginDestination('resume_service_admin'), '/admin/resume-services/');
-  assert.equal(
-    postLoginDestination('resume_quality_reviewer'),
-    '/admin/resume-services/?view=quality-review',
-  );
+  assert.equal(postLoginDestination('resume_quality_reviewer'), '/app/');
   assert.equal(postLoginDestination('cv_specialist'), '/specialist/');
   assert.equal(postLoginDestination(['cv_specialist', 'super_admin']), '/admin/');
   assert.equal(postLoginDestination('member', { intent: 'pro' }), '/app/billing/?intent=pro');

@@ -174,10 +174,11 @@ Checkout must not be invoked while the product decision remains paused.
 Internal resume operations currently consume `/admin/resume-requests*` transitions
 for queue/detail, assign, information request, data complete, work start, revision
 start, deliverable registration, and release. Backend permission filtering is
-authoritative untuk role code `super_admin`, `cv_specialist`,
-`resume_quality_reviewer`, dan `resume_service_admin`. Login mengarahkan dua role
-resume terakhir ke workspace Resume Services yang sesuai; backend tetap melakukan
-authorization setiap operasi.
+authoritative untuk role code `super_admin`, `cv_specialist`, dan
+`resume_service_admin`. Role `resume_service_admin` memiliki seluruh fungsi queue,
+assignment, quality review, dan final release. Role lama
+`resume_quality_reviewer` telah dipensiunkan dan tidak dipetakan oleh frontend;
+backend tetap melakukan authorization setiap operasi.
 
 ### Super Admin
 
@@ -191,6 +192,25 @@ The current activity surface is read-only through `GET /admin/activity`. No exac
 method/path/payload is approved here for plan mutation, admin payment mutation,
 theme-catalog mutation, or QR regeneration. Those controls must not be added until
 the backend contract and its authorization/audit behavior are synchronized.
+
+## Confirmed dependency: Super Admin email templates (backend active)
+
+Product direction and Stage 1 specification are approved in FE-D-010. Backend
+Stage 2 implemented the contract in source. Migration 010 is applied to the local
+main database, the feature flag is active, and the guarded route is reachable.
+The contract is consumed by `services/email-template-service.js` and the
+Super Admin editor at `/admin/mail/templates/`. Catalog, draft,
+preview, dummy test-send/status, publication, versions, and restore operations
+are specified once in [Email Template Management](06-EMAIL-TEMPLATE-MANAGEMENT.md).
+The confirmed family is `/admin/mail/templates`; the Stage 3 service consumes
+all listed operations. Existing outbox/retry operations remain unchanged.
+
+The [backend handoff](EMAIL-TEMPLATES-BACKEND-HANDOFF.md) records the returned
+schema/error/authorization/versioning evidence. The adapter and UI use
+authenticated super_admin access, access-context
+CSRF for unsafe operations, and backend-owned persistence/rendering. Do not
+substitute browser storage, guessed endpoints, or mocked success for backend
+support. Actual adapter implementation must add behavioral contract tests.
 
 ## Contract change procedure
 

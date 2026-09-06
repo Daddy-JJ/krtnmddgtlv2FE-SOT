@@ -1,6 +1,6 @@
 # Frontend Repository Status
 
-Updated: 2026-09-05
+Updated: 2026-09-06
 
 Overall: **SOT reintegration Phase 10 complete; local readiness passed, production approval pending external Vercel/backend/UAT evidence.**
 
@@ -12,8 +12,8 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 | Stack | Static HTML, Vanilla JS modules, Tailwind CSS 4 |
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
-| Static build | 154 allowlisted runtime files in `dist/` |
-| Automated tests | 125 passing; no known test failure |
+| Static build | 158 allowlisted runtime files in `dist/` |
+| Automated tests | 129 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Paused |
@@ -52,8 +52,9 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
    the configured API base.
 3. Starter name length validation now operates on cleaned name text only.
 4. Every deployed top-level runtime directory is covered by reserved slug tests.
-5. Login routes Super Admin, CV Specialist, Resume Quality Reviewer, and Resume
-   Service Admin according to their approved workspace.
+5. Login routes Super Admin, CV Specialist, and Resume Service Admin according
+   to their approved workspace. The retired Resume Quality Reviewer claim fails
+   closed to the member workspace.
 6. Local-stack tests use a repository-local frontend helper and no longer import
    a missing monorepo tool.
 
@@ -135,6 +136,30 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 - Added routing, asset, email handoff, fragment cleanup, and timeout contract
   coverage. No real Starter record was created during QA.
 
+## Email template management - Stages 1-4
+
+- Product direction and Stage 1 execution approved by owner (FE-D-010).
+- Read-only backend inventory: seven template entries across Starter, OTP,
+  password reset, Resume completion, and retention reminders at 30/7/1 days.
+- Editor fields, required security blocks, draft/publication lifecycle, initial
+  API, migration/version requirements, and future QA gates documented in
+  `docs/06-EMAIL-TEMPLATE-MANAGEMENT.md`.
+- Backend work brief: `docs/EMAIL-TEMPLATES-BACKEND-HANDOFF.md`.
+- Runtime editor, service adapter, validator, and noindex route are implemented
+  through the existing Super Admin shell at `/admin/mail/templates/`.
+- The editor supports seven fixed templates, structured paragraphs/emphasis,
+  required action/security blocks, brand/color fields, draft save, backend
+  preview, test-send/status, publication, immutable history, and restore-to-draft.
+- Migration 010 is applied to the local main backend database, the feature flag
+  is active, and the restarted API exposes the authenticated route family.
+- Local Stage 4 QA builds 158 allowlisted files and passes 129/129 tests. Live
+  frontend 8080 and backend 3000 probes pass, including exact `/PCiZZvU` routing.
+- Backend Stage 2 source and guarded `_test` integration QA completed on
+  2026-09-06. Main database migration 010 is applied, feature flag is true, and
+  the unauthenticated route probe returns 401. No real email was sent.
+- Remaining external gate: authenticated Super Admin mutation checks and
+  designated-mailbox UAT. No commit, push, or deployment was performed.
+
 ## Reintegration phase status
 
 | Phase | Status |
@@ -152,8 +177,8 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 
 ## Validation note
 
-`npm run build` passes and produces 154 allowlisted runtime files. Full `npm test`
-passes all 125 tests, including public slug routing, asset serving, Starter email
+`npm run build` passes and produces 158 allowlisted runtime files. Full `npm test`
+passes all 129 tests, including public slug routing, asset serving, Starter email
 handoff, and the repository-local same-origin stack/proxy.
 No live Vercel deployment, external API mutation, or server cleanup was performed
 during SOT reintegration.

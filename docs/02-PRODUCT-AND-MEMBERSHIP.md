@@ -114,6 +114,19 @@ Light/Dark preference berlaku untuk website chrome, bukan artwork kartu.
 - Toggle global tetap tersedia setelah pemilihan.
 - Reduced-motion preference dihormati.
 
+## Super Admin email content (implemented locally)
+
+FE-D-010 permits editing existing user-facing email wording and structured
+formatting, including Starter welcome/management, OTP, password reset, and
+Resume notifications. The future editor includes drafts, preview, dummy test
+email, explicit publish, version history, and restoration to draft.
+
+Email trigger schedules, security/expiry notices, token behavior, recipient
+selection, and authorization remain backend-controlled. Backend Stage 2 and the
+Super Admin Stage 3 editor are active locally. No extra welcome email, campaign,
+checkout activation, or Starter resend workflow is added. Confirmed contract:
+`06-EMAIL-TEMPLATE-MANAGEMENT.md`.
+
 ## Language
 
 Bahasa Indonesia adalah satu-satunya bahasa launch yang diwajibkan. English

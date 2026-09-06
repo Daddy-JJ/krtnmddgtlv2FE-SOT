@@ -47,10 +47,10 @@ editor and are intentional when tested.
 
 ## Current inventory
 
-- 60 route `index.html` shells.
-- 27 page-controller modules under `pages/`.
+- 61 route `index.html` shells.
+- 28 page-controller modules under `pages/`.
 - 10 allowlisted card-theme templates.
-- Static build baseline: 154 runtime files in `dist/`.
+- Static build baseline: 158 runtime files in `dist/`.
 
 Counts describe the verified Phase 10 repository and must be refreshed when the
 runtime inventory changes.
@@ -72,6 +72,17 @@ Shared responsibility owners include:
 
 Search for an existing owner before adding a module; repeated business rules must
 be consolidated instead of maintained in parallel.
+
+## Email template management
+
+`docs/06-EMAIL-TEMPLATE-MANAGEMENT.md` records the implemented feature,
+verified template inventory, and confirmed contract. The backend evidence brief
+is `docs/EMAIL-TEMPLATES-BACKEND-HANDOFF.md`.
+
+`/admin/mail/templates/`, `pages/admin/email-templates.js`,
+`services/email-template-service.js`, and
+`validators/email-template-validator.js` implement the editor. Existing
+`/admin/mail/` remains the separate Mail Outbox surface.
 
 ## Generated and historical directories
 

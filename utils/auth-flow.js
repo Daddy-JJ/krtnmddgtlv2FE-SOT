@@ -54,7 +54,6 @@ export function postLoginDestination(roles, { intent = '' } = {}) {
 
   if (assignedRoles.has('super_admin')) return '/admin/';
   if (assignedRoles.has('resume_service_admin')) return '/admin/resume-services/';
-  if (assignedRoles.has('resume_quality_reviewer')) return '/admin/resume-services/?view=quality-review';
   if (assignedRoles.has('cv_specialist')) return '/specialist/';
 
   const safeIntent = safeMembershipIntent(intent);

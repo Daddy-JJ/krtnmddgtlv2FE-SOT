@@ -36,7 +36,7 @@ feature service.
 
 ## Route model
 
-Source contains 60 route shells plus ten card-theme HTML templates.
+Source contains 61 route shells plus ten card-theme HTML templates.
 
 Main route groups:
 
