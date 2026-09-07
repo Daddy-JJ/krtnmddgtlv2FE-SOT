@@ -14,10 +14,17 @@ export function safeHttpUrl(value) {
   }
 }
 
-export function safeImageUrl(value) {
+export function safeImageUrl(value, baseUrl = globalThis.location?.origin) {
   const candidate = String(value ?? '').trim();
   if (!candidate || CONTROL_OR_WHITESPACE.test(candidate)) return '';
   if (/^data:image\/(?:png|jpe?g|gif|webp|svg\+xml|bmp|avif|ico);/i.test(candidate)) return candidate;
+  if (candidate.startsWith('/') && !candidate.startsWith('//') && !candidate.includes('\\')) {
+    try {
+      return safeHttpUrl(new URL(candidate, baseUrl).href);
+    } catch {
+      return '';
+    }
+  }
   return safeHttpUrl(candidate);
 }
 

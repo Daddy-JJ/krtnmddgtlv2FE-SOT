@@ -1,7 +1,7 @@
 import { cardService } from '../../services/card-service.js';
 import { contentService } from '../../services/content-service.js';
 import { buildCatalogInput, buildSocialInput, validateCatalogInput, validateSocialInput } from '../../validators/content-validator.js';
-import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
+import { clearFieldErrors, clearStatus, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
 
 const mode = document.querySelector('[data-content-page]')?.dataset.contentPage ?? 'social';
 const form = document.querySelector('[data-content-form]');
@@ -31,7 +31,8 @@ async function load() {
     }
     state.card = await cardService.get(first.publicId);
     await refreshList();
-    showStatus(status, 'Data siap.', 'success');
+    if (isStarterPlan()) showStatus(status, starterUnavailableMessage(), 'info');
+    else clearStatus(status);
   } catch (error) {
     if (error.status === 401) {
       location.assign('/login/');
@@ -40,6 +41,7 @@ async function load() {
     showStatus(status, error.message, 'error');
   } finally {
     setBusy(form, false);
+    if (!state.card || isStarterPlan()) setCreateLocked(true);
   }
 }
 
@@ -74,6 +76,7 @@ async function createItem(event) {
     showStatus(status, contentErrorMessage(error), 'error');
   } finally {
     setBusy(form, false);
+    if (isStarterPlan()) setCreateLocked(true);
   }
 }
 
@@ -95,10 +98,31 @@ async function deleteItem(event) {
 }
 
 function contentErrorMessage(error) {
-  if (state.card?.planCode === 'starter' && error?.code === 'PLAN_LIMIT_REACHED') {
-    return 'Sedang kami siapkan.';
+  if (error?.code === 'PLAN_LIMIT_REACHED') {
+    if (isStarterPlan()) return starterUnavailableMessage();
+    return mode === 'social'
+      ? 'Batas tautan sosial untuk paket Anda telah tercapai.'
+      : 'Batas item katalog untuk paket Anda telah tercapai.';
   }
   return error?.message ?? 'Kami belum dapat memproses permintaan ini.';
+}
+
+function isStarterPlan() {
+  return String(state.card?.planCode ?? '').toLowerCase() === 'starter';
+}
+
+function starterUnavailableMessage() {
+  return mode === 'social'
+    ? 'Tautan sosial tidak tersedia pada paket Starter. Membership Basic dan Pro masih Under development.'
+    : 'Katalog tidak tersedia pada paket Starter. Membership Basic dan Pro masih Under development.';
+}
+
+function setCreateLocked(locked) {
+  form.querySelectorAll('button,input,textarea,select').forEach((element) => {
+    element.disabled = locked;
+  });
+  if (locked) form.setAttribute('aria-disabled', 'true');
+  else form.removeAttribute('aria-disabled');
 }
 
 function renderList() {

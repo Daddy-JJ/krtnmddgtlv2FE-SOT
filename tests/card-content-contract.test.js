@@ -44,11 +44,17 @@ test('social and catalog deletion requires explicit user confirmation', async ()
   assert.match(source, /Tindakan ini tidak dapat dibatalkan/);
 });
 
-test('Starter content limits use the membership preparation message', async () => {
+test('Starter content forms explain entitlement and lock unavailable creation', async () => {
   const source = await readFile(new URL('../pages/app/card-content.js', import.meta.url), 'utf8');
-  assert.match(source, /planCode === 'starter'/);
+  assert.match(source, /isStarterPlan\(\)/);
   assert.match(source, /PLAN_LIMIT_REACHED/);
-  assert.match(source, /Sedang kami siapkan\./);
+  assert.match(source, /Tautan sosial tidak tersedia pada paket Starter/);
+  assert.match(source, /Katalog tidak tersedia pada paket Starter/);
+  assert.match(source, /Batas tautan sosial untuk paket Anda telah tercapai/);
+  assert.match(source, /Batas item katalog untuk paket Anda telah tercapai/);
+  assert.match(source, /setCreateLocked\(true\)/);
+  assert.match(source, /aria-disabled/);
+  assert.doesNotMatch(source, /Sedang kami siapkan|Data siap/);
 });
 
 test('social and catalog creation assigns deterministic append order without exposing a fake reorder control', async () => {

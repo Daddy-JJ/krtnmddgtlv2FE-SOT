@@ -332,7 +332,6 @@ textarea:focus-visible {
 .billing-membership__eyebrow,
 .billing-notify__label {
   margin: 0 0 .35rem;
-  color: #0f766e;
   font-size: .72rem;
   font-weight: 800;
   letter-spacing: .12em;
@@ -346,33 +345,13 @@ textarea:focus-visible {
   overflow: hidden;
 }
 
-.billing-plan--locked {
-  border-color: rgba(100, 116, 139, .42);
-  background: linear-gradient(145deg, rgba(248, 250, 252, .9), rgba(226, 232, 240, .72));
-  filter: grayscale(.82);
-  opacity: .82;
-}
-
-.billing-plan--locked::after {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: linear-gradient(125deg, rgba(255, 255, 255, .25), transparent 45%);
-  content: "";
-  pointer-events: none;
-}
-
 .billing-plan > * { position: relative; z-index: 1; }
 
 .billing-plan__badge {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  border: 1px solid rgba(71, 85, 105, .45);
-  border-radius: 999px;
   padding: .3rem .55rem;
-  background: rgba(255, 255, 255, .9);
-  color: #334155;
   font-size: .67rem;
   font-weight: 850;
   letter-spacing: .06em;
@@ -381,29 +360,25 @@ textarea:focus-visible {
 }
 
 .billing-plan__heading { display: flex; min-width: 0; align-items: center; gap: .55rem; padding-right: 7rem; }
-.billing-plan__lock { display: grid; width: 1.9rem; height: 1.9rem; flex: 0 0 auto; place-items: center; border: 1px solid rgba(71, 85, 105, .32); border-radius: .55rem; background: rgba(255, 255, 255, .6); font-size: .9rem; }
-.billing-plan__cta:disabled { cursor: not-allowed; background: #94a3b8; color: #f8fafc; box-shadow: none; opacity: 1; }
+.billing-plan__lock { display: grid; width: 1.9rem; height: 1.9rem; flex: 0 0 auto; place-items: center; font-size: .9rem; }
+.billing-plan__cta:disabled { cursor: not-allowed; }
 
 .billing-notify {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(18rem, .9fr);
   gap: 1rem 1.5rem;
   align-items: center;
-  border: 1px dashed rgba(20, 184, 166, .55);
-  border-radius: .75rem;
   padding: 1.25rem;
-  background: linear-gradient(135deg, rgba(240, 253, 250, .92), rgba(255, 255, 255, .92));
 }
 
 .billing-notify__form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) auto; gap: .55rem; }
 .billing-notify__form select,
 .billing-notify__form input,
-.billing-notify__form button { min-width: 0; min-height: 2.75rem; border-radius: .5rem; font: inherit; }
+.billing-notify__form button { min-width: 0; min-height: 2.75rem; font: inherit; }
 .billing-notify__form select,
-.billing-notify__form input { border: 1px solid #cbd5e1; padding: .65rem .75rem; background: #fff; color: #0f172a; }
-.billing-notify__form button { border: 1px solid #0f766e; padding: .65rem 1rem; background: #0f766e; color: #fff; font-weight: 750; white-space: nowrap; }
-.billing-notify__form button:hover { background: #115e59; }
-.billing-notify__status { grid-column: 1 / -1; min-height: 1.25rem; margin: 0; color: #475569; font-size: .82rem; }
+.billing-notify__form input { padding: .65rem .75rem; }
+.billing-notify__form button { padding: .65rem 1rem; font-weight: 750; white-space: nowrap; }
+.billing-notify__status { grid-column: 1 / -1; min-height: 1.25rem; margin: 0; font-size: .82rem; }
 
 @media (max-width: 700px) {
   .billing-notify { grid-template-columns: 1fr; }
@@ -583,25 +558,8 @@ html:not([data-site-theme="light"]) .app-shell-page .app-shell__main textarea {
 .theme-option {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, .22);
-  border-radius: 1rem;
   padding: .7rem;
-  color: #f8fafc;
-  background: rgba(15, 23, 42, .64);
   text-align: left;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
-  transition: transform .18s ease, border-color .18s ease, background .18s ease;
-}
-
-.theme-option:hover,
-.theme-option[aria-pressed="true"] {
-  border-color: rgba(56, 189, 248, .65);
-  background: rgba(30, 41, 59, .9);
-  transform: translateY(-2px);
-}
-
-.theme-option[aria-pressed="true"] {
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, .28), 0 14px 32px rgba(2, 6, 23, .24);
 }
 
 .theme-option__preview {
@@ -610,8 +568,6 @@ html:not([data-site-theme="light"]) .app-shell-page .app-shell__main textarea {
   aspect-ratio: 16 / 10;
   place-items: center;
   overflow: hidden;
-  border-radius: .7rem;
-  background: linear-gradient(145deg, #eef2f7, #dbe4ef);
 }
 
 .card-theme-preview__host {
@@ -643,7 +599,6 @@ html:not([data-site-theme="light"]) .app-shell-page .app-shell__main textarea {
 .theme-option__meta {
   display: block;
   margin-top: .25rem;
-  color: #94a3b8;
   font-size: .8rem;
 }
 
@@ -651,9 +606,6 @@ html:not([data-site-theme="light"]) .app-shell-page .app-shell__main textarea {
   position: relative;
   min-height: 15rem;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, .24);
-  border-radius: 1rem;
-  background: linear-gradient(145deg, #eef2f7, #dbe4ef);
 }
 
 .card-editor-preview[data-preview-orientation="portrait"] {

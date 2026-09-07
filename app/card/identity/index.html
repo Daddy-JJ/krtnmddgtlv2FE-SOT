@@ -23,7 +23,7 @@
     </header>
 
     <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-start">
-    <form class="space-y-8 rounded-2xl border border-slate-700 bg-slate-900/60 p-5 sm:p-7"
+    <form class="dashboard-panel space-y-8 p-5 sm:p-7"
       data-card-editor-form data-editor-section="card" novalidate>
       <fieldset>
         <legend class="text-lg font-black">Identitas profesional</legend>
@@ -110,13 +110,13 @@
       </fieldset>
 
       <div class="border-t border-slate-700 pt-6">
-        <button class="min-h-12 w-full rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-5 py-3 font-bold text-white" type="submit">
+        <button class="primary-cta min-h-12 w-full px-5 py-3 font-bold" type="submit">
           Simpan kartu nama
         </button>
         <p class="mt-3 text-sm" aria-live="polite" data-form-status></p>
       </div>
     </form>
-    <aside class="card-editor-preview-panel rounded-2xl border border-slate-700 bg-slate-900/60 p-5 lg:sticky lg:top-8" aria-labelledby="cardPreviewTitle">
+    <aside class="dashboard-panel card-editor-preview-panel p-5 lg:sticky lg:top-8" aria-labelledby="cardPreviewTitle">
       <p class="text-xs font-semibold uppercase tracking-wider text-teal-300">Preview langsung</p>
       <h2 class="mt-1 text-xl font-black" id="cardPreviewTitle">Kartu sebelum disimpan</h2>
       <p class="mt-2 text-sm text-slate-400">Data di preview mengikuti form. Tema, logo tersimpan, QR, dan social link memakai data kartu saat ini.</p>

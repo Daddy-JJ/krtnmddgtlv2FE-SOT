@@ -63,6 +63,11 @@ const files = [
   'validators/content-validator.js',
   'validators/payment-validator.js',
   'components/forms/form-utils.js',
+  'pages/admin/email-templates.js',
+  'pages/admin/super-admin-workspace.js',
+  'services/email-template-service.js',
+  'validators/email-template-validator.js',
+  'admin/mail/templates/index.html',
 ];
 
 test('frontend foundation contains no token storage or unsafe DOM sinks', async () => {

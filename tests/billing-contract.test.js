@@ -47,8 +47,15 @@ test('billing UI keeps annual plans visible but locks checkout while payment is 
   assert.match(html,/data-checkout-plan="basic" disabled/);
   assert.match(html,/data-checkout-plan="pro" disabled/);
   assert.match(html,/data-notify-form/);
+  assert.match(html,/dashboard-panel billing-plan billing-plan--locked/);
+  assert.match(html,/dashboard-panel billing-notify/);
+  assert.match(html,/billing-plan__badge" data-status-badge/);
+  assert.match(html,/billing-plan__cta primary-cta/);
   assert.match(html,/365 hari/g);
   assert.doesNotMatch(source,/paymentService\.checkout|function checkout|toggleCheckout/);
+  assert.match(source, /Peningkatan membership masih Under development\./);
+  assert.match(source, /clearStatus\(status\)/);
+  assert.doesNotMatch(source, /Tagihan siap\./);
   assert.doesNotMatch(html,/one-time|sekali bayar/i);
 });
 

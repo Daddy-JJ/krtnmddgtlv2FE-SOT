@@ -1,6 +1,6 @@
 import { paymentService } from '../../services/payment-service.js';
 import { billingStatusLabel } from '../../validators/payment-validator.js';
-import { showStatus } from '../../components/forms/form-utils.js';
+import { clearStatus, showStatus } from '../../components/forms/form-utils.js';
 import { safeMembershipIntent } from '../../utils/auth-flow.js';
 
 const status = document.querySelector('[data-form-status]');
@@ -33,7 +33,8 @@ async function load() {
     state.subscription = sub;
     state.payments = Array.isArray(payments) ? payments : [];
     render();
-    showStatus(status, requestedIntent ? 'Under development' : 'Tagihan siap.', 'success');
+    if (requestedIntent) showStatus(status, 'Peningkatan membership masih Under development.', 'info');
+    else clearStatus(status);
   } catch (error) {
     if (error.status === 401) {
       location.assign('/login/');

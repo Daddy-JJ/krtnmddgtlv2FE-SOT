@@ -18,6 +18,15 @@ export function showStatus(target, message, tone = 'info') {
   target.setAttribute('aria-atomic', 'true');
 }
 
+export function clearStatus(target) {
+  if (!target) return;
+  target.textContent = '';
+  delete target.dataset.tone;
+  target.removeAttribute('role');
+  target.removeAttribute('aria-live');
+  target.removeAttribute('aria-atomic');
+}
+
 export function clearFieldErrors(form) {
   form.querySelectorAll('[data-field-error]').forEach((element) => {
     element.textContent = '';

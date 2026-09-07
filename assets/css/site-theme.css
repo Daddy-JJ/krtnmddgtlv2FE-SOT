@@ -609,25 +609,6 @@ html[data-site-theme="dark"] .dashboard-shell .bg-slate-100 {
   background-color: var(--site-surface) !important;
 }
 
-/* Keep legacy theme-picker controls on the same solid light workspace palette. */
-html[data-site-theme="light"] .dashboard-shell .theme-option {
-  border-color: var(--site-line);
-  background: var(--site-paper);
-  color: var(--site-ink);
-  box-shadow: none;
-}
-
-html[data-site-theme="light"] .dashboard-shell .theme-option:hover,
-html[data-site-theme="light"] .dashboard-shell .theme-option[aria-pressed="true"] {
-  border-color: var(--site-ink);
-  background: var(--site-surface);
-  box-shadow: none;
-}
-
-html[data-site-theme="light"] .dashboard-shell .theme-option__meta {
-  color: var(--site-muted);
-}
-
 /* Shared user-workspace controls */
 .dashboard-shell .primary-cta,
 .dashboard-shell [class*="bg-gradient-to-r"],
@@ -683,9 +664,19 @@ html[data-site-theme="light"] .dashboard-shell .theme-option__meta {
 .dashboard-shell section[class*="bg-white"],
 .dashboard-shell aside[class*="bg-white"] {
   border-color: var(--site-line) !important;
-  background: var(--site-paper) !important;
+  background: var(--site-surface) !important;
   color: var(--site-ink) !important;
   box-shadow: none !important;
+}
+
+.dashboard-shell :is(form, section, article, aside, div, label)[class*="rounded-"] {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.dashboard-shell :is(form, section, article, aside, div, label)[class*="rounded-"][class*="border"] {
+  background: var(--site-surface) !important;
+  color: var(--site-ink) !important;
 }
 
 .dashboard-shell input,
@@ -953,6 +944,78 @@ textarea {
   outline: 2px solid var(--site-ink);
   outline-offset: 2px;
   font-weight: 800;
+}
+
+/* Workspace components share one token-driven visual language in both themes. */
+.dashboard-shell .workspace-frame,
+.dashboard-shell .theme-option,
+.dashboard-shell .billing-plan,
+.dashboard-shell .billing-notify {
+  border: 1px solid var(--site-line) !important;
+  border-radius: 0 !important;
+  background: var(--site-surface) !important;
+  color: var(--site-ink) !important;
+  box-shadow: none !important;
+}
+
+.dashboard-shell .workspace-frame {
+  background: var(--site-surface-strong) !important;
+}
+
+.dashboard-shell .theme-option:hover,
+.dashboard-shell .theme-option[aria-pressed="true"] {
+  border-color: var(--site-ink) !important;
+  background: var(--site-surface-strong) !important;
+  transform: none;
+}
+
+.dashboard-shell .theme-option__meta,
+.dashboard-shell .billing-notify__status {
+  color: var(--site-muted) !important;
+}
+
+.dashboard-shell .theme-option__preview,
+.dashboard-shell .card-editor-preview {
+  border: 1px solid var(--site-line);
+  border-radius: 0;
+  background: var(--site-surface-strong);
+  box-shadow: none;
+}
+
+.dashboard-shell .billing-plan--locked {
+  filter: none;
+  opacity: 1;
+}
+
+.dashboard-shell .billing-plan__lock {
+  border: 1px solid var(--site-line);
+  border-radius: 0;
+  background: var(--site-surface-strong);
+  color: var(--site-ink);
+}
+
+.dashboard-shell .billing-plan__cta:disabled {
+  border-color: var(--site-line) !important;
+  background: var(--site-surface-strong) !important;
+  color: var(--site-muted) !important;
+  opacity: 1;
+}
+
+.dashboard-shell .billing-membership__eyebrow,
+.dashboard-shell .billing-notify__label {
+  color: var(--site-success) !important;
+}
+
+.dashboard-shell .billing-notify__form button {
+  border: 1px solid var(--site-line) !important;
+  border-radius: 0 !important;
+  background: var(--site-ink) !important;
+  color: var(--site-inverse) !important;
+}
+
+.dashboard-shell .billing-notify__form button:hover {
+  background: var(--site-accent) !important;
+  color: #141414 !important;
 }
 
 .dashboard-shell table {

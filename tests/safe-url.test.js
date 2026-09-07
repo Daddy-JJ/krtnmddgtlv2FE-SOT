@@ -34,7 +34,9 @@ test('safeImageUrl permits HTTP(S) and safe image data URIs only', () => {
   for (const unsafe of [
     '',
     '   ',
-    '/relative/logo.png',
+    'relative/logo.png',
+    '//evil.example/logo.png',
+    '/unsafe\\logo.png',
     'javascript:alert(1)',
     'data:text/html,test',
     'data:image/svg+xml,<script>alert(1)</script>',
@@ -43,6 +45,16 @@ test('safeImageUrl permits HTTP(S) and safe image data URIs only', () => {
   ]) {
     assert.equal(safeImageUrl(unsafe), '', unsafe);
   }
+});
+
+test('safeImageUrl resolves safe root-relative API images against the page origin', () => {
+  assert.equal(
+    safeImageUrl(
+      '/api/v1/public/cards/PCiZZvU/qr',
+      'http://127.0.0.1:8080',
+    ),
+    'http://127.0.0.1:8080/api/v1/public/cards/PCiZZvU/qr',
+  );
 });
 
 test('safeMailtoHref validates the address before creating a link', () => {

@@ -8,6 +8,9 @@ const appStyles = await readFile(new URL('../assets/css/app.css', import.meta.ur
 const loginPage = await readFile(new URL('../login/index.html', import.meta.url), 'utf8');
 const registerPage = await readFile(new URL('../register/index.html', import.meta.url), 'utf8');
 const landingContentPage = await readFile(new URL('../admin/landing-content/index.html', import.meta.url), 'utf8');
+const billingPage = await readFile(new URL('../app/billing/index.html', import.meta.url), 'utf8');
+const designPage = await readFile(new URL('../app/card/design/index.html', import.meta.url), 'utf8');
+const identityPage = await readFile(new URL('../app/card/identity/index.html', import.meta.url), 'utf8');
 
 async function collect(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -69,8 +72,8 @@ test('light workspace palette overrides legacy dark utility surfaces consistentl
   assert.match(appStyles, /html:not\(\[data-site-theme="light"\]\) \.app-shell-page \.app-shell__main \.bg-white/);
   assert.match(appStyles, /html:not\(\[data-site-theme="light"\]\) \.app-shell-page \.app-shell__main input/);
   assert.match(appStyles, /html:not\(\[data-site-theme="light"\]\) \.app-shell-page \.app-shell__main \.text-slate-600/);
-  assert.match(themeStyles, /html\[data-site-theme="light"\] \.dashboard-shell \.theme-option\s*\{[^}]*background:\s*var\(--site-paper\)[^}]*color:\s*var\(--site-ink\)/s);
-  assert.match(themeStyles, /html\[data-site-theme="light"\] \.dashboard-shell \.theme-option\[aria-pressed="true"\]/);
+  assert.match(themeStyles, /\.dashboard-shell \.theme-option,[\s\S]*background:\s*var\(--site-surface\)\s*!important;[\s\S]*color:\s*var\(--site-ink\)\s*!important/s);
+  assert.match(themeStyles, /\.dashboard-shell \.theme-option\[aria-pressed="true"\]/);
   assert.match(themeStyles, /html\[data-site-theme="light"\] \.dashboard-shell \[data-form-status\]\s*\{[^}]*color:\s*var\(--site-ink\)\s*!important/s);
   assert.match(themeStyles, /html\[data-site-theme="light"\] \.dashboard-shell \[data-form-status\]\[data-tone="error"\]\s*\{[^}]*color:\s*var\(--site-danger\)\s*!important/s);
 });
@@ -102,4 +105,21 @@ test('global shell implements the approved technical brutalist editorial tokens'
   assert.match(themeStyles, /\.mono-button--dark:hover[^{]*\{[^}]*background:\s*var\(--site-accent\)/s);
   assert.match(themeStyles, /dialog::backdrop\s*\{[^}]*rgb\(20 20 20 \/ 70%\)/s);
   assert.match(themeStyles, /\.site-hero h1,[\s\S]*font-size:\s*2rem !important/);
+});
+
+test('workspace feature surfaces reuse the global brutalist primitives in both themes', () => {
+  const billingStart = appStyles.indexOf('/* Billing:');
+  const billingEnd = appStyles.indexOf('.dashboard-link,', billingStart);
+  const billingLayout = appStyles.slice(billingStart, billingEnd);
+  assert.doesNotMatch(billingLayout, /#[0-9a-f]{3,8}|rgba?\(|gradient\(|border-radius|box-shadow|filter:/i);
+  assert.match(billingPage, /class="dashboard-panel billing-plan billing-plan--locked p-5"/);
+  assert.match(billingPage, /class="dashboard-panel billing-notify mt-4"/);
+  assert.match(billingPage, /class="billing-plan__badge" data-status-badge/);
+  assert.match(designPage, /class="dashboard-action min-h-11/);
+  assert.match(designPage, /class="workspace-frame mt-4 p-3"/);
+  assert.match(identityPage, /class="dashboard-panel space-y-8 p-5 sm:p-7"/);
+  assert.match(identityPage, /class="dashboard-panel card-editor-preview-panel/);
+  assert.match(themeStyles, /\.dashboard-shell :is\(form, section, article, aside, div, label\)\[class\*="rounded-"\]/);
+  assert.match(themeStyles, /\.dashboard-shell \.billing-plan--locked\s*\{[^}]*filter:\s*none;[^}]*opacity:\s*1;/s);
+  assert.match(themeStyles, /\.dashboard-shell \.theme-option__preview,[\s\S]*background:\s*var\(--site-surface-strong\)/s);
 });
