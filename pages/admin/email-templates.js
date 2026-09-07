@@ -1,4 +1,5 @@
 import { emailTemplateService } from '../../services/email-template-service.js';
+import { safeHttpUrl } from '../../utils/safe-url.js';
 import { validateEmailTemplateContent } from '../../validators/email-template-validator.js';
 
 export async function renderEmailTemplateManager({ content, status }) {
@@ -348,8 +349,9 @@ class EmailTemplateManager {
     card.style.color = doc.style.textColor;
     if (doc.banner) card.append(node('p', 'mb-3 text-sm font-black', doc.banner));
     if (doc.logoUrl) {
+      const safeLogo = safeHttpUrl(doc.logoUrl);
       const image = document.createElement('img');
-      image.src = doc.logoUrl; image.alt = doc.style.logoAlt; image.width = 160;
+      image.src = safeLogo; image.alt = doc.style.logoAlt; image.width = 160;
       image.className = 'mb-4 h-auto max-w-[10rem]';
       card.append(image);
     }

@@ -1,4 +1,4 @@
-import { safeHttpUrl, safeMailtoHref, safeTelHref } from "../utils/safe-url.js";
+import { safeHttpUrl, safeImageUrl, safeMailtoHref, safeTelHref } from "../utils/safe-url.js";
 
 const FIELD_SELECTORS = {
   fullName: "[data-field='fullName']",
@@ -102,16 +102,18 @@ export function renderCardTheme(root, card) {
   setLink(root, "addressText", card.addressText, safeHttpUrl(card.mapsUrl));
 
   root.querySelectorAll(FIELD_SELECTORS.logoUrl).forEach((img) => {
-    img.hidden = !card.logoUrl;
-    if (card.logoUrl) img.src = card.logoUrl;
+    const safeLogo = safeImageUrl(card.logoUrl);
+    img.hidden = !safeLogo;
+    if (safeLogo) img.src = safeLogo;
   });
   root.querySelectorAll("[data-logo-slot]").forEach((slot) => {
     slot.hidden = !card.logoUrl;
   });
 
   root.querySelectorAll(FIELD_SELECTORS.qrUrl).forEach((img) => {
-    img.hidden = !card.qrUrl;
-    if (card.qrUrl) img.src = card.qrUrl;
+    const safeQr = safeImageUrl(card.qrUrl);
+    img.hidden = !safeQr;
+    if (safeQr) img.src = safeQr;
   });
 
   const socials = root.querySelector("[data-list='socialLinks']");

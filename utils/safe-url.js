@@ -14,6 +14,13 @@ export function safeHttpUrl(value) {
   }
 }
 
+export function safeImageUrl(value) {
+  const candidate = String(value ?? '').trim();
+  if (!candidate || CONTROL_OR_WHITESPACE.test(candidate)) return '';
+  if (/^data:image\/(?:png|jpe?g|gif|webp|svg\+xml|bmp|avif|ico);/i.test(candidate)) return candidate;
+  return safeHttpUrl(candidate);
+}
+
 export function safeMailtoHref(value) {
   const email = String(value ?? '').trim().toLowerCase();
   return email.length <= 190 && EMAIL_PATTERN.test(email) ? `mailto:${email}` : '';

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { safeHttpUrl, safeMailtoHref, safeTelHref } from '../utils/safe-url.js';
+import { safeHttpUrl, safeImageUrl, safeMailtoHref, safeTelHref } from '../utils/safe-url.js';
 
 test('safeHttpUrl permits only complete HTTP(S) URLs', () => {
   assert.equal(safeHttpUrl('https://example.com/a?b=1'), 'https://example.com/a?b=1');
@@ -18,6 +18,30 @@ test('safeHttpUrl permits only complete HTTP(S) URLs', () => {
     'https://example.com/\nscript',
   ]) {
     assert.equal(safeHttpUrl(unsafe), '', unsafe);
+  }
+});
+
+test('safeImageUrl permits HTTP(S) and safe image data URIs only', () => {
+  assert.equal(safeImageUrl('https://example.com/logo.png'), 'https://example.com/logo.png');
+  assert.equal(
+    safeImageUrl('data:image/png;base64,AAAA'),
+    'data:image/png;base64,AAAA',
+  );
+  assert.equal(
+    safeImageUrl('data:image/svg+xml;charset=UTF-8,%3Csvg%3E'),
+    'data:image/svg+xml;charset=UTF-8,%3Csvg%3E',
+  );
+  for (const unsafe of [
+    '',
+    '   ',
+    '/relative/logo.png',
+    'javascript:alert(1)',
+    'data:text/html,test',
+    'data:image/svg+xml,<script>alert(1)</script>',
+    'file:///tmp/logo.png',
+    'https://user:password@example.com/logo.png',
+  ]) {
+    assert.equal(safeImageUrl(unsafe), '', unsafe);
   }
 });
 

@@ -4,7 +4,7 @@ const starterPublicIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab]
 
 export function safeReturnTo(value) {
   if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) return '';
-  if (/[\\\u0000-\u001f\u007f]/.test(value)) return '';
+  if (/[\\\u0000-\u001f\u007f\u2028\u2029]/.test(value)) return '';
 
   const rawPath = value.split(/[?#]/, 1)[0];
   if (/%(?:2f|5c)/i.test(rawPath)) return '';
