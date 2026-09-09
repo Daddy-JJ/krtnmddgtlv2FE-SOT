@@ -149,12 +149,9 @@ function previewData() {
 function updateWhatsappPreview() {
   if (!whatsappPreview || !form) return;
   const mobilePhone = String(form.elements.mobilePhone?.value ?? '').trim();
-  const planCode = String(state.card?.planCode ?? '').toLowerCase();
   if (!mobilePhone) {
     whatsappPreview.textContent = 'Isi nomor mobile untuk menyiapkan CTA WhatsApp.';
-  } else if (planCode && planCode !== 'pro') {
-    whatsappPreview.textContent = `Nomor ${mobilePhone} tersimpan di VCF. CTA WhatsApp tersedia pada paket Pro.`;
   } else {
-    whatsappPreview.textContent = `CTA WhatsApp akan memakai nomor mobile ${mobilePhone} setelah data disimpan.`;
+    whatsappPreview.textContent = `Tombol WhatsApp publik akan memakai nomor mobile ${mobilePhone} setelah data disimpan.`;
   }
 }

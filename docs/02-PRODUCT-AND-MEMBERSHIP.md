@@ -18,7 +18,7 @@ satu URL publik, QR, vCard, kartu visual, dan fitur tambahan sesuai membership.
 | Catalog items | 0 | 2 | 10 |
 | Google Maps | No | Yes | Yes |
 | Logo | No | No | Yes |
-| WhatsApp CTA | No | No | Yes |
+| WhatsApp CTA | Yes | Yes | Yes |
 | Resume Enhancement | No | No | 1 beneficiary/period |
 | Subscription term | Free | 365 days | 365 days |
 
@@ -37,7 +37,8 @@ sebagai enforcement keamanan.
 - Website.
 - Alamat.
 
-Maps URL, logo, WhatsApp, social links, dan catalog mengikuti tier. Semua theme
+Maps URL, logo, social links, dan catalog mengikuti tier. WhatsApp CTA tersedia
+untuk semua tier ketika nomor handphone valid. Semua theme
 memakai data inti yang sama; mengganti theme tidak membuat salinan contact data.
 
 ## Starter journey

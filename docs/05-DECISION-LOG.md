@@ -121,6 +121,19 @@ specialist management, and audit access. `resume_quality_reviewer` is retired an
 must not appear in role choices or receive privileged navigation from an old
 claim. Backend permissions and request-state checks remain authoritative.
 
+## FE-D-012 - WhatsApp CTA available to all tiers
+
+Date: 2026-09-09
+Status: Accepted
+
+Owner approved WhatsApp click-to-chat on public cards for Starter, Basic, and
+Pro, superseding only the Pro-only WhatsApp CTA entitlement in the previous
+card-capability decision. The frontend derives a non-persisted digits-only
+`https://wa.me/62...` shortlink from a valid saved Indonesian mobile number.
+Local numbers beginning with `0`, country-code numbers beginning with `62`, and
+display formatting are normalized; invalid or absent numbers keep the CTA hidden.
+No endpoint, request payload, database field, or card artwork contract changes.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

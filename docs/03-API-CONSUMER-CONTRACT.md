@@ -118,9 +118,11 @@ as an invalid, expired, or already-used link.
 
 `PUT /cards/{publicId}` may submit nullable `contact.mapsUrl`; the frontend
 accepts only an HTTP(S) URL and the backend remains authoritative for Basic/Pro
-access. `whatsappUrl` is a read-only public aggregate value derived by the
-backend from the saved mobile number for eligible Pro cards; the browser must not
-submit or persist a WhatsApp URL. A saved `logoUrl` may be rendered, but no logo
+access. WhatsApp CTA is available to every tier. The public frontend derives an
+official digits-only `https://wa.me/62...` shortlink from a valid saved Indonesian
+mobile number; it must not submit or persist a WhatsApp URL. A backend-provided
+`whatsappUrl` may remain in the aggregate for compatibility but is not required
+by this frontend behavior. A saved `logoUrl` may be rendered, but no logo
 upload/delete operation is approved in this consumer contract yet.
 
 ### Social and catalog

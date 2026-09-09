@@ -33,6 +33,19 @@ export function publicCardViewModel(card) {
   });
 }
 
+/** Build an official digits-only WhatsApp shortlink for Indonesian mobile numbers. */
+export function whatsappChatUrl(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw || /[^\d\s()+.-]/.test(raw)) return '';
+
+  let digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('00')) digits = digits.slice(2);
+  if (digits.startsWith('0')) digits = `62${digits.slice(1)}`;
+  else if (digits.startsWith('8')) digits = `62${digits}`;
+
+  return /^628\d{7,11}$/.test(digits) ? `https://wa.me/${digits}` : '';
+}
+
 export function publicAssetLinks(slug) {
   const encoded = encodeURIComponent(slug);
   return Object.freeze({

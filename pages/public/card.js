@@ -1,6 +1,6 @@
 import { api } from '../../services/api-client.js';
 import { renderCardTheme } from '../../services/card-theme-renderer.js';
-import { publicAssetLinks, publicCardViewModel, publicSlugFromPath } from '../../services/public-card-presenter.js';
+import { publicAssetLinks, publicCardViewModel, publicSlugFromPath, whatsappChatUrl } from '../../services/public-card-presenter.js';
 import { safeHttpUrl } from '../../utils/safe-url.js';
 
 const nodes = {
@@ -113,10 +113,14 @@ function renderActions(card, slug) {
   const links = publicAssetLinks(slug);
   nodes.vcard.href = links.vcard;
   nodes.qr.href = links.qrDownload;
-  const whatsappUrl = safeHttpUrl(card.whatsappUrl);
+  nodes.whatsapp.hidden = true;
+  nodes.whatsapp.removeAttribute('href');
+  nodes.whatsapp.parentElement?.classList.remove('public-card-actions--with-whatsapp');
+  const whatsappUrl = whatsappChatUrl(card.contact?.mobilePhone);
   if (whatsappUrl) {
     nodes.whatsapp.href = whatsappUrl;
     nodes.whatsapp.hidden = false;
+    nodes.whatsapp.parentElement?.classList.add('public-card-actions--with-whatsapp');
   }
 }
 

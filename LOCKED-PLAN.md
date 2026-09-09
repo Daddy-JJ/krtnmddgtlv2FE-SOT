@@ -48,7 +48,7 @@ dari backend. Browser tidak boleh mengaktifkan membership.
 - Social limit: Starter 0, Basic 2, Pro 5.
 - Catalog limit: Starter 0, Basic 2, Pro 10.
 - Maps: Basic dan Pro.
-- Logo dan WhatsApp CTA: Pro.
+- Logo: Pro. WhatsApp CTA dari nomor handphone publik: Starter, Basic, dan Pro.
 - QR dan vCard tersedia untuk semua tier melalui backend output.
 - Artwork kartu publik tidak menampilkan label tier.
 

@@ -63,7 +63,9 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 - Added nullable HTTP(S) Maps editing through the existing complete card update
   payload while preserving the rest of the contact data.
 - Added a read-only WhatsApp CTA explanation tied to the mobile number; no
-  browser-supplied WhatsApp URL was introduced.
+  browser-supplied WhatsApp URL was introduced. FE-D-012 subsequently makes the
+  public CTA available to all tiers through a non-persisted, normalized `wa.me`
+  shortlink when the saved Indonesian mobile number is valid.
 - Added isolated active-theme preview that updates from unsaved editor form data
   and continues to use saved theme/logo/QR/social values.
 - Social and catalog create/list/delete flows now append and display items in a
@@ -159,6 +161,17 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
   the unauthenticated route probe returns 401. No real email was sent.
 - Remaining external gate: authenticated Super Admin mutation checks and
   designated-mailbox UAT. No commit, push, or deployment was performed.
+
+## WhatsApp CTA all tiers
+
+- FE-D-012 is implemented on public cards for Starter, Basic, and Pro.
+- Indonesian mobile input is normalized to an official digits-only
+  `https://wa.me/62...` shortlink; missing or invalid numbers keep the CTA hidden.
+- The existing card action language is preserved with a responsive four, two,
+  or one-column layout when WhatsApp is available.
+- Local QA on 2026-09-09 builds 158 allowlisted files and passes 140/140 tests.
+  The live `/PCiZZvU` shell, JavaScript, CSS, and public mobile aggregate respond
+  successfully without creating or modifying backend data.
 
 ## Reintegration phase status
 

@@ -23,6 +23,7 @@ test('public card shell exposes accessible loading, content, action, and error s
   assert.match(shell, /data-vcard-link/);
   assert.match(shell, /data-qr-link/);
   assert.match(shell, /data-bookmark-link/);
+  assert.match(shell, /data-whatsapp-link hidden/);
   assert.match(shell, /data-bookmark-status aria-live="polite"/);
   assert.match(shell, /data-full-details-section/);
   assert.match(shell, /data-full-details-list/);
@@ -38,6 +39,8 @@ test('public page allowlists registry templates and renders remote data through 
   assert.match(page, /replaceChildren/);
   assert.match(page, /textContent/);
   assert.match(page, /safeHttpUrl/);
+  assert.match(page, /whatsappChatUrl\(card\.contact\?\.mobilePhone\)/);
+  assert.match(page, /public-card-actions--with-whatsapp/);
   assert.match(page, /function renderFullDetails/);
   assert.match(page, /navigator\.clipboard\.writeText/);
   assert.match(page, /function saveBookmark/);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { publicAssetLinks, publicCardViewModel, publicSlugFromPath } from '../services/public-card-presenter.js';
+import { publicAssetLinks, publicCardViewModel, publicSlugFromPath, whatsappChatUrl } from '../services/public-card-presenter.js';
 
 test('root public slug parser preserves Starter case and rejects nested or unsafe paths', () => {
   assert.equal(publicSlugFromPath('/QaStart'), 'QaStart');
@@ -41,4 +41,14 @@ test('public VCF and QR links encode the exact case-sensitive slug', () => {
     vcard: '/api/v1/public/cards/QaStart/vcard',
     qrDownload: '/api/v1/public/cards/QaStart/qr?download=true',
   });
+});
+
+test('WhatsApp shortlink normalizes Indonesian mobile numbers for every tier', () => {
+  assert.equal(whatsappChatUrl('0813 2821-9697'), 'https://wa.me/6281328219697');
+  assert.equal(whatsappChatUrl('+62 813 2821 9697'), 'https://wa.me/6281328219697');
+  assert.equal(whatsappChatUrl('6281328219697'), 'https://wa.me/6281328219697');
+  assert.equal(whatsappChatUrl('81328219697'), 'https://wa.me/6281328219697');
+  assert.equal(whatsappChatUrl('021-555-0100'), '');
+  assert.equal(whatsappChatUrl('0813ext123'), '');
+  assert.equal(whatsappChatUrl(''), '');
 });
