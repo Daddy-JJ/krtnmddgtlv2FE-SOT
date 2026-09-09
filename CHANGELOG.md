@@ -5,6 +5,11 @@ Perubahan historis monorepo sebelum reintegrasi tersedia di
 
 ## Unreleased
 
+- Menyederhanakan form Starter dengan sapaan Mr/Mrs/Ms opsional, nama belakang
+  opsional, website opsional, dan istilah Nomor handphone.
+- Mengarahkan link pengelolaan Starter langsung ke Signup, mengisi email read-only
+  dari signup-context, serta menampilkan Login hanya untuk EMAIL_ALREADY_EXISTS
+  tanpa menyimpan email atau token handoff di URL/Web Storage.
 - Menyelesaikan Phase 10 re-check dengan 154 file build dan 117 test lulus,
   menambahkan baseline security headers pada Vercel, memverifikasi parity dengan
   Apache, serta mengunci session-storage claim ke public ID tervalidasi.

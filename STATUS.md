@@ -173,6 +173,21 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
   The live `/PCiZZvU` shell, JavaScript, CSS, and public mobile aggregate respond
   successfully without creating or modifying backend data.
 
+## Starter form and direct Signup
+
+- FE-D-013 makes Mr/Mrs/Ms, last name, and website optional while retaining a
+  required first name and the existing backend contact.fullName payload.
+- FE-D-014 exchanges the email token, removes its fragment, and opens Signup
+  directly. Signup fetches the cookie-authorized email from signup-context and
+  keeps it read-only.
+- Login is hidden for the new-user path and appears only after backend code
+  EMAIL_ALREADY_EXISTS. No email or handoff token is persisted in URL or Web
+  Storage.
+- Local QA on 2026-09-09 builds 158 allowlisted files and passes 142/142 tests.
+  Read-only live probes pass for Create, Manage, and the Signup module on port
+  8080. Backend port 3000 was offline, so live signup-context integration remains
+  to be exercised when both services are running.
+
 ## Reintegration phase status
 
 | Phase | Status |
@@ -191,7 +206,7 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 ## Validation note
 
 `npm run build` passes and produces 158 allowlisted runtime files. Full `npm test`
-passes all 129 tests, including public slug routing, asset serving, Starter email
+passes all 142 tests, including public slug routing, asset serving, Starter email
 handoff, and the repository-local same-origin stack/proxy.
 No live Vercel deployment, external API mutation, or server cleanup was performed
 during SOT reintegration.

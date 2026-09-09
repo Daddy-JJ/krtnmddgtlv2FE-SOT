@@ -36,14 +36,18 @@ dari backend. Browser tidak boleh mengaktifkan membership.
 - Form Starter dapat digunakan tanpa akun.
 - Backend membuat slug tujuh huruf `a-zA-Z`, case-sensitive.
 - Link email `Kelola kartu` boleh membawa token opaque untuk handoff aman.
-- Pengguna wajib Login/Signup dan mempunyai akun terverifikasi sebelum claim.
+- Pengguna baru dari link email diarahkan langsung ke Signup dengan email kartu
+  terisi read-only. Login hanya ditawarkan jika backend menyatakan email sudah
+  mempunyai akun.
+- Pengguna wajib mempunyai akun terverifikasi sebelum claim.
 - Kartu wajib diklaim ke akun sebelum dapat diedit.
 - Credential atau token handoff tidak boleh disimpan di Web Storage.
 
 ## Card capability
 
-- Core contact: nama, jabatan, organisasi, telepon kantor, telepon seluler, email,
-  website, dan alamat.
+- Core contact: nama, jabatan, organisasi, telepon kantor, nomor handphone,
+  email, website, dan alamat. Pada form Starter, sapaan Mr/Mrs/Ms dan nama
+  belakang bersifat opsional; nama depan tetap wajib. Website juga opsional.
 - Theme access kumulatif: Starter 1, Basic 3, Pro 10.
 - Social limit: Starter 0, Basic 2, Pro 5.
 - Catalog limit: Starter 0, Basic 2, Pro 10.

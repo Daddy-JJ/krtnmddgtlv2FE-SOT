@@ -88,6 +88,7 @@ SQL, storage path, token, atau internal exception.
 |---|---|---|
 | POST | `/starter/cards` | Anonymous Starter creation |
 | POST | `/starter/access` | Exchange email management handoff |
+| GET | `/starter/cards/{publicId}/signup-context` | Read the cookie-authorized Starter email for Signup |
 | PUT | `/starter/cards/{publicId}` | Update after authorized account flow |
 | POST | `/starter/cards/{publicId}/claim` | Claim into verified account |
 
@@ -102,6 +103,18 @@ email delivered. The email handoff is posted to /starter/access with
 { publicId, token }, credentials included, and no CSRF header. A successful
 exchange removes the token fragment from browser history; HTTP 401 is presented
 as an invalid, expired, or already-used link.
+
+After exchange, the frontend goes directly to Signup. It requests
+`signup-context` with credentials included and no CSRF header, then shows only
+the returned email as a read-only form value. Email and handoff token must not be
+copied into query parameters or Web Storage. HTTP 401 means the management
+context is unavailable. A registration response with HTTP 409 code
+`EMAIL_ALREADY_EXISTS` reveals the Login recovery route while preserving the
+safe `returnTo`.
+
+Starter creation sends one backend `contact.fullName` assembled from optional
+Mr/Mrs/Ms, required first name, and optional last name. An omitted website is
+sent as `websiteUrl: ""`; non-empty websites still require HTTP(S).
 
 ### Cards and design
 

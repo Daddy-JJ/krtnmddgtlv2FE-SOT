@@ -1,11 +1,13 @@
 import { normalizeWebsiteUrl } from '../utils/website-url.js';
 
 const httpUrlPattern = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
+const allowedNamePrefixes = new Set(['Mr', 'Mrs', 'Ms']);
 
 export const starterFields = ['fullName', 'jobTitle', 'organization', 'officePhone', 'mobilePhone', 'email', 'websiteUrl', 'addressText'];
 
 export function buildStarterInput(values, locale = 'id') {
-  const splitName = [clean(values.firstName), clean(values.lastName)].filter(Boolean).join(' ');
+  const namePrefix = allowedNamePrefixes.has(clean(values.namePrefix)) ? clean(values.namePrefix) : '';
+  const splitName = [namePrefix, clean(values.firstName), clean(values.lastName)].filter(Boolean).join(' ');
   return {
     locale: 'id',
     contact: {
@@ -22,17 +24,19 @@ export function buildStarterInput(values, locale = 'id') {
 }
 
 export function validateStarterCreateValues(values, locale = 'id') {
+  const namePrefix = clean(values.namePrefix);
   const firstName = clean(values.firstName);
   const lastName = clean(values.lastName);
   const input = buildStarterInput(values, locale);
   const { fullName: _fullName, ...contactErrors } = validateStarterInput(input);
 
   return compactErrors({
+    namePrefix: namePrefix && !allowedNamePrefixes.has(namePrefix) ? 'Sapaan tidak valid.' : '',
     firstName: requiredMax(firstName, 'Nama depan', 100)
       || (input.contact.fullName.length > 150
-        ? 'Gabungan nama depan dan nama belakang maksimal 150 karakter.'
+        ? 'Gabungan sapaan, nama depan, dan nama belakang maksimal 150 karakter.'
         : ''),
-    lastName: requiredMax(lastName, 'Nama belakang', 100),
+    lastName: maxOnly(lastName, 'Nama belakang', 100),
     ...contactErrors,
   });
 }
@@ -44,7 +48,7 @@ export function validateStarterInput(input) {
     jobTitle: maxOnly(contact.jobTitle, 'Jabatan', 120),
     organization: maxOnly(contact.organization, 'Organisasi / Perusahaan', 150),
     officePhone: maxOnly(contact.officePhone, 'Telepon kantor', 32),
-    mobilePhone: maxOnly(contact.mobilePhone, 'Nomor mobile', 32),
+    mobilePhone: maxOnly(contact.mobilePhone, 'Nomor handphone', 32),
     email: email(contact.email),
     websiteUrl: website(contact.websiteUrl),
     addressText: maxOnly(contact.addressText, 'Alamat', 1000),
@@ -77,7 +81,7 @@ function email(value) {
 
 function website(value) {
   const text = clean(value);
-  if (!text) return 'Website wajib diisi.';
+  if (!text) return '';
   if (text.length > 500 || !httpUrlPattern.test(text)) return 'Website wajib memakai URL http atau https.';
   return '';
 }

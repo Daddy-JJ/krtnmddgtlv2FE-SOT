@@ -86,23 +86,29 @@ test('website input accepts a bare domain and prevents duplicated protocols', ()
   assert.deepEqual(validateStarterInput(buildStarterInput({ fullName: 'A', email: 'a@example.com', websiteUrl: 'detik.com' })), {});
 });
 
-test('Starter create combines required first and last names into the fullName API contract', async () => {
+test('Starter create combines optional prefix and last name into the fullName API contract', async () => {
   const values = {
+    namePrefix: 'Ms',
     firstName: ' Begitu ',
-    lastName: ' Indah, SE ',
+    lastName: '',
     email: 'begitu@example.com',
-    websiteUrl: 'https://example.com',
+    websiteUrl: '',
   };
   const input = buildStarterInput(values);
 
-  assert.equal(input.contact.fullName, 'Begitu Indah, SE');
+  assert.equal(input.contact.fullName, 'Ms Begitu');
+  assert.equal(input.contact.websiteUrl, '');
   assert.deepEqual(validateStarterCreateValues(values), {});
   assert.equal(validateStarterCreateValues({ ...values, firstName: '' }).firstName, 'Nama depan wajib diisi.');
-  assert.equal(validateStarterCreateValues({ ...values, lastName: '' }).lastName, 'Nama belakang wajib diisi.');
+  assert.equal(validateStarterCreateValues({ ...values, namePrefix: 'Dr' }).namePrefix, 'Sapaan tidak valid.');
 
   const page = await readFile(new URL('../create/index.html', import.meta.url), 'utf8');
+  assert.match(page, /name="namePrefix"[^>]*autocomplete="honorific-prefix"/);
   assert.match(page, /name="firstName"[^>]*autocomplete="given-name"[^>]*required/);
-  assert.match(page, /name="lastName"[^>]*autocomplete="family-name"[^>]*required/);
+  assert.match(page, /name="lastName"[^>]*autocomplete="family-name"/);
+  assert.doesNotMatch(page, /name="lastName"[^>]*required/);
+  assert.doesNotMatch(page, /name="websiteUrl"[^>]*required/);
+  assert.ok(page.includes('>Nomor handphone</label>'));
   assert.match(page, />Organisasi \/ Perusahaan<\/label>/);
   assert.doesNotMatch(page, /name="fullName"/);
 });
@@ -148,10 +154,10 @@ test('Starter claim session storage keeps only a validated public ID navigation 
   }
 });
 
-test('Starter management page has account-only actions and no anonymous edit controls', async () => {
+test('Starter management page directs new users to signup without an initial login choice', async () => {
   const page = await readFile(new URL('../starter/manage/index.html', import.meta.url), 'utf8');
-  assert.match(page, /data-starter-login/);
-  assert.match(page, /data-starter-signup/);
+  assert.match(page, /Menyiapkan pendaftaran akun/);
+  assert.doesNotMatch(page, /data-starter-login|data-starter-signup|Login atau buat akun/);
   assert.doesNotMatch(page, /Simpan perubahan|Claim ke akun login|data-starter-manage-form/);
   assert.equal(authErrorMessage({ code: 'INTERNAL_SERVER_ERROR' }), 'Layanan sedang mengalami kendala. Coba lagi beberapa menit lagi.');
 });

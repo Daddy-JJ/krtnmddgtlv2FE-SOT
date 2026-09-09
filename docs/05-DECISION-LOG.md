@@ -134,6 +134,27 @@ Local numbers beginning with `0`, country-code numbers beginning with `62`, and
 display formatting are normalized; invalid or absent numbers keep the CTA hidden.
 No endpoint, request payload, database field, or card artwork contract changes.
 
+## FE-D-013 - Flexible Starter identity and optional website
+
+Date: 2026-09-09
+Status: Accepted
+
+The Starter form keeps first name required while making Mr/Mrs/Ms and last name
+optional. The frontend combines those visible parts into the existing
+contact.fullName contract. Website is optional and is sent as an empty string
+when omitted. The user-facing mobile label is Nomor handphone.
+
+## FE-D-014 - Direct Starter Signup after email handoff
+
+Date: 2026-09-09
+Status: Accepted
+
+A new Starter user is not presented with Login versus Signup after opening the
+email management link. After the one-time token exchange, the frontend removes
+the fragment and opens Signup directly. The backend-authorized signup context
+provides the card email, which remains read-only and is never put in URL or Web
+Storage. Login appears only as recovery after EMAIL_ALREADY_EXISTS.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

@@ -1,4 +1,5 @@
 import { authService } from '../../services/auth-service.js';
+import { starterService } from '../../services/starter-service.js';
 import { normalizeEmail, validateEmail, validateVerifyOtp } from '../../validators/auth-validator.js';
 import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
 import { authErrorMessage, pendingStarterClaim, safeMembershipIntent, safeReturnTo, starterPublicIdFromReturnTo, withAuthContext } from '../../utils/auth-flow.js';
@@ -16,6 +17,7 @@ const loginLink = document.querySelector('a[href="/login/"]');
 if (loginLink) loginLink.href = withAuthContext('/login/', { returnTo, intent });
 if (starterId) {
   document.querySelector('.auth-intro')?.replaceChildren(document.createTextNode('Masukkan kode 6 digit. Sesudah login, kartu Starter akan otomatis muncul di workspace.'));
+  prepareStarterVerification();
 }
 
 form?.elements.code?.addEventListener('input', (event) => {
@@ -79,4 +81,20 @@ function startCooldown(seconds) {
       resend.disabled = false;
     }
   }, 1000);
+}
+
+async function prepareStarterVerification() {
+  if (!emailInput) return;
+  emailInput.readOnly = true;
+  emailInput.setAttribute('aria-readonly', 'true');
+  showStatus(status, 'Memuat email kartu Starter...', 'info');
+  try {
+    const context = await starterService.signupContext(starterId);
+    emailInput.value = normalizeEmail(context?.email);
+    if (!emailInput.value) throw new Error('Starter signup context did not include an email.');
+    showStatus(status, 'Email kartu siap. Masukkan kode OTP yang telah dikirim.', 'success');
+    form?.elements.code?.focus();
+  } catch {
+    showStatus(status, 'Konteks kartu tidak tersedia. Buka kembali link pengelolaan terbaru dari email Anda.', 'error');
+  }
 }

@@ -24,15 +24,27 @@
     <h1 class="text-3xl font-black tracking-tight">Buat kartu Starter</h1>
     <p class="auth-intro mt-3 max-w-2xl">Starter dibuat tanpa akun. Setelah selesai, link pengelolaan akan dikirim ke email Anda, sedangkan URL publik tetap random dan read-only.</p>
     <form class="auth-panel mt-8 grid gap-5 md:grid-cols-2" data-starter-create-form novalidate>
-      <div>
-        <label class="block text-sm font-semibold" for="firstName">Nama Depan</label>
-        <input class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3" id="firstName" name="firstName" autocomplete="given-name" required>
-        <p class="mt-1 text-sm text-red-700" data-field-error="firstName"></p>
-      </div>
-      <div>
-        <label class="block text-sm font-semibold" for="lastName">Nama Belakang</label>
-        <input class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3" id="lastName" name="lastName" autocomplete="family-name" required>
-        <p class="mt-1 text-sm text-red-700" data-field-error="lastName"></p>
+      <div class="grid gap-5 md:col-span-2 md:grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)]">
+        <div>
+          <label class="block text-sm font-semibold" for="namePrefix">Sapaan <span class="font-normal">(opsional)</span></label>
+          <select class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3" id="namePrefix" name="namePrefix" autocomplete="honorific-prefix">
+            <option value="">Tanpa sapaan</option>
+            <option value="Mr">Mr</option>
+            <option value="Mrs">Mrs</option>
+            <option value="Ms">Ms</option>
+          </select>
+          <p class="mt-1 text-sm text-red-700" data-field-error="namePrefix"></p>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold" for="firstName">Nama Depan</label>
+          <input class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3" id="firstName" name="firstName" autocomplete="given-name" required>
+          <p class="mt-1 text-sm text-red-700" data-field-error="firstName"></p>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold" for="lastName">Nama Belakang <span class="font-normal">(opsional)</span></label>
+          <input class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3" id="lastName" name="lastName" autocomplete="family-name">
+          <p class="mt-1 text-sm text-red-700" data-field-error="lastName"></p>
+        </div>
       </div>
       <div>
         <label class="block text-sm font-semibold" for="jobTitle">Jabatan</label>
@@ -50,7 +62,7 @@
         <p class="mt-1 text-sm text-red-700" data-field-error="officePhone"></p>
       </div>
       <div>
-        <label class="block text-sm font-semibold" for="mobilePhone">Nomor mobile</label>
+        <label class="block text-sm font-semibold" for="mobilePhone">Nomor handphone</label>
         <input class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3" id="mobilePhone" name="mobilePhone" type="tel" inputmode="tel" autocomplete="tel">
         <p class="mt-1 text-sm text-red-700" data-field-error="mobilePhone"></p>
       </div>
@@ -60,8 +72,8 @@
         <p class="mt-1 text-sm text-red-700" data-field-error="email"></p>
       </div>
       <div class="md:col-span-2">
-        <label class="block text-sm font-semibold" for="websiteUrl">Website</label>
-        <input class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3" id="websiteUrl" name="websiteUrl" type="url" placeholder="contoh.com atau https://contoh.com" autocomplete="url" required>
+        <label class="block text-sm font-semibold" for="websiteUrl">Website <span class="font-normal">(opsional)</span></label>
+        <input class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3" id="websiteUrl" name="websiteUrl" type="url" placeholder="contoh.com atau https://contoh.com" autocomplete="url">
         <p class="mt-1 text-sm text-red-700" data-field-error="websiteUrl"></p>
       </div>
       <div class="md:col-span-2">

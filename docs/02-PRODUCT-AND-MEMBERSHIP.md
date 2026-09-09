@@ -28,13 +28,14 @@ sebagai enforcement keamanan.
 
 ## Core card fields
 
-- Nama lengkap.
+- Nama lengkap. Form Starter menyusun field ini dari sapaan opsional Mr/Mrs/Ms,
+  nama depan wajib, dan nama belakang opsional.
 - Role/jabatan.
 - Organization/perusahaan.
 - Office phone.
-- Mobile phone.
+- Nomor handphone.
 - Email.
-- Website.
+- Website (opsional pada form Starter).
 - Alamat.
 
 Maps URL, logo, social links, dan catalog mengikuti tier. WhatsApp CTA tersedia
@@ -48,9 +49,13 @@ memakai data inti yang sama; mengganti theme tidak membuat salinan contact data.
 3. Email berisi URL publik dan link `Kelola kartu` dikirim oleh backend.
 4. Link management boleh ditukar menjadi credential HttpOnly dan token harus
    dihapus dari browser URL.
-5. Halaman management mengarahkan pengguna ke Login atau Signup.
-6. Akun wajib terverifikasi dan kartu wajib diklaim.
-7. Setelah claim berhasil, pengguna dapat mengedit melalui member workspace.
+5. Halaman management langsung mengarahkan pengguna baru ke Signup. Email
+   diambil dari context backend, terisi read-only, dan tidak masuk URL atau
+   Web Storage.
+6. Login baru ditawarkan bila registrasi ditolak dengan
+   EMAIL_ALREADY_EXISTS.
+7. Akun wajib terverifikasi dan kartu wajib diklaim.
+8. Setelah claim berhasil, pengguna dapat mengedit melalui member workspace.
 
 Anonymous edit tidak diizinkan. Public slug bukan credential.
 

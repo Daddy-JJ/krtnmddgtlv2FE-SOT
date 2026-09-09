@@ -14,6 +14,9 @@ export const starterService = {
   openAccess(publicId, token) {
     return api.post('/starter/access', { publicId, token }, { csrfContext: null, skipRefresh: true });
   },
+  signupContext(publicId) {
+    return api.get(`/starter/cards/${encodeURIComponent(publicId)}/signup-context`, { skipRefresh: true });
+  },
   update(publicId, input) {
     return api.put(`/starter/cards/${encodeURIComponent(publicId)}`, input, { csrfContext: 'access' });
   },

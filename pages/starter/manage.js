@@ -6,15 +6,9 @@ const status = document.querySelector('[data-form-status]');
 const params = new URLSearchParams(location.search);
 const publicId = params.get('publicId') ?? '';
 const returnTo = publicId ? `/starter/manage/?publicId=${encodeURIComponent(publicId)}` : '';
-const loginLinks = document.querySelectorAll('[data-starter-login]');
-const signupLinks = document.querySelectorAll('[data-starter-signup]');
-
-loginLinks.forEach((link) => { link.href = withAuthContext('/login/', { returnTo }); });
-signupLinks.forEach((link) => { link.href = withAuthContext('/register/', { returnTo }); });
 
 if (!publicId) {
   showStatus(status, 'Link pengelolaan tidak lengkap. Buka kembali link dari email Anda.', 'error');
-  [...loginLinks, ...signupLinks].forEach((link) => link.setAttribute('aria-disabled', 'true'));
 } else {
   openEmailAccess();
 }
@@ -22,7 +16,9 @@ if (!publicId) {
 async function openEmailAccess() {
   const token = new URLSearchParams(location.hash.slice(1)).get('token');
   if (!token) {
-    showStatus(status, 'Login atau signup untuk menghubungkan kartu ini ke akun Anda.', 'info');
+    rememberStarterClaim(publicId);
+    showStatus(status, 'Membuka pendaftaran akun...', 'info');
+    location.replace(withAuthContext('/register/', { returnTo }));
     return;
   }
   showStatus(status, 'Memverifikasi link pengelolaan...', 'info');
@@ -30,7 +26,8 @@ async function openEmailAccess() {
     await starterService.openAccess(publicId, token);
     rememberStarterClaim(publicId);
     history.replaceState(null, '', `${location.pathname}${location.search}`);
-    showStatus(status, 'Kartu siap dihubungkan. Login atau signup untuk melanjutkan.', 'success');
+    showStatus(status, 'Link terverifikasi. Membuka pendaftaran akun...', 'success');
+    location.replace(withAuthContext('/register/', { returnTo }));
   } catch (error) {
     showStatus(status, 'Link pengelolaan tidak valid atau sudah kedaluwarsa. Minta link baru melalui support.', 'error');
   }

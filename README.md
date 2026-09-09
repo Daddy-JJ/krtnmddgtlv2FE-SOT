@@ -78,6 +78,18 @@ Untuk membuka frontend melalui `http://localhost:8080`, backend harus mengizinka
 Origin tersebut pada CORS. Jika CORS atau cookie gagal, gunakan URL kanonis
 `http://127.0.0.1:8080/` dan backend `http://127.0.0.1:3000/`.
 
+### Alur Starter
+
+Form `/create/` mewajibkan nama depan dan email. Sapaan Mr/Mrs/Ms, nama
+belakang, dan website bersifat opsional; nomor kontak menggunakan label
+`Nomor handphone`.
+
+Link pengelolaan dari email menukar token satu kali, menghapus fragment dari
+history, lalu membuka Signup secara langsung. Email kartu diambil dari endpoint
+`signup-context`, ditampilkan read-only, dan tidak disimpan di URL atau Web
+Storage. Login baru ditampilkan bila backend mengembalikan
+`EMAIL_ALREADY_EXISTS`.
+
 ## Source of truth
 
 Mulai dari:
