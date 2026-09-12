@@ -17,6 +17,7 @@ repository ini dibatasi pada kontrak yang dibutuhkan browser dan deployment prox
 | UI/UX conventions dan accessibility | `docs/01-FRONTEND-ARCHITECTURE.md`, lalu contract halaman/test |
 | Deployment frontend | `docs/04-DEPLOYMENT.md` |
 | Implementasi aktual dan known gaps | kode, test, lalu `STATUS.md` |
+| Bukti implementasi lintas tier | `docs/TIER-IMPLEMENTATION-MATRIX.md` |
 | Operasional hosting | `docs/hosting-handover.md` |
 
 `FILE-INDEX.md` dan `PROJECT-STRUCTURE.md` adalah peta turunan dari repository
@@ -41,6 +42,8 @@ Backend repository memegang authority untuk OpenAPI, server validation, database
 RBAC, payment, email, file storage, dan operational jobs. Repository frontend ini
 tidak menyimpan salinan OpenAPI lama sebagai SOT. Sinkronisasi lintas repository
 dilakukan melalui API consumer contract dan pengujian integrasi/Postman.
+Backend resmi adalah Node.js + Express. Referensi PHP/Laravel backend dan Endroid
+QR hanya historical/superseded.
 
 ## Historical archive
 

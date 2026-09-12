@@ -148,6 +148,10 @@ function previewData() {
 
 function updateWhatsappPreview() {
   if (!whatsappPreview || !form) return;
+  if (state.card?.planCode !== 'pro') {
+    whatsappPreview.textContent = 'CTA WhatsApp tersedia khusus paket Pro.';
+    return;
+  }
   const mobilePhone = String(form.elements.mobilePhone?.value ?? '').trim();
   if (!mobilePhone) {
     whatsappPreview.textContent = 'Isi nomor mobile untuk menyiapkan CTA WhatsApp.';

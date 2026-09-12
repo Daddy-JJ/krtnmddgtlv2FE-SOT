@@ -22,6 +22,7 @@
 | `docs/03-API-CONSUMER-CONTRACT.md` | REST contract yang dibutuhkan frontend |
 | `docs/04-DEPLOYMENT.md` | Build dan deployment Vercel |
 | `docs/05-DECISION-LOG.md` | Keputusan frontend yang disetujui product owner |
+| `docs/TIER-IMPLEMENTATION-MATRIX.md` | Bukti implementasi Starter/Basic/Pro lintas frontend, API, DB, authorization, dan test |
 | `docs/hosting-handover.md` | Handover operasional non-secret |
 
 ## Approved feature specifications and handoff

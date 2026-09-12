@@ -37,6 +37,17 @@ commit, screenshot, dan log.
 - Resume upload hanya menawarkan DOCX maksimal 10 MB; server harus memvalidasi
   ulang format, ukuran, authorization, malware status, dan retention.
 
+## Public slug and QR
+
+- Starter slug is backend-generated `[A-Za-z]{7}`, case-sensitive, contains no
+  personal data, and is never treated as a credential.
+- The browser preserves exact slug case and never offers Starter slug mutation.
+- Public QR is loaded from the configured Node API and contains only the
+  canonical public URL. QR errors or links must not expose token, cookie,
+  internal path, or private contact payload.
+- WhatsApp URL is backend-derived, accepted only as HTTPS `wa.me/628...`, and
+  rendered only when the public aggregate identifies a Pro card.
+
 ## Deployment
 
 - Secret hanya berada di Vercel/backend environment, tidak di static config.

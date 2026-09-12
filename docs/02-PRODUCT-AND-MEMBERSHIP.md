@@ -18,7 +18,7 @@ satu URL publik, QR, vCard, kartu visual, dan fitur tambahan sesuai membership.
 | Catalog items | 0 | 2 | 10 |
 | Google Maps | No | Yes | Yes |
 | Logo | No | No | Yes |
-| WhatsApp CTA | Yes | Yes | Yes |
+| WhatsApp CTA | No | No | Yes |
 | Resume Enhancement | No | No | 1 beneficiary/period |
 | Subscription term | Free | 365 days | 365 days |
 
@@ -39,7 +39,7 @@ sebagai enforcement keamanan.
 - Alamat.
 
 Maps URL, logo, social links, dan catalog mengikuti tier. WhatsApp CTA tersedia
-untuk semua tier ketika nomor handphone valid. Semua theme
+hanya untuk Pro ketika nomor handphone valid. Semua theme
 memakai data inti yang sama; mengganti theme tidak membuat salinan contact data.
 
 ## Starter journey
@@ -95,7 +95,8 @@ normalized field contract yang sama.
 ## Billing and upgrade
 
 Membership Basic/Pro tetap didefinisikan sebagai annual 365-day product, tetapi
-checkout baru sedang paused.
+checkout baru sedang paused sampai product owner menyatakan integrasi Midtrans
+API siap.
 
 Selama pause:
 

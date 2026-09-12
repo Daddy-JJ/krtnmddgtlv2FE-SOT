@@ -124,7 +124,7 @@ claim. Backend permissions and request-state checks remain authoritative.
 ## FE-D-012 - WhatsApp CTA available to all tiers
 
 Date: 2026-09-09
-Status: Accepted
+Status: Superseded by FE-D-015 on 2026-09-11
 
 Owner approved WhatsApp click-to-chat on public cards for Starter, Basic, and
 Pro, superseding only the Pro-only WhatsApp CTA entitlement in the previous
@@ -154,6 +154,41 @@ email management link. After the one-time token exchange, the frontend removes
 the fragment and opens Signup directly. The backend-authorized signup context
 provides the card email, which remains read-only and is never put in URL or Web
 Storage. Login appears only as recovery after EMAIL_ALREADY_EXISTS.
+
+## FE-D-015 - Node backend, native QR, seven-letter Starter slug, and Pro WhatsApp
+
+Date: 2026-09-11
+Status: Accepted
+
+Node.js `>=22.18 <23` with Express is the official backend. PHP/Laravel as an
+active backend and Endroid QR are superseded. Starter public slugs are exactly
+seven ASCII letters, case-sensitive, generated and enforced by the backend, and
+not editable by Starter. QR PNG is rendered by the Node backend from the
+canonical public URL.
+
+The new locked membership baseline supersedes FE-D-012: WhatsApp CTA is now
+Pro-only and the public frontend consumes the safe backend-derived URL. The
+supplied baseline also says Starter has no login/member area while editing is
+allowed; this conflicts with FE-D-002 and the implemented Signup/claim flow.
+That access-model item is `[Need More Information]`; existing secure claim and
+authorization remain unchanged pending owner clarification.
+
+## FE-D-016 - Anonymous Starter creation, account-bound management, and Midtrans gate
+
+Date: 2026-09-12
+Status: Accepted
+
+The owner resolves the access-model question from FE-D-015: a new user may
+create a Starter card without Login or Signup. An account is required only when
+that user chooses to maintain or edit the created card; the user then creates a
+Starter account and claims the specific card through the existing secure
+email-handoff flow. This confirms FE-D-002 and FE-D-014 rather than creating an
+anonymous edit path.
+
+Membership checkout remains paused. It may be activated only after a later
+explicit owner decision confirms that the Midtrans API integration is ready.
+Until then, the frontend keeps checkout actions disabled, displays
+`Under development`, and does not send payment-creation requests.
 
 ## Decision change procedure
 

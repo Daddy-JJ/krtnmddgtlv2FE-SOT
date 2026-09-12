@@ -1,6 +1,6 @@
 # Frontend SOT Reintegration Review
 
-Review date: 2026-09-01
+Review date: 2026-09-11
 
 Status: **LOCAL REINTEGRATION VALIDATION COMPLETE; PRODUCTION READINESS PENDING EXTERNAL EVIDENCE**
 
@@ -91,3 +91,31 @@ Reintegrasi lokal selesai dan repository aman untuk dibuat checkpoint commit,
 di-push, lalu dijadikan Vercel Preview. Production promotion belum disetujui:
 external staging/deployment smoke dan human UAT di atas masih wajib diselesaikan
 terhadap exact commit/artifact yang akan dipromosikan.
+
+## 2026-09-11 backend/QR/slug audit addendum
+
+The active backend checkout is `C:\xampp\htdocs\krtnmdgtlv2API`; the
+double-`d` spelling in the implementation brief does not exist. Source audit
+verified Node/Express composition, native `qrcode` PNG rendering with cache and
+ETag, seven-letter cryptographic Starter allocation, binary unique slug schema,
+and Starter mutation DTO exclusion. Frontend API configuration remains
+`127.0.0.1:3000/api/v1` for local hosts.
+
+Initial preflight stopped safely while MariaDB was unreachable. After XAMPP
+MariaDB was started, the exact `krtnmdgtlv2` identity, binary unique slug
+index, and migration history were verified; a timestamped logical backup was
+created before applying the only pending additive migration, 011.
+
+Final evidence includes 142/142 frontend tests, 156/156 non-database backend
+tests, 1/1 database integration test, direct and proxied health HTTP 200, CORS
+HTTP 204, a passing read-only Newman System run, and isolated `_test` Starter
+E2E for exact-case slug, QR, and VCF. The temporary test record was removed by
+rebuilding the test baseline. Full credentialed Postman mutations and
+production/Vercel UAT remain external gates.
+
+## 2026-09-12 owner clarification
+
+The Starter access-model conflict is resolved: creation is anonymous, while
+maintenance/editing requires a verified account and card claim. Checkout is an
+intentional product pause, not an implementation ambiguity, and remains disabled
+until a future explicit decision confirms Midtrans API readiness.

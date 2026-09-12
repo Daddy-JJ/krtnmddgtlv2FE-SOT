@@ -131,11 +131,11 @@ sent as `websiteUrl: ""`; non-empty websites still require HTTP(S).
 
 `PUT /cards/{publicId}` may submit nullable `contact.mapsUrl`; the frontend
 accepts only an HTTP(S) URL and the backend remains authoritative for Basic/Pro
-access. WhatsApp CTA is available to every tier. The public frontend derives an
-official digits-only `https://wa.me/62...` shortlink from a valid saved Indonesian
-mobile number; it must not submit or persist a WhatsApp URL. A backend-provided
-`whatsappUrl` may remain in the aggregate for compatibility but is not required
-by this frontend behavior. A saved `logoUrl` may be rendered, but no logo
+access. WhatsApp CTA is Pro-only. The browser must not submit or persist a
+WhatsApp URL. Backend-provided `whatsappUrl` is derived from a valid saved
+Indonesian mobile number and must be `null` for Starter/Basic; the
+frontend validates the HTTPS `wa.me` shape and renders it only for Pro. A saved
+`logoUrl` may be rendered, but no logo
 upload/delete operation is approved in this consumer contract yet.
 
 ### Social and catalog
@@ -161,6 +161,9 @@ They require synchronized backend contract before implementation.
 
 Slug casing must be preserved. Public output URLs must use the configured API
 base builder rather than hard-coded origin/path construction.
+Starter slugs are exactly seven ASCII letters and immutable; Basic/Pro custom
+slugs follow the separate lowercase validation and authorization contract. QR
+PNG contains the backend canonical public URL, not raw contact data.
 
 ### Subscription, payment, and feedback
 

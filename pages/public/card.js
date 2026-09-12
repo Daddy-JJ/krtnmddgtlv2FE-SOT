@@ -1,6 +1,6 @@
 import { api } from '../../services/api-client.js';
 import { renderCardTheme } from '../../services/card-theme-renderer.js';
-import { publicAssetLinks, publicCardViewModel, publicSlugFromPath, whatsappChatUrl } from '../../services/public-card-presenter.js';
+import { publicAssetLinks, publicCardViewModel, publicSlugFromPath, safeWhatsAppUrl } from '../../services/public-card-presenter.js';
 import { safeHttpUrl } from '../../utils/safe-url.js';
 
 const nodes = {
@@ -116,7 +116,7 @@ function renderActions(card, slug) {
   nodes.whatsapp.hidden = true;
   nodes.whatsapp.removeAttribute('href');
   nodes.whatsapp.parentElement?.classList.remove('public-card-actions--with-whatsapp');
-  const whatsappUrl = whatsappChatUrl(card.contact?.mobilePhone);
+  const whatsappUrl = card.planCode === 'pro' ? safeWhatsAppUrl(card.whatsappUrl) : '';
   if (whatsappUrl) {
     nodes.whatsapp.href = whatsappUrl;
     nodes.whatsapp.hidden = false;

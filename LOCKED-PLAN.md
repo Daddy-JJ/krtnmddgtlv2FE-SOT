@@ -52,7 +52,7 @@ dari backend. Browser tidak boleh mengaktifkan membership.
 - Social limit: Starter 0, Basic 2, Pro 5.
 - Catalog limit: Starter 0, Basic 2, Pro 10.
 - Maps: Basic dan Pro.
-- Logo: Pro. WhatsApp CTA dari nomor handphone publik: Starter, Basic, dan Pro.
+- Logo dan WhatsApp CTA dari nomor handphone publik: hanya Pro.
 - QR dan vCard tersedia untuk semua tier melalui backend output.
 - Artwork kartu publik tidak menampilkan label tier.
 
@@ -68,7 +68,8 @@ dari backend. Browser tidak boleh mengaktifkan membership.
 
 ## Membership checkout pause
 
-- Checkout dan aktivasi payment baru tetap paused.
+- Checkout dan aktivasi payment baru tetap paused sampai product owner
+  menyatakan integrasi Midtrans API siap.
 - UI boleh menampilkan benefit dan harga informatif.
 - Tombol checkout tidak boleh aktif.
 - Note paused wajib menggunakan teks `Under development`.

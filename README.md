@@ -3,7 +3,9 @@
 Repository ini adalah source frontend mandiri untuk KartuNamaDigital.id. Isinya
 mencakup halaman publik, onboarding Starter, workspace member, workspace internal,
 renderer kartu, dan proxy API Vercel. Implementasi backend berada di repository
-terpisah dan diakses melalui REST API.
+terpisah dan diakses melalui REST API. Backend resmi adalah Node.js 22 +
+Express; PHP/Laravel bukan backend aktif dan phpMyAdmin hanya alat administrasi
+database.
 
 ## Stack
 
@@ -83,6 +85,10 @@ Origin tersebut pada CORS. Jika CORS atau cookie gagal, gunakan URL kanonis
 Form `/create/` mewajibkan nama depan dan email. Sapaan Mr/Mrs/Ms, nama
 belakang, dan website bersifat opsional; nomor kontak menggunakan label
 `Nomor handphone`.
+
+Backend membuat slug Starter tepat tujuh huruf `A-Z`/`a-z`,
+case-sensitive, dan tidak dapat diedit oleh Starter. QR berasal dari endpoint
+Node backend dan berisi canonical public URL. CTA WhatsApp hanya untuk Pro.
 
 Link pengelolaan dari email menukar token satu kali, menghapus fragment dari
 history, lalu membuka Signup secara langsung. Email kartu diambil dari endpoint

@@ -4,7 +4,9 @@
 
 Repository ini adalah frontend mandiri KartuNamaDigital.id. Backend, database,
 mailer, payment verification, dan server-side authorization berada di repository
-terpisah. Frontend mengonsumsi REST JSON `/api/v1`.
+terpisah. Frontend mengonsumsi REST JSON `/api/v1`. Backend resmi adalah
+Node.js `>=22.18 <23` + Express; referensi PHP/Laravel backend dan Endroid QR
+berstatus superseded.
 
 ## Product
 
@@ -18,12 +20,16 @@ Tier terkunci: Starter, Basic, Pro.
 
 - Starter dibuat anonim, tetapi edit hanya setelah Login/Signup dan claim kartu.
 - Resume source wajib DOCX maksimal 10 MB.
-- Checkout membership paused; gunakan note `Under development`.
+- Checkout membership paused sampai product owner menyatakan integrasi Midtrans
+  API siap; gunakan note `Under development`.
 - First-visit Light/Dark chooser wajib.
 - Frontend di-host di Vercel.
 - Backend berada di repository terpisah dan shared hosting, terhubung melalui API.
 - Launch Bahasa Indonesia; English ditunda.
 - SOT ini frontend-only.
+- Starter slug tepat tujuh huruf ASCII case-sensitive dan backend-only.
+- QR dibuat backend Node dari canonical public URL.
+- WhatsApp CTA hanya tersedia untuk Pro.
 
 ## Actual frontend architecture
 

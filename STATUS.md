@@ -1,8 +1,8 @@
 # Frontend Repository Status
 
-Updated: 2026-09-06
+Updated: 2026-09-12
 
-Overall: **SOT reintegration Phase 10 complete; local readiness passed, production approval pending external Vercel/backend/UAT evidence.**
+Overall: **Frontend source and SOT aligned; local frontend/API/database integration verified. Production readiness still requires external UAT.**
 
 ## Baseline
 
@@ -16,7 +16,7 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 | Automated tests | 129 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
-| Checkout | Paused |
+| Checkout | Paused pending explicit Midtrans API readiness decision |
 | Production readiness | Not yet approved |
 
 ## Implemented frontend surfaces
@@ -162,11 +162,13 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 - Remaining external gate: authenticated Super Admin mutation checks and
   designated-mailbox UAT. No commit, push, or deployment was performed.
 
-## WhatsApp CTA all tiers
+## WhatsApp CTA history (superseded)
 
-- FE-D-012 is implemented on public cards for Starter, Basic, and Pro.
+- FE-D-012 previously enabled the CTA for all tiers. FE-D-015 supersedes it:
+  current source renders backend-derived WhatsApp only for Pro.
 - Indonesian mobile input is normalized to an official digits-only
-  `https://wa.me/62...` shortlink; missing or invalid numbers keep the CTA hidden.
+  `https://wa.me/62...` shortlink; Starter/Basic, missing, or invalid values keep
+  the CTA hidden.
 - The existing card action language is preserved with a responsive four, two,
   or one-column layout when WhatsApp is available.
 - Local QA on 2026-09-09 builds 158 allowlisted files and passes 140/140 tests.
@@ -183,10 +185,10 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 - Login is hidden for the new-user path and appears only after backend code
   EMAIL_ALREADY_EXISTS. No email or handoff token is persisted in URL or Web
   Storage.
-- Local QA on 2026-09-09 builds 158 allowlisted files and passes 142/142 tests.
-  Read-only live probes pass for Create, Manage, and the Signup module on port
-  8080. Backend port 3000 was offline, so live signup-context integration remains
-  to be exercised when both services are running.
+- Local QA on 2026-09-11 builds 158 allowlisted files and passes 142/142 tests.
+  Frontend port 8080 and backend port 3000 were exercised together: direct and
+  proxied health returned HTTP 200, CORS preflight returned HTTP 204, and the
+  exact-case public slug shell plus global CSS returned HTTP 200.
 
 ## Reintegration phase status
 
@@ -208,5 +210,32 @@ Overall: **SOT reintegration Phase 10 complete; local readiness passed, producti
 `npm run build` passes and produces 158 allowlisted runtime files. Full `npm test`
 passes all 142 tests, including public slug routing, asset serving, Starter email
 handoff, and the repository-local same-origin stack/proxy.
-No live Vercel deployment, external API mutation, or server cleanup was performed
+No live Vercel deployment or production/main-database mutation was performed
 during SOT reintegration.
+
+## 2026-09-11 Node/QR/Starter integration verification
+
+- Node.js/Express is the official backend; PHP/Laravel and Endroid QR are
+  superseded references only.
+- The backend preflight verified database `krtnmdgtlv2`, all 13 migrations,
+  and the binary unique slug index after a timestamped logical backup.
+- Migration 011 aligned Click-to-WhatsApp with the authoritative Pro-only tier
+  rule. The frontend now accepts only a backend-derived safe `wa.me` URL for
+  Pro and does not derive it from public contact data.
+- Isolated testing-runtime E2E verified Starter HTTP 201, an exact seven-letter
+  case-sensitive slug, public profile HTTP 200, wrong-case HTTP 404, QR PNG
+  HTTP 200/304, VCF HTTP 200, and rejection of client-supplied or unauthorized
+  slug changes. The test database baseline was rebuilt afterward.
+- `PCiZZvU` was verified as a public-card shell through `npm run dev`, not
+  merely as an HTTP 200 response. The backend and frontend runtime processes
+  were stopped after smoke testing; MariaDB remains available for local work.
+
+## 2026-09-12 owner clarification
+
+- Starter creation remains anonymous and does not require Login or Signup.
+- A user who wants to maintain or edit that Starter card must create or use a
+  verified account and claim the specific card through the existing secure
+  email-handoff flow.
+- Checkout remains intentionally paused until the product owner explicitly
+  confirms that the Midtrans API integration is ready. No checkout code or
+  payment request was activated by this clarification.
