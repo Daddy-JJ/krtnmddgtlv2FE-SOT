@@ -1,4 +1,5 @@
 import { safeHttpUrl, safeImageUrl, safeMailtoHref, safeTelHref } from "../utils/safe-url.js";
+import { formatCardDisplayName } from "../utils/name-format.js";
 
 const FIELD_SELECTORS = {
   fullName: "[data-field='fullName']",
@@ -65,7 +66,7 @@ function setSplitName(root, value) {
 }
 
 function updateAdaptiveClasses(root, card) {
-  const nameLength = normalizeLength(card.fullName);
+  const nameLength = normalizeLength(formatCardDisplayName(card.fullName));
   const roleLength = normalizeLength(card.jobTitle);
   const orgLength = normalizeLength(card.organization);
   const longestContactLength = Math.max(
@@ -89,8 +90,9 @@ function updateAdaptiveClasses(root, card) {
 export function renderCardTheme(root, card) {
   if (!root) throw new Error("Theme root is required.");
 
-  setText(root, "fullName", card.fullName);
-  setSplitName(root, card.fullName);
+  const displayName = formatCardDisplayName(card.fullName);
+  setText(root, "fullName", displayName);
+  setSplitName(root, displayName);
   setText(root, "jobTitle", card.jobTitle);
   setText(root, "organization", card.organization);
   setText(root, "canonicalUrl", card.canonicalUrl);

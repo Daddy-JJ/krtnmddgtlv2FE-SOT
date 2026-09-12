@@ -190,6 +190,52 @@ explicit owner decision confirms that the Midtrans API integration is ready.
 Until then, the frontend keeps checkout actions disabled, displays
 `Under development`, and does not send payment-creation requests.
 
+## FE-D-017 - WhatsApp CTA available to all tiers
+
+Date: 2026-09-12
+Status: Accepted
+
+The owner reconfirms that WhatsApp click-to-chat is available for Starter,
+Basic, and Pro. This supersedes FE-D-015's Pro-only WhatsApp entitlement while
+preserving backend-derived, normalized wa.me URLs and frontend validation.
+
+## FE-D-018 - Prefix-aware card display
+
+Date: 2026-09-12
+Status: Accepted
+
+The card editor keeps Mr/Ms/Mrs as a separate optional prefix and keeps the
+last name optional. The existing backend `contact.fullName` payload remains
+unchanged for compatibility. Public card artwork displays the person's name
+without the prefix and appends the corresponding optional gender symbol: Mr
+uses `♂`, while Ms/Mrs use `♀`. Names without a recognized prefix display
+without a symbol. The marker is rendered in parentheses, for example
+`Arwan Prabowo (U+2642)` or `Sari (U+2640)` at the presentation layer.
+
+## FE-D-019 - Verified account security UX
+
+Date: 2026-09-12
+Status: Accepted
+
+The authenticated account page reads GET /me before enabling security actions.
+When emailVerified is true, the page displays a verified status and hides OTP
+verification/resend controls. If the profile is unverified, those controls
+remain available with the backend-owned account email. Password-reset requests
+use the same read-only profile email so a signed-in user cannot target another
+address from this surface.
+
+## FE-D-020 - Reset-only account settings surface
+
+Date: 2026-09-12
+Status: Accepted
+
+The owner removes the email-status and OTP panels from `/app/account/`,
+superseding the account-page presentation in FE-D-019. The page retains only
+password reset, loads the current account through GET /me, and uses its
+backend-owned email as a read-only reset destination. OTP verification remains
+owned by the dedicated registration flow. No API endpoint, authentication
+contract, or backend implementation changes.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

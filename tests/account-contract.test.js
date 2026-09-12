@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { ApiClient } from '../services/api-client.js';
 import { validateEmail, validateForgotPassword, validateVerifyOtp } from '../validators/auth-validator.js';
+
+const root = new URL('../', import.meta.url);
 
 test('account email/reset public auth requests omit CSRF and logout uses access CSRF', async () => {
   const requests = [];
@@ -28,4 +31,20 @@ test('account validators cover email verification and reset forms', () => {
   assert.deepEqual(validateVerifyOtp({ email: 'user@example.com', code: '123456' }), {});
   assert.equal(validateVerifyOtp({ email: 'bad', code: '12' }).code, 'Kode OTP harus 6 digit.');
   assert.deepEqual(validateForgotPassword({ email: 'user@example.com' }), {});
+});
+
+test('account page exposes only reset password and locks delivery to the current account email', async () => {
+  const [page, controller] = await Promise.all([
+    readFile(new URL('app/account/index.html', root), 'utf8'),
+    readFile(new URL('pages/app/account.js', root), 'utf8'),
+  ]);
+
+  assert.doesNotMatch(page, /Status email|data-account-verification-panel|data-account-verified|data-account-verify-form|data-account-resend/);
+  assert.match(page, /Reset password/i);
+  assert.match(page, /id="reset-email"[^>]*readonly[^>]*aria-readonly="true"/);
+  assert.match(page, /data-account-reset-submit disabled/);
+  assert.match(controller, /await authService\.current\(\)/);
+  assert.match(controller, /resetForm\.elements\.email\.value = email/);
+  assert.doesNotMatch(controller, /verifyEmailOtp|resendEmailOtp|validateVerifyOtp|verifyForm|verifiedState/);
+  assert.doesNotMatch(controller, /Data email akun tidak tersedia\./);
 });

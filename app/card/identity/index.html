@@ -28,14 +28,24 @@
       <fieldset>
         <legend class="text-lg font-black">Identitas profesional</legend>
         <div class="mt-5 grid gap-5 sm:grid-cols-2">
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold" for="namePrefix">Sapaan <span class="font-normal text-slate-400">(opsional)</span></label>
+            <select class="mt-2 w-full rounded-lg border border-slate-600 px-3 py-3" id="namePrefix" name="namePrefix" autocomplete="honorific-prefix">
+              <option value="">Tanpa sapaan</option>
+              <option value="Mr">Mr</option>
+              <option value="Ms">Ms</option>
+              <option value="Mrs">Mrs</option>
+            </select>
+            <p class="mt-1 text-sm text-red-400" data-field-error="namePrefix"></p>
+          </div>
           <div>
             <label class="block text-sm font-semibold" for="firstName">Nama depan</label>
             <input class="mt-2 w-full rounded-lg border border-slate-600 px-3 py-3" id="firstName" name="firstName" autocomplete="given-name" required>
             <p class="mt-1 text-sm text-red-400" data-field-error="firstName"></p>
           </div>
           <div>
-            <label class="block text-sm font-semibold" for="lastName">Nama belakang</label>
-            <input class="mt-2 w-full rounded-lg border border-slate-600 px-3 py-3" id="lastName" name="lastName" autocomplete="family-name" required>
+            <label class="block text-sm font-semibold" for="lastName">Nama belakang <span class="font-normal text-slate-400">(opsional)</span></label>
+            <input class="mt-2 w-full rounded-lg border border-slate-600 px-3 py-3" id="lastName" name="lastName" autocomplete="family-name">
             <p class="mt-1 text-sm text-red-400" data-field-error="lastName"></p>
           </div>
           <div>

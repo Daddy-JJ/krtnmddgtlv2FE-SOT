@@ -116,7 +116,7 @@ function renderActions(card, slug) {
   nodes.whatsapp.hidden = true;
   nodes.whatsapp.removeAttribute('href');
   nodes.whatsapp.parentElement?.classList.remove('public-card-actions--with-whatsapp');
-  const whatsappUrl = card.planCode === 'pro' ? safeWhatsAppUrl(card.whatsappUrl) : '';
+  const whatsappUrl = safeWhatsAppUrl(card.whatsappUrl);
   if (whatsappUrl) {
     nodes.whatsapp.href = whatsappUrl;
     nodes.whatsapp.hidden = false;

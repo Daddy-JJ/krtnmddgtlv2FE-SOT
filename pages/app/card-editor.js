@@ -3,6 +3,7 @@ import { buildCardInput, validateCardInput } from '../../validators/card-validat
 import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
 import { mountCardLivePreview } from '../../components/card-live-preview.js';
 import { bindWebsiteUrlInput } from '../../utils/website-url.js';
+import { splitName } from '../../utils/name-format.js';
 
 const form = document.querySelector('[data-card-editor-form]');
 const status = document.querySelector('[data-form-status]');
@@ -11,7 +12,7 @@ const previewStatus = document.querySelector('[data-card-live-preview-status]');
 const whatsappPreview = document.querySelector('[data-whatsapp-preview]');
 const section = form?.dataset.editorSection ?? 'card';
 const editableFields = [
-  'firstName', 'lastName', 'jobTitle', 'organization',
+  'namePrefix', 'firstName', 'lastName', 'jobTitle', 'organization',
   'officePhone', 'mobilePhone', 'email', 'websiteUrl',
   'addressStreet', 'addressCity', 'addressProvince', 'addressPostalCode', 'addressCountry',
   'mapsUrl',
@@ -60,7 +61,6 @@ async function save(event) {
   const input = buildCardInput(values, state.card, document.documentElement.lang);
   const errors = validateCardInput(input, editableFields);
   if (!String(values.firstName ?? '').trim()) errors.firstName = 'Nama depan wajib diisi.';
-  if (!String(values.lastName ?? '').trim()) errors.lastName = 'Nama belakang wajib diisi.';
   if (Object.keys(errors).length) {
     showFieldErrors(form, errors);
     showStatus(status, 'Periksa field yang ditandai.', 'error');
@@ -89,11 +89,12 @@ async function save(event) {
 
 function fillForm(card) {
   const name = String(card.contact?.fullName ?? '').trim().replace(/\s+/g, ' ');
-  const nameParts = name.split(' ').filter(Boolean);
+  const nameParts = splitName(name);
   const address = String(card.contact?.addressText ?? '').split(/\r?\n|\|/).map((part) => part.trim());
   const values = {
-    firstName: nameParts.shift() ?? '',
-    lastName: nameParts.join(' '),
+    namePrefix: nameParts.prefix,
+    firstName: nameParts.firstName,
+    lastName: nameParts.lastName,
     jobTitle: card.contact?.jobTitle ?? '',
     organization: card.contact?.organization ?? '',
     officePhone: card.contact?.officePhone ?? '',
@@ -148,13 +149,9 @@ function previewData() {
 
 function updateWhatsappPreview() {
   if (!whatsappPreview || !form) return;
-  if (state.card?.planCode !== 'pro') {
-    whatsappPreview.textContent = 'CTA WhatsApp tersedia khusus paket Pro.';
-    return;
-  }
   const mobilePhone = String(form.elements.mobilePhone?.value ?? '').trim();
   if (!mobilePhone) {
-    whatsappPreview.textContent = 'Isi nomor mobile untuk menyiapkan CTA WhatsApp.';
+    whatsappPreview.textContent = 'CTA WhatsApp tersedia untuk Starter, Basic, dan Pro. Isi nomor mobile untuk menyiapkannya.';
   } else {
     whatsappPreview.textContent = `Tombol WhatsApp publik akan memakai nomor mobile ${mobilePhone} setelah data disimpan.`;
   }

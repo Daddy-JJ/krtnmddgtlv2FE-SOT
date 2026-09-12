@@ -80,7 +80,7 @@ SQL, storage path, token, atau internal exception.
 | GET | `/auth/csrf` | Bootstrap access CSRF token |
 | POST | `/auth/forgot-password` | Request reset email |
 | POST | `/auth/reset-password` | Consume reset token |
-| GET | `/me` | Current user and roles |
+| GET | `/me` | Current user, verified-email state, and roles |
 
 ### Starter
 
@@ -130,11 +130,11 @@ sent as `websiteUrl: ""`; non-empty websites still require HTTP(S).
 | PATCH | `/cards/{publicId}/theme` | Save theme selection |
 
 `PUT /cards/{publicId}` may submit nullable `contact.mapsUrl`; the frontend
-accepts only an HTTP(S) URL and the backend remains authoritative for Basic/Pro
-access. WhatsApp CTA is Pro-only. The browser must not submit or persist a
-WhatsApp URL. Backend-provided `whatsappUrl` is derived from a valid saved
-Indonesian mobile number and must be `null` for Starter/Basic; the
-frontend validates the HTTPS `wa.me` shape and renders it only for Pro. A saved
+accepts only an HTTP(S) URL and the backend remains authoritative for tier
+access. WhatsApp CTA is available for Starter, Basic, and Pro. The browser must
+not submit or persist a WhatsApp URL. Backend-provided `whatsappUrl` is derived
+from a valid saved Indonesian mobile number; the frontend validates the HTTPS
+`wa.me` shape before rendering it. A saved
 `logoUrl` may be rendered, but no logo
 upload/delete operation is approved in this consumer contract yet.
 

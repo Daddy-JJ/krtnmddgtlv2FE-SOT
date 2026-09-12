@@ -1,59 +1,33 @@
 import { authService } from '../../services/auth-service.js';
-import { normalizeEmail, validateEmail, validateForgotPassword, validateVerifyOtp } from '../../validators/auth-validator.js';
+import { normalizeEmail, validateForgotPassword } from '../../validators/auth-validator.js';
 import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
 
-const verifyForm = document.querySelector('[data-account-verify-form]');
 const resetForm = document.querySelector('[data-account-reset-form]');
-const resendButton = document.querySelector('[data-account-resend]');
 const logoutButton = document.querySelector('[data-account-logout]');
 const status = document.querySelector('[data-form-status]');
+const resetSubmit = document.querySelector('[data-account-reset-submit]');
 
-verifyForm?.elements.code?.addEventListener('input', (event) => {
-  event.target.value = event.target.value.replace(/\D/g, '').slice(0, 6);
-});
+void loadAccount();
 
-verifyForm?.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const input = formValues(verifyForm);
-  input.email = normalizeEmail(input.email);
-  input.code = String(input.code ?? '').replace(/\D/g, '').slice(0, 6);
-  const errors = validateVerifyOtp(input);
-  if (Object.keys(errors).length) {
-    showFieldErrors(verifyForm, errors);
-    return;
-  }
-  clearFieldErrors(verifyForm);
-  setBusy(verifyForm, true);
-  showStatus(status, 'Memverifikasi email...', 'info');
+async function loadAccount() {
+  showStatus(status, 'Memuat keamanan akun...', 'info');
   try {
-    await authService.verifyEmailOtp(input);
-    showStatus(status, 'Email berhasil diverifikasi.', 'success');
-  } catch (error) {
-    showFieldErrors(verifyForm, mapApiFieldErrors(error.details));
-    showStatus(status, error.message, 'error');
-  } finally {
-    setBusy(verifyForm, false);
-  }
-});
+    const account = await authService.current();
+    const email = normalizeEmail(account?.email);
+    if (!email) throw new Error('Email akun belum dapat dimuat.');
 
-resendButton?.addEventListener('click', async () => {
-  const email = normalizeEmail(verifyForm?.elements.email?.value);
-  const message = validateEmail(email);
-  if (message) {
-    showFieldErrors(verifyForm, { email: message });
-    return;
-  }
-  resendButton.disabled = true;
-  showStatus(status, 'Mengirim ulang OTP...', 'info');
-  try {
-    await authService.resendEmailOtp({ email });
-    showStatus(status, 'Jika email memenuhi syarat, OTP baru sudah dikirim.', 'success');
-    cooldown(resendButton, 60);
+    if (resetForm?.elements.email) resetForm.elements.email.value = email;
+    if (resetSubmit) resetSubmit.disabled = false;
+
+    showStatus(status, 'Reset password siap digunakan.', 'success');
   } catch (error) {
-    showStatus(status, error.message, 'error');
-    resendButton.disabled = false;
+    if (error?.status === 401) {
+      location.assign('/login/');
+      return;
+    }
+    showStatus(status, error.message || 'Keamanan akun belum dapat dimuat.', 'error');
   }
-});
+}
 
 resetForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -77,7 +51,6 @@ resetForm?.addEventListener('submit', async (event) => {
     setBusy(resetForm, false);
   }
 });
-
 logoutButton?.addEventListener('click', async () => {
   logoutButton.disabled = true;
   showStatus(status, 'Keluar dari akun...', 'info');
@@ -89,17 +62,3 @@ logoutButton?.addEventListener('click', async () => {
     logoutButton.disabled = false;
   }
 });
-
-function cooldown(button, seconds) {
-  const label = button.textContent;
-  let remaining = seconds;
-  const timer = setInterval(() => {
-    remaining -= 1;
-    button.textContent = `Kirim ulang (${remaining})`;
-    if (remaining <= 0) {
-      clearInterval(timer);
-      button.textContent = label;
-      button.disabled = false;
-    }
-  }, 1000);
-}

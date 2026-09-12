@@ -164,11 +164,12 @@ Overall: **Frontend source and SOT aligned; local frontend/API/database integrat
 
 ## WhatsApp CTA history (superseded)
 
-- FE-D-012 previously enabled the CTA for all tiers. FE-D-015 supersedes it:
-  current source renders backend-derived WhatsApp only for Pro.
+- FE-D-012 previously enabled the CTA for all tiers. FE-D-017 now reconfirms
+  that rule and supersedes FE-D-015's Pro-only entitlement; current source
+  renders backend-derived WhatsApp for all tiers.
 - Indonesian mobile input is normalized to an official digits-only
-  `https://wa.me/62...` shortlink; Starter/Basic, missing, or invalid values keep
-  the CTA hidden.
+  `https://wa.me/62...` shortlink; missing or invalid values keep the CTA
+  hidden on every tier.
 - The existing card action language is preserved with a responsive four, two,
   or one-column layout when WhatsApp is available.
 - Local QA on 2026-09-09 builds 158 allowlisted files and passes 140/140 tests.
@@ -189,6 +190,24 @@ Overall: **Frontend source and SOT aligned; local frontend/API/database integrat
   Frontend port 8080 and backend port 3000 were exercised together: direct and
   proxied health returned HTTP 200, CORS preflight returned HTTP 204, and the
   exact-case public slug shell plus global CSS returned HTTP 200.
+
+## Prefix-aware card display
+
+- FE-D-018 keeps Mr/Ms/Mrs separate in the identity editor while preserving the
+  legacy `contact.fullName` API payload and optional last name.
+- Public card artwork now renders the name without the prefix and appends `♂`
+  for Mr or `♀` for Ms/Mrs. Unprefixed names remain unchanged.
+- Regression coverage exercises parsing, one-word names, and the rendered
+  display format in `tests/public-card-presenter.test.js` and
+  `tests/card-editor-contract.test.js`.
+
+## Reset-only account security UX
+
+- FE-D-020 supersedes the account-page presentation from FE-D-019.
+- `/app/account/` contains only Reset Password; the email-status and OTP panels
+  are no longer rendered or controlled there.
+- Reset-password requests use the backend-owned, read-only account email loaded
+  through GET /me. OTP remains in the dedicated `/verify-email/` flow.
 
 ## Reintegration phase status
 
@@ -217,11 +236,11 @@ during SOT reintegration.
 
 - Node.js/Express is the official backend; PHP/Laravel and Endroid QR are
   superseded references only.
-- The backend preflight verified database `krtnmdgtlv2`, all 13 migrations,
+- The backend preflight verified database `krtnmdgtlv2`, all 14 migrations,
   and the binary unique slug index after a timestamped logical backup.
-- Migration 011 aligned Click-to-WhatsApp with the authoritative Pro-only tier
-  rule. The frontend now accepts only a backend-derived safe `wa.me` URL for
-  Pro and does not derive it from public contact data.
+- Migration 012 aligns Click-to-WhatsApp with the authoritative all-tier rule;
+  migration 011 remains historical. The frontend accepts only a backend-derived
+  safe `wa.me` URL and does not derive it from public contact data.
 - Isolated testing-runtime E2E verified Starter HTTP 201, an exact seven-letter
   case-sensitive slug, public profile HTTP 200, wrong-case HTTP 404, QR PNG
   HTTP 200/304, VCF HTTP 200, and rejection of client-supplied or unauthorized

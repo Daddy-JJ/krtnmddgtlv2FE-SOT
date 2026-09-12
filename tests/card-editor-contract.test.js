@@ -76,6 +76,13 @@ test('card editor composes structured name and address fields into the legacy AP
   assert.equal(input.contact.addressText, 'RT 03 RW 02 Jalan Kabupaten\nBandung\nJawa Barat\n40115\nIndonesia');
 });
 
+test('card editor preserves prefix and separates first and optional last names', () => {
+  const input = buildCardInput({ namePrefix: 'Mr', firstName: 'Arwan', lastName: 'Prabowo' }, { locale: 'id', contact: { fullName: 'Old', jobTitle: '', organization: '', officePhone: '', mobilePhone: '', email: 'a@example.com', websiteUrl: '', addressText: '' } });
+  assert.equal(input.contact.fullName, 'Mr Arwan Prabowo');
+  const oneWord = buildCardInput({ namePrefix: 'Ms', firstName: 'Sari', lastName: '' }, { locale: 'id', contact: { fullName: 'Old', jobTitle: '', organization: '', officePhone: '', mobilePhone: '', email: 'a@example.com', websiteUrl: '', addressText: '' } });
+  assert.equal(oneWord.contact.fullName, 'Ms Sari');
+});
+
 test('card editor accepts a nullable HTTP(S) Maps URL without dropping other contact data', () => {
   const currentCard = {
     locale: 'id',

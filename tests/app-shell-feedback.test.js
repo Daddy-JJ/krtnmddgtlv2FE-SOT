@@ -50,7 +50,7 @@ test('identity and contact are merged into one Kartu Nama editor with a legacy r
     readFile(new URL('app/card/contact/index.html', root), 'utf8'),
   ]);
   const fields = [
-    'firstName', 'lastName', 'jobTitle', 'organization',
+    'namePrefix', 'firstName', 'lastName', 'jobTitle', 'organization',
     'officePhone', 'mobilePhone', 'email', 'websiteUrl',
     'addressStreet', 'addressCity', 'addressProvince', 'addressPostalCode', 'addressCountry',
   ];

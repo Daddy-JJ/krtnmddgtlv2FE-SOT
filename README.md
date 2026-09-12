@@ -88,7 +88,8 @@ belakang, dan website bersifat opsional; nomor kontak menggunakan label
 
 Backend membuat slug Starter tepat tujuh huruf `A-Z`/`a-z`,
 case-sensitive, dan tidak dapat diedit oleh Starter. QR berasal dari endpoint
-Node backend dan berisi canonical public URL. CTA WhatsApp hanya untuk Pro.
+Node backend dan berisi canonical public URL. CTA WhatsApp tersedia untuk
+Starter, Basic, dan Pro.
 
 Link pengelolaan dari email menukar token satu kali, menghapus fragment dari
 history, lalu membuka Signup secara langsung. Email kartu diambil dari endpoint

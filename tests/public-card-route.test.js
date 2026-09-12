@@ -39,7 +39,7 @@ test('public page allowlists registry templates and renders remote data through 
   assert.match(page, /replaceChildren/);
   assert.match(page, /textContent/);
   assert.match(page, /safeHttpUrl/);
-  assert.match(page, /card\.planCode === 'pro' \? safeWhatsAppUrl\(card\.whatsappUrl\) : ''/);
+  assert.match(page, /const whatsappUrl = safeWhatsAppUrl\(card\.whatsappUrl\);/);
   assert.match(page, /public-card-actions--with-whatsapp/);
   assert.match(page, /function renderFullDetails/);
   assert.match(page, /navigator\.clipboard\.writeText/);

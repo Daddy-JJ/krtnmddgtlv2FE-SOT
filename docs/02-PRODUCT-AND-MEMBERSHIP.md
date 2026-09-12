@@ -18,7 +18,7 @@ satu URL publik, QR, vCard, kartu visual, dan fitur tambahan sesuai membership.
 | Catalog items | 0 | 2 | 10 |
 | Google Maps | No | Yes | Yes |
 | Logo | No | No | Yes |
-| WhatsApp CTA | No | No | Yes |
+| WhatsApp CTA | Yes | Yes | Yes |
 | Resume Enhancement | No | No | 1 beneficiary/period |
 | Subscription term | Free | 365 days | 365 days |
 
@@ -39,7 +39,7 @@ sebagai enforcement keamanan.
 - Alamat.
 
 Maps URL, logo, social links, dan catalog mengikuti tier. WhatsApp CTA tersedia
-hanya untuk Pro ketika nomor handphone valid. Semua theme
+untuk Starter, Basic, dan Pro ketika nomor handphone valid. Semua theme
 memakai data inti yang sama; mengganti theme tidak membuat salinan contact data.
 
 ## Starter journey
@@ -58,6 +58,13 @@ memakai data inti yang sama; mengganti theme tidak membuat salinan contact data.
 8. Setelah claim berhasil, pengguna dapat mengedit melalui member workspace.
 
 Anonymous edit tidak diizinkan. Public slug bukan credential.
+
+## Account security UX
+
+The authenticated `/app/account/` surface contains only password reset. It
+reads the account from GET /me and uses the backend-owned email as a read-only
+reset destination. OTP verification remains in the dedicated registration flow
+at `/verify-email/`; it is not repeated in account settings.
 
 ## Public URL
 

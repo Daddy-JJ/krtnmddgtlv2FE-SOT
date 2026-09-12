@@ -29,7 +29,8 @@ Tier terkunci: Starter, Basic, Pro.
 - SOT ini frontend-only.
 - Starter slug tepat tujuh huruf ASCII case-sensitive dan backend-only.
 - QR dibuat backend Node dari canonical public URL.
-- WhatsApp CTA hanya tersedia untuk Pro.
+- WhatsApp CTA tersedia untuk Starter, Basic, dan Pro; URL selalu diturunkan
+  backend dari nomor mobile yang tersimpan.
 
 ## Actual frontend architecture
 

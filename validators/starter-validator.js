@@ -1,4 +1,5 @@
 import { normalizeWebsiteUrl } from '../utils/website-url.js';
+import { normalizeNamePrefix } from '../utils/name-format.js';
 
 const httpUrlPattern = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
 const allowedNamePrefixes = new Set(['Mr', 'Mrs', 'Ms']);
@@ -6,7 +7,7 @@ const allowedNamePrefixes = new Set(['Mr', 'Mrs', 'Ms']);
 export const starterFields = ['fullName', 'jobTitle', 'organization', 'officePhone', 'mobilePhone', 'email', 'websiteUrl', 'addressText'];
 
 export function buildStarterInput(values, locale = 'id') {
-  const namePrefix = allowedNamePrefixes.has(clean(values.namePrefix)) ? clean(values.namePrefix) : '';
+  const namePrefix = allowedNamePrefixes.has(clean(values.namePrefix)) ? normalizeNamePrefix(values.namePrefix) : '';
   const splitName = [namePrefix, clean(values.firstName), clean(values.lastName)].filter(Boolean).join(' ');
   return {
     locale: 'id',

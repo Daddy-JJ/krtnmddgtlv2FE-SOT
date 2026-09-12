@@ -26,7 +26,7 @@ test('card editor renders unsaved form data through the allowlisted active theme
   assert.match(html, /name="mapsUrl"/);
   assert.match(html, /data-whatsapp-preview/);
   assert.match(controller, /Tombol WhatsApp publik akan memakai nomor mobile/);
-  assert.match(controller, /CTA WhatsApp tersedia khusus paket Pro/);
+  assert.match(controller, /CTA WhatsApp tersedia untuk Starter, Basic, dan Pro/);
   assert.match(styles, /\.card-editor-preview/);
   assert.match(styles, /\.card-theme-preview__host/);
 });
