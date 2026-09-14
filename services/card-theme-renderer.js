@@ -1,5 +1,5 @@
 import { safeHttpUrl, safeImageUrl, safeMailtoHref, safeTelHref } from "../utils/safe-url.js";
-import { formatCardDisplayName } from "../utils/name-format.js";
+import { formatCardDisplayName, splitName } from "../utils/name-format.js";
 
 const FIELD_SELECTORS = {
   fullName: "[data-field='fullName']",
@@ -21,6 +21,24 @@ function setText(root, field, value) {
     node.textContent = value || "";
     node.hidden = !value;
     if (value && !node.classList.contains("sr-only")) node.title = value;
+  });
+}
+
+function setDisplayName(root, value) {
+  const parsed = splitName(value);
+  root.querySelectorAll(FIELD_SELECTORS.fullName).forEach((node) => {
+    node.replaceChildren();
+    node.hidden = !value;
+    if (!value) return;
+    node.append(document.createTextNode(parsed.displayName));
+    if (parsed.genderSymbol) {
+      const marker = document.createElement("span");
+      marker.className = "digital-card__gender-symbol";
+      marker.setAttribute("aria-label", `jenis kelamin ${parsed.genderSymbol}`);
+      marker.textContent = `   (${parsed.genderSymbol})`;
+      node.append(marker);
+    }
+    node.title = value;
   });
 }
 
@@ -48,16 +66,33 @@ function normalizeLength(value) {
 }
 
 function setSplitName(root, value) {
-  const normalized = String(value || "").trim();
+  const parsed = splitName(value);
+  const normalized = parsed.displayName;
   const [lead = "", ...tailParts] = normalized.split(/\s+/);
   const tail = tailParts.join(" ");
 
   root.querySelectorAll("[data-name-lead]").forEach((node) => {
-    node.textContent = lead;
+    node.replaceChildren();
+    node.append(document.createTextNode(lead));
+    if (parsed.genderSymbol && !tail) {
+      const marker = document.createElement("span");
+      marker.className = "digital-card__gender-symbol";
+      marker.setAttribute("aria-label", `jenis kelamin ${parsed.genderSymbol}`);
+      marker.textContent = `   (${parsed.genderSymbol})`;
+      node.append(marker);
+    }
     node.hidden = !lead;
   });
   root.querySelectorAll("[data-name-tail]").forEach((node) => {
-    node.textContent = tail;
+    node.replaceChildren();
+    node.append(document.createTextNode(tail));
+    if (parsed.genderSymbol) {
+      const marker = document.createElement("span");
+      marker.className = "digital-card__gender-symbol";
+      marker.setAttribute("aria-label", `jenis kelamin ${parsed.genderSymbol}`);
+      marker.textContent = ` (${parsed.genderSymbol})`;
+      node.append(marker);
+    }
     node.hidden = !tail;
   });
   root.querySelectorAll(".digital-card__name--split").forEach((node) => {
@@ -91,8 +126,8 @@ export function renderCardTheme(root, card) {
   if (!root) throw new Error("Theme root is required.");
 
   const displayName = formatCardDisplayName(card.fullName);
-  setText(root, "fullName", displayName);
-  setSplitName(root, displayName);
+  setDisplayName(root, card.fullName);
+  setSplitName(root, card.fullName);
   setText(root, "jobTitle", card.jobTitle);
   setText(root, "organization", card.organization);
   setText(root, "canonicalUrl", card.canonicalUrl);

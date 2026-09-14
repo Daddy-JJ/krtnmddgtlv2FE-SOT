@@ -114,6 +114,17 @@
   letter-spacing: -.035em;
 }
 
+.digital-card__gender-symbol {
+  display: inline-block;
+  font-family: var(--card-sans, sans-serif);
+  font-size: 50%;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
+  vertical-align: middle;
+  white-space: pre;
+}
+
 .digital-card__role {
   margin: clamp(8px, 1.4cqw, 14px) 0 0;
   color: #3c485a;
