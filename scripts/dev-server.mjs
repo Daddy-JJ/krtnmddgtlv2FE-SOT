@@ -1,5 +1,7 @@
 import { createLocalFrontendServer } from './local-server.mjs';
 
+process.loadEnvFile?.();
+
 const host = process.env.FRONTEND_HOST ?? '127.0.0.1';
 const port = Number(process.env.FRONTEND_PORT ?? 8080);
 const backendOrigin = new URL(process.env.BACKEND_ORIGIN ?? 'http://127.0.0.1:3000');

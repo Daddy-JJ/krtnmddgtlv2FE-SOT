@@ -83,8 +83,10 @@ Rules:
 - No temporary `*.trycloudflare.com` upstream.
 - Configure separately for Preview and Production.
 
-This value is consumed server-side by the proxy and is not the same as the
-fallback browser `PUBLIC_API_BASE_URL` placeholder.
+This value is consumed server-side by the proxy. Public browser routing is
+configured separately with `PUBLIC_API_BASE_URL_LOCAL` and
+`PUBLIC_API_BASE_URL_PRODUCTION`; these values contain the complete `/api/v1`
+base URL and are safe to expose in the static bundle.
 
 ## Static-public boundary
 

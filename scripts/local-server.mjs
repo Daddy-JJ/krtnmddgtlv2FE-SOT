@@ -2,7 +2,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PUBLIC_DIRECTORIES, PUBLIC_ROOT_FILES } from './build-static.mjs';
+import { PUBLIC_DIRECTORIES, PUBLIC_ROOT_FILES, renderRuntimeConfig } from './build-static.mjs';
 
 const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const publicDirectories = new Set(PUBLIC_DIRECTORIES);
@@ -58,10 +58,13 @@ async function handleRequest(request, response, { backendOrigin, sourceRoot }) {
   }
 
   const body = await readFile(filePath);
+  const responseBody = requestUrl.pathname === '/config/runtime-config.js'
+    ? renderRuntimeConfig(body.toString('utf8'))
+    : body;
   response.writeHead(200, {
     'content-type': contentTypes.get(path.extname(filePath).toLowerCase()) ?? 'application/octet-stream',
   });
-  response.end(request.method === 'HEAD' ? undefined : body);
+  response.end(request.method === 'HEAD' ? undefined : responseBody);
 }
 
 async function resolvePublicFile(sourceRoot, pathname) {
@@ -122,4 +125,3 @@ async function proxyApiRequest(request, response, requestUrl, backendOrigin) {
   const body = Buffer.from(await upstream.arrayBuffer());
   response.end(request.method === 'HEAD' ? undefined : body);
 }
-

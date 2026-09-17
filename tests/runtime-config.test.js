@@ -30,13 +30,13 @@ test('undeployed placeholders safely use the same-origin API route', () => {
 });
 
 test('127.0.0.1 frontend uses the local backend API port', () => {
-  const config = runtimeConfig(undefined, '127.0.0.1');
+  const config = runtimeConfig(undefined, '127.0.0.1', { apiBaseUrl: 'http://127.0.0.1:3000/api/v1' });
   assert.equal(config.apiBaseUrl, 'http://127.0.0.1:3000/api/v1');
   assert.equal(config.requestTimeoutMs, 12_000);
 });
 
 test('localhost uses the 127.0.0.1 backend hostname for cookie consistency', () => {
-  const config = runtimeConfig(undefined, 'localhost');
+  const config = runtimeConfig(undefined, 'localhost', { apiBaseUrl: 'http://127.0.0.1:3000/api/v1' });
   assert.equal(config.apiBaseUrl, 'http://127.0.0.1:3000/api/v1');
   assert.equal(config.requestTimeoutMs, 12_000);
 });
@@ -44,6 +44,12 @@ test('localhost uses the 127.0.0.1 backend hostname for cookie consistency', () 
 test('non-local hosts retain the same-origin API route', () => {
   const config = runtimeConfig(undefined, 'preview.example.test');
   assert.equal(config.apiBaseUrl, '/api/v1');
+  assert.equal(config.requestTimeoutMs, 12_000);
+});
+
+test('the production Vercel host uses the production API environment value', () => {
+  const config = runtimeConfig(undefined, 'krtnmdgtlv2-fe-ten.vercel.app', { apiBaseUrl: 'https://api.kartunamadigital.id/api/v1' });
+  assert.equal(config.apiBaseUrl, 'https://api.kartunamadigital.id/api/v1');
   assert.equal(config.requestTimeoutMs, 12_000);
 });
 

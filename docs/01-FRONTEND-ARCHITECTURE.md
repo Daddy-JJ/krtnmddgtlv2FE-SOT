@@ -77,17 +77,17 @@ not appear in card artwork.
 
 `config/app-config.js` reads `globalThis.__KND_CONFIG__` and defaults to:
 
-- API base `http://127.0.0.1:3000/api/v1` only for local `localhost` or
-  `127.0.0.1` hosts while the public placeholder is active; other environments
-  retain `/api/v1`.
+- API base values come from `PUBLIC_API_BASE_URL_LOCAL` and
+  `PUBLIC_API_BASE_URL_PRODUCTION` in the environment. Local hosts use the
+  local value; `krtnmdgtlv2-fe-ten.vercel.app` uses the production value.
 - Request timeout 12 seconds.
 - Locale `id`.
 
 `config/runtime-config.js` is public configuration only. It must never contain
 credentials. Server-owned `globalThis.__KND_CONFIG__` remains authoritative;
-injected public values take precedence over local detection. On Vercel, browser
-traffic remains same-origin and the server-side Function uses
-`BACKEND_API_BASE_URL`.
+environment-injected public values select local or production routing. The
+Vercel proxy remains available for same-origin `/api/v1` fallback traffic and
+uses `BACKEND_API_BASE_URL` server-side.
 
 Runtime locale support is currently limited to `id`; English resources remain
 dormant scaffolding. `assets/js/site-theme.js` mounts an accessible Light/Dark

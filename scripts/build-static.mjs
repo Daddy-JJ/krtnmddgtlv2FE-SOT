@@ -1,4 +1,4 @@
-import { copyFile, lstat, mkdir, readdir, rm } from 'node:fs/promises';
+import { copyFile, lstat, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -56,6 +56,15 @@ const ALLOWED_STATIC_EXTENSIONS = new Set([
   '.xml',
 ]);
 
+const RUNTIME_CONFIG_FILE = 'config/runtime-config.js';
+
+export function renderRuntimeConfig(source, env = process.env) {
+  return source
+    .replaceAll('__PUBLIC_API_BASE_URL_LOCAL__', String(env.PUBLIC_API_BASE_URL_LOCAL ?? '__PUBLIC_API_BASE_URL_LOCAL__'))
+    .replaceAll('__PUBLIC_API_BASE_URL_PRODUCTION__', String(env.PUBLIC_API_BASE_URL_PRODUCTION ?? '__PUBLIC_API_BASE_URL_PRODUCTION__'))
+    .replaceAll('__PUBLIC_API_TIMEOUT_MS__', String(env.PUBLIC_API_TIMEOUT_MS ?? '__PUBLIC_API_TIMEOUT_MS__'));
+}
+
 function relativeDisplayPath(sourceRoot, sourcePath) {
   return path.relative(sourceRoot, sourcePath).split(path.sep).join('/');
 }
@@ -95,7 +104,12 @@ async function copyPublicDirectory(sourceRoot, sourceDirectory, outputDirectory,
     }
 
     await mkdir(path.dirname(outputPath), { recursive: true });
-    await copyFile(sourcePath, outputPath);
+    if (relativePath === RUNTIME_CONFIG_FILE) {
+      const source = await readFile(sourcePath, 'utf8');
+      await writeFile(outputPath, renderRuntimeConfig(source), 'utf8');
+    } else {
+      await copyFile(sourcePath, outputPath);
+    }
     copiedFiles.push(relativePath);
   }
 }
