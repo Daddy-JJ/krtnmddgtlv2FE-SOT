@@ -23,7 +23,6 @@ krtnmddgtlv2FE-SOT/
 ├── scripts/dev-server.mjs     # npm run dev entry point (127.0.0.1:8080)
 ├── tests/                     # native Node tests
 ├── docs/                      # canonical SOT and operations
-├── docs/_legacy-sot/          # read-only historical archive
 ├── dist/                      # generated output saat build; tidak perlu disimpan lokal
 ├── package.json
 └── vercel.json
@@ -87,6 +86,6 @@ is `docs/EMAIL-TEMPLATES-BACKEND-HANDOFF.md`.
 ## Generated and historical directories
 
 - `dist/` and `node_modules/` are generated and ignored.
-- `docs/_legacy-sot/` is immutable historical evidence.
+- `docs/` is the sole canonical documentation source.
 - Empty scaffold directories do not prove a feature is implemented; use code,
   test, and `STATUS.md`.

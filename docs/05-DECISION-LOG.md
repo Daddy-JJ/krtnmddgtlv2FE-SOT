@@ -1,7 +1,7 @@
 # Frontend Decision Log
 
 Only approved decisions that apply to this frontend repository belong here.
-Historical monorepo decisions remain in `docs/_legacy-sot/` without precedence.
+Historical decisions that remain relevant are summarized in this canonical log.
 
 ## FE-D-001 — Frontend-only SOT
 
@@ -69,8 +69,18 @@ deferred. Existing English locale resources may remain dormant scaffolding.
 Date: 2026-09-01  
 Status: Accepted
 
-Legacy documents are preserved at `docs/_legacy-sot/` with their relative paths
-and checksums. They provide provenance only and cannot override canonical SOT.
+Legacy documents were previously preserved as a read-only snapshot. They provided
+provenance only and could not override canonical SOT.
+
+## FE-D-021 — Consolidate documentation into canonical docs
+
+Date: 2026-09-17
+Status: Accepted
+
+The legacy documentation snapshot is removed after its relevant decisions and
+operational guidance were consolidated into the canonical `docs/` set. The
+frontend repository has one active documentation source; no API, runtime, or
+backend behavior changes.
 
 ## FE-D-009 — Explicit static deployment allowlist
 

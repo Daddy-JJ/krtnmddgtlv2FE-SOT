@@ -108,8 +108,8 @@ Mulai dari:
 5. `SOT-MANIFEST.md`
 
 Dokumen rinci berada di `docs/01-FRONTEND-ARCHITECTURE.md` sampai
-`docs/05-DECISION-LOG.md`. Dokumen lama dipertahankan sebagai snapshot read-only
-di `docs/_legacy-sot/` dan tidak mempunyai precedence.
+`docs/05-DECISION-LOG.md`. Dokumentasi utama di `docs/` adalah satu-satunya
+sumber kanonis repository frontend.
 
 ## Template Email Super Admin
 

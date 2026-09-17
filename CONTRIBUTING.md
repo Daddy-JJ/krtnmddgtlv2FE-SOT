@@ -17,7 +17,7 @@
 - Gunakan safe DOM APIs untuk data eksternal.
 - Endpoint/payload baru wajib dicatat di API consumer contract.
 - Public asset baru wajib ditambahkan secara eksplisit ke allowlist build.
-- Jangan mengedit `dist/` atau `docs/_legacy-sot/`.
+- Jangan mengedit `dist/`; dokumentasi aktif hanya berada di `docs/`.
 
 ## Validation
 

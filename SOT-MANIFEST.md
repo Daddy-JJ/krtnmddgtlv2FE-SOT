@@ -47,6 +47,5 @@ QR hanya historical/superseded.
 
 ## Historical archive
 
-`docs/_legacy-sot/` berstatus read-only historical evidence. Semua path lama yang
-memakai prefix `frontend/`, backend monorepo, database, atau deployment lama tidak
-aktif kecuali diadopsi ulang secara eksplisit ke dokumen kanonis.
+Dokumen historis yang masih berlaku telah dikonsolidasikan ke `docs/` utama.
+Tidak ada arsip dokumentasi paralel yang menjadi bagian repository aktif.

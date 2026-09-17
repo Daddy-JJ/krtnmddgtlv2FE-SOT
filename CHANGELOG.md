@@ -1,9 +1,12 @@
 # Changelog
 
-Perubahan historis monorepo sebelum reintegrasi tersedia di
-`docs/_legacy-sot/root/CHANGELOG.md`.
+Perubahan historis monorepo sebelum reintegrasi telah dikonsolidasikan ke
+dokumentasi kanonis repository ini.
 
 ## Unreleased
+
+- Menghapus snapshot `docs/_legacy-sot/` setelah dokumentasinya dikonsolidasikan
+  ke `docs/` utama.
 
 - Menyederhanakan form Starter dengan sapaan Mr/Mrs/Ms opsional, nama belakang
   opsional, website opsional, dan istilah Nomor handphone.
@@ -55,8 +58,7 @@ Perubahan historis monorepo sebelum reintegrasi tersedia di
 
 ## 0.3.0 — Legacy SOT quarantine — 2026-09-01
 
-- Memindahkan 162 file legacy ke `docs/_legacy-sot/docs/`.
-- Menyimpan snapshot 12 file governance di `docs/_legacy-sot/root/`.
+- Mengarantina 162 file legacy dan 12 file governance selama reintegrasi.
 - Memverifikasi seluruh file dengan SHA-256 sebelum dan sesudah karantina.
 
 ## 0.2.0 — Deployment output boundary — 2026-09-01

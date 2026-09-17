@@ -77,9 +77,8 @@ templates. Angka ini bersifat turunan dan harus mengikuti repository.
 
 ## Historical material
 
-`docs/_legacy-sot/` adalah snapshot read-only dari SOT monorepo lama. Gunakan
-hanya untuk provenance atau audit. Jangan mengikuti path, status, atau precedence
-di dalamnya sebagai instruksi aktif.
+Dokumen historis yang masih relevan telah diringkas ke dokumentasi kanonis di
+`docs/`. Tidak ada snapshot legacy terpisah yang menjadi bagian repository.
 
 ## Maintenance rule
 

@@ -24,7 +24,7 @@ frontend KartuNamaDigital.id.
 5. `docs/01-FRONTEND-ARCHITECTURE.md`
 6. Kode dan test frontend saat ini untuk fakta implementasi
 7. `STATUS.md` dan dokumen operasional
-8. `docs/_legacy-sot/` hanya bukti historis, tidak pernah menjadi authority
+8. `docs/` adalah satu-satunya sumber dokumentasi kanonis
 
 Kontrak backend yang sebenarnya dikelola di repository backend terpisah. Dokumen
 API di repository ini hanya mendefinisikan kebutuhan frontend sebagai consumer.
@@ -83,5 +83,5 @@ Sesudah perubahan:
 2. Laporkan file berubah, hasil validasi, risiko, dan asumsi.
 3. Jangan lanjut ke fase berikutnya tanpa instruksi product owner.
 
-Jangan memodifikasi snapshot di `docs/_legacy-sot/`. Keputusan lama hanya dapat
-diadopsi kembali melalui Decision Log kanonis.
+Jangan membuat snapshot dokumentasi paralel. Keputusan lama hanya dapat diadopsi
+kembali melalui Decision Log kanonis.
