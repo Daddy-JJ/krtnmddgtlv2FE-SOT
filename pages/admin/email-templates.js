@@ -42,7 +42,7 @@ class EmailTemplateManager {
 
   render() {
     const layout = node('div', 'grid gap-5 lg:grid-cols-[18rem_minmax(0,1fr)]');
-    const catalog = node('aside', 'rounded-2xl border border-white/10 p-4');
+    const catalog = node('aside', 'fdn-panel rounded-2xl border border-white/10 p-4');
     catalog.append(node('h2', 'text-lg font-black', 'Template transaksional'));
     for (const item of this.catalog) {
       const button = node('button', 'dashboard-action mt-3 block w-full text-left');
@@ -61,7 +61,7 @@ class EmailTemplateManager {
 
   editor() {
     const wrapper = node('div', 'space-y-5');
-    const meta = node('section', 'rounded-2xl border border-white/10 p-5');
+    const meta = node('section', 'fdn-panel rounded-2xl border border-white/10 p-5');
     meta.append(
       node('h2', 'text-2xl font-black', this.detail.label),
       node('p', 'mt-2 text-sm text-slate-300', `Key: ${this.detail.key} | Draft: ${this.detail.draftRevision.slice(0, 8)} | Published: ${this.detail.publishedVersion ?? 'belum ada'}`),
@@ -75,7 +75,7 @@ class EmailTemplateManager {
     );
     meta.append(fields, this.styleFields());
 
-    const blocks = node('section', 'rounded-2xl border border-white/10 p-5');
+    const blocks = node('section', 'fdn-panel rounded-2xl border border-white/10 p-5');
     const blockHead = node('div', 'flex flex-wrap items-center justify-between gap-3');
     blockHead.append(node('h2', 'text-xl font-black', 'Isi dan format'));
     const addParagraph = action('Tambah paragraf', () => this.change(() => {
@@ -84,7 +84,7 @@ class EmailTemplateManager {
     blockHead.append(addParagraph);
     blocks.append(blockHead, this.blockList(), this.requiredBlockControls());
 
-    const actions = node('section', 'rounded-2xl border border-white/10 p-5');
+    const actions = node('section', 'fdn-panel rounded-2xl border border-white/10 p-5');
     actions.append(node('h2', 'text-xl font-black', 'Validasi dan publikasi'));
     const row = node('div', 'mt-4 flex flex-wrap gap-3');
     row.append(
@@ -98,7 +98,7 @@ class EmailTemplateManager {
     if (this.testJob) actions.append(this.testStatusPanel());
     if (this.history) actions.append(this.historyPanel());
 
-    const preview = node('section', 'rounded-2xl border border-white/10 p-5');
+    const preview = node('section', 'fdn-panel rounded-2xl border border-white/10 p-5');
     preview.dataset.emailPreview = '';
     preview.append(node('h2', 'text-xl font-black', 'Preview backend'));
     wrapper.append(meta, blocks, actions, preview);

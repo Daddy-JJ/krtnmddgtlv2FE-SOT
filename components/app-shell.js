@@ -60,11 +60,11 @@ function mountShell(content) {
   brandText.append(element('small', '', 'DIGITAL.ID'));
   brand.append(mark, brandText);
 
-  const menuButton = element('button', 'app-shell__menu-button', 'Menu');
+  const menuButton = element('button', 'app-shell__menu-button fdn-button--secondary', 'Menu');
   menuButton.type = 'button';
   menuButton.setAttribute('aria-expanded', 'false');
   menuButton.setAttribute('aria-controls', 'app-sidebar');
-  const logout = element('button', 'app-shell__logout', 'Keluar');
+  const logout = element('button', 'app-shell__logout fdn-button--secondary', 'Keluar');
   logout.type = 'button';
   headerNav.append(brand, menuButton, logout);
   header.append(headerNav);

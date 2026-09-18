@@ -246,6 +246,119 @@ backend-owned email as a read-only reset destination. OTP verification remains
 owned by the dedicated registration flow. No API endpoint, authentication
 contract, or backend implementation changes.
 
+## FE-D-021 - Foundations-inspired visual system pilot
+
+Date: 2026-09-17
+Status: Accepted
+
+The owner approves an opt-in visual-system adapter inspired by Supertype
+Foundations 0.2.5. The frontend remains static HTML, Vanilla JavaScript modules,
+and Tailwind CSS 4; React, Next.js, and the upstream component runtime are not
+introduced. Semantic tokens, typography, contrast, radius, shadow, and common
+component primitives are reimplemented as scoped local CSS.
+
+The first review gate covers /about/, /faq/, /login/, /app/, /app/account/,
+and /admin/. Broader rollout requires owner approval after visual review. The
+ten card-name designs, their theme registry, renderer, and public-card artwork
+are explicitly excluded from this redesign. API contracts, business rules, and
+backend ownership are unchanged.
+
+The upstream reference is MIT-licensed and recorded in THIRD-PARTY-NOTICES.md.
+
+## FE-D-022 - Foundations layout normalization and Contact alignment
+
+Date: 2026-09-17
+Status: Accepted
+
+The owner approves a single spacing scale and explicit layout ownership for the
+Foundations pilot. The scoped adapter now owns marketing containers and heroes,
+auth spacing, application shell grid/gaps, and Super Admin panel spacing. Legacy
+hero ornaments and accumulated padding are disabled only inside the adapter.
+
+Contact joins About and FAQ in the marketing pilot so these related pages share
+the same typography, component styling, container width, and vertical rhythm.
+The ten card-name designs and public-card artwork remain excluded.
+
+## FE-D-023 - Foundations editorial micro-polish
+
+Date: 2026-09-17
+Status: Accepted
+
+The owner approves a compact editorial heading scale and a wider reading measure
+for the Foundations marketing pilot. About, FAQ, and Contact retain the shared
+spacing system while avoiding unnecessary three-line desktop headings. Legacy
+panel corner bars are disabled inside the pilot adapter; public-card themes and
+dynamic card artwork remain unchanged.
+
+## FE-D-024 - Foundations typography and blocks recipe refactor
+
+Date: 2026-09-18
+Status: Accepted
+
+The owner approves a focused refactor of the About, FAQ, and Contact marketing
+recipes. The local scoped adapter adopts semantic display/lead roles, responsive
+Card grids, and native HTML Disclosure for FAQ. This replaces route-local
+utility-based heading scales and static FAQ panels on those three routes.
+
+The scope does not introduce a React or Next.js runtime, external API changes,
+or changes to public-card rendering. The ten card-name designs, their renderer,
+and public-card artwork remain excluded.
+## FE-D-025 - Foundations full-route rollout
+
+Date: 2026-09-18
+Status: Accepted
+
+The owner approves rollout of the scoped Foundations adapter to every visible
+frontend route shell. Marketing and blog routes use editorial type roles;
+authentication, member workspace, and internal workspace use interface type
+roles. The route shells keep their existing page controllers, API contracts,
+authorization, and business behavior.
+
+The ten card-theme templates, theme registry, renderer, and public-card artwork
+remain explicitly excluded. Redirect-only compatibility routes remain functionally
+unchanged and are not given presentation markup.
+## FE-D-026 - Landing recipe normalization
+
+Date: 2026-09-18
+Status: Accepted
+
+The owner approves a landing-only normalization pass. The legacy landing
+illustration markup remains in place, while its spacing, reading measure,
+headline scale, surfaces, footer, and light/dark values are routed through the
+Foundations role tokens. The landing page remains static HTML with its existing
+navigation, content hydration, and API contract unchanged.
+
+The ten card-name designs, public-card artwork, and all other route-specific
+business behavior remain outside this decision.
+## FE-D-027 - Concise landing blocks and cross-page design audit
+
+Date: 2026-09-18
+Status: Accepted
+
+The owner requests merging benefits with the profile introduction, and security
+with the final CTA. Each pair becomes one responsive section. This supersedes
+FE-D-026 only where it retained the browser/security/person illustrations in
+those sections. All 25 existing admin-managed text fields remain represented;
+no API or content schema changes are introduced.
+
+Other pages receive a consistency audit with evidence and follow-up priorities,
+not an unbounded redesign. The ten card designs remain excluded. The canonical
+audit is in `REVIEW-REPORT.md`; passing adapter-presence tests does not certify
+complete visual alignment.
+
+## FE-D-028 - Approved cross-page Foundations normalization
+
+Date: 2026-09-19
+Status: Accepted
+
+The owner approved continuing the redesign across remaining non-card pages.
+This expands FE-D-027's audit-only boundary for those pages. Shared typography,
+scope, panels, controls, navigation and responsive spacing are normalized in
+the existing adapter, without a framework or API change. Fonts intentionally
+use local system stacks; no remote font dependency is implied.
+Ten public-card designs remain excluded. Browser fixtures provide presentation
+evidence only; real authenticated workflows still require UAT.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

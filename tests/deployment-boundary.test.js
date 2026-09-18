@@ -66,12 +66,15 @@ test('static deployment output contains runtime files and excludes internal mate
 
 test('deployment configuration uses an explicit static output boundary', async () => {
   const packageJson = JSON.parse(await readFile(path.join(PROJECT_ROOT, 'package.json'), 'utf8'));
+  const devServer = await readFile(path.join(PROJECT_ROOT, 'scripts/dev-server.mjs'), 'utf8');
   const vercelConfig = JSON.parse(await readFile(path.join(PROJECT_ROOT, 'vercel.json'), 'utf8'));
   const cpanelConfig = await readFile(path.join(PROJECT_ROOT, '.cpanel.yml'), 'utf8');
   const vercelIgnore = await readFile(path.join(PROJECT_ROOT, '.vercelignore'), 'utf8');
 
   assert.equal(packageJson.scripts['build:static'], 'node scripts/build-static.mjs');
   assert.equal(packageJson.scripts.dev, 'node scripts/dev-server.mjs');
+  assert.match(devServer, /existsSync\('\.env'\)/);
+  assert.doesNotMatch(devServer, /process\.loadEnvFile\?\.\(\)/);
   assert.match(packageJson.scripts.build, /build:static/);
   assert.equal(vercelConfig.outputDirectory, 'dist');
   assert.equal(vercelConfig.buildCommand, 'npm run build');

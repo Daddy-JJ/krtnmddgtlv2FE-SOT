@@ -1,0 +1,104 @@
+/* Typography layer for opted-in Foundations pilot routes. */
+.ui-foundations {
+  font-family: var(--fdn-font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  text-rendering: optimizeLegibility;
+}
+
+.ui-foundations.editorial {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.ui-foundations :is(h1, h2, h3, h4, .site-theme-chooser__title) {
+  color: var(--fdn-foreground) !important;
+  font-family: var(--fdn-font-heading) !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.2 !important;
+  text-transform: none !important;
+  text-wrap: balance;
+}
+
+.ui-foundations h1 {
+  font-size: var(--fdn-type-page-title) !important;
+}
+
+.ui-foundations.editorial h1 {
+  font-size: var(--fdn-type-page-title) !important;
+}
+
+.ui-foundations.editorial .fdn-display {
+  margin-top: var(--fdn-space-3) !important;
+  font-size: var(--fdn-type-page-title) !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.2 !important;
+}
+
+.ui-foundations .fdn-lead {
+  margin-top: var(--fdn-space-4) !important;
+  max-width: 60ch;
+  font-size: 1rem;
+}
+
+.ui-foundations:not(.editorial) h1 {
+  font-size: var(--fdn-type-page-title) !important;
+}
+
+.ui-foundations h2 {
+  font-size: var(--fdn-type-section-title) !important;
+}
+
+.ui-foundations h3 {
+  font-size: var(--fdn-type-card-title) !important;
+}
+
+.ui-foundations h4 {
+  font-size: 1.05rem !important;
+}
+
+.ui-foundations :is(p, li, dd) {
+  max-width: 72ch;
+}
+
+.ui-foundations :is(.site-lead, .auth-intro, .dashboard-subtitle) {
+  color: var(--fdn-muted-foreground) !important;
+}
+
+.ui-foundations :is(.site-eyebrow, .auth-eyebrow, .workspace-eyebrow, .dashboard-eyebrow, .site-theme-chooser__eyebrow) {
+  color: var(--fdn-primary-ink) !important;
+  font-family: var(--fdn-font-sans) !important;
+  font-size: 0.75rem !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.13em !important;
+  text-transform: uppercase !important;
+}
+
+.ui-foundations :is(label, th) {
+  color: var(--fdn-muted-foreground);
+  font-family: var(--fdn-font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+html.ui-foundations body :is(.text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600, .text-slate-700) {
+  color: var(--fdn-muted-foreground) !important;
+}
+
+.ui-foundations :is(.text-cyan-300, .text-cyan-400) {
+  color: var(--fdn-primary-ink) !important;
+}
+
+html.ui-foundations body :is(.text-red-300, .text-red-400, .text-red-600, .text-red-700, [data-field-error]) {
+  color: var(--fdn-danger) !important;
+}
+
+.ui-foundations a:not([class*="button"]):not([class*="primary"]) {
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}

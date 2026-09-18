@@ -58,7 +58,7 @@ locally; planned frontend runtime files are not included in the inventory below.
 | `validators/` | Client-side validation, termasuk shared Resume DOCX rule |
 | `utils/` | Cookie, URL, dan auth-flow utilities |
 | `config/` | Runtime config dan theme registry |
-| `assets/` | Compiled CSS, source CSS, image, icon, theme preview |
+| `assets/` | Compiled CSS, global theme, opt-in Foundations adapter, image, icon, theme preview |
 | `locales/` | Locale resources; English saat ini deferred |
 | `tests/` | Native Node contract/security tests |
 | `scripts/build-static.mjs` | Allowlisted static build |
@@ -67,6 +67,14 @@ locally; planned frontend runtime files are not included in the inventory below.
 
 Current inventory: 61 route shells, 28 page controllers, dan 10 card theme
 templates. Angka ini bersifat turunan dan harus mengikuti repository.
+
+Foundations adapter CSS:
+
+- `assets/css/foundations-tokens.css`
+- `assets/css/foundations-typography.css`
+- `assets/css/foundations-primitives.css`
+
+The adapter is loaded by every visible route shell except public-card and redirect-only compatibility shells. The ten card templates and public-card artwork remain outside its scope.
 
 ## Deployment files
 

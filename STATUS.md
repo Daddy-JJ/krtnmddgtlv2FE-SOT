@@ -1,6 +1,6 @@
 # Frontend Repository Status
 
-Updated: 2026-09-12
+Updated: 2026-09-19
 
 Overall: **Frontend source and SOT aligned; local frontend/API/database integration verified. Production readiness still requires external UAT.**
 
@@ -12,8 +12,8 @@ Overall: **Frontend source and SOT aligned; local frontend/API/database integrat
 | Stack | Static HTML, Vanilla JS modules, Tailwind CSS 4 |
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
-| Static build | 158 allowlisted runtime files in `dist/` |
-| Automated tests | 129 passing; no known test failure |
+| Static build | 162 allowlisted runtime files in `dist/` |
+| Automated tests | 159 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Paused pending explicit Midtrans API readiness decision |
@@ -34,7 +34,35 @@ Overall: **Frontend source and SOT aligned; local frontend/API/database integrat
 | Internal workspace | Super Admin and assignment-scoped CV Specialist shells |
 | API transport | Cookie credentials, CSRF contexts, timeout, refresh, normalized errors |
 | Deployment | `dist/` allowlist and Vercel HTTPS upstream proxy |
+| Visual system | Foundations-inspired adapter active on all 51 visible non-card route shells; 10 card designs excluded |
 
+## Visual system
+
+SEO follow-up 2026-09-19: all ten sitemap pages have unique metadata and social
+previews, with keyword intent focused on kartu nama digital. Private-route
+noindex coverage includes eight previously unmarked admin redirects. Build
+passes and 159 tests pass. Production crawl/indexing and Search Console remain
+external release checks; personalized public-card metadata remains JS-rendered.
+
+2026-09-19 follow-up: shared scope, typography, action roles, panels, chooser,
+article spacing and admin navigation have been normalized. The browser audit
+covers 51 non-card shells at 320/1440px in both themes with mocked API responses.
+This verifies presentation, not live authenticated workflows; real-data UAT
+remains pending. See `REVIEW-REPORT.md` for evidence and limitations.
+Full QA passes (162 build files, 157 tests); no backend or card-artwork changes.
+
+The Foundations adapter is active on all 51 visible route shells: marketing,
+authentication/onboarding, member workspace, internal workspace, and blog. It is
+native scoped CSS, owns the shared token/type/layout rhythm, and does not add a
+React or Next.js runtime.
+
+The ten dynamic card-name designs, their registry and renderer, and public-card
+artwork remain unchanged by explicit owner decision. Redirect-only compatibility
+routes also remain presentation-neutral.
+
+The landing page now normalizes its legacy marketing recipe through Foundations roles for spacing, reading measure, light/dark surfaces, and headline scale. About, FAQ, and Contact use semantic display/lead typography, responsive Card
+grids, and native FAQ disclosures. API, authentication, and dynamic public-card
+rendering are unaffected.
 ## Locked decisions reconciled in Phase 6
 
 - First visit tanpa stored preference menampilkan chooser Light/Dark yang dapat

@@ -5,6 +5,36 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- SEO: optimasi 10 halaman publik untuk intent kartu nama digital; metadata
+  unik, Open Graph/Twitter, heading utama, internal link artikel, structured
+  data dan tanggal sitemap. Koreksi FAQ Starter/WhatsApp dan input CV DOCX
+  mengikuti SOT. Delapan redirect admin kini noindex; seluruh 159 tes lulus.
+
+- Melanjutkan normalisasi Foundations lintas halaman: scope pada html,
+  skala tipografi bersama, panel semantic, kontrol form, navigasi admin,
+  tombol sekunder, chooser tema, serta spacing artikel. Sistem font lokal
+  dinyatakan eksplisit tanpa ketergantungan CDN. QA: 157 test lulus.
+  QA browser memakai fixture API; UAT dengan data nyata tetap diperlukan.
+
+- Menggabungkan manfaat + profil dan keamanan + CTA menjadi dua section landing
+  ringkas; mempertahankan 25 field teks admin, memperbaiki kontras footer,
+  dan memverifikasi desktop/mobile Light/Dark. Audit konsistensi 51 shell
+  beserta temuan yang masih pending dicatat pada REVIEW-REPORT.md.
+- Merollout adapter Foundations ke seluruh 51 route shell aktif (marketing, auth, member workspace, internal workspace, dan blog), dengan public-card serta redirect compatibility tetap dikecualikan.
+- Menormalisasi landing page ke role Foundations untuk reading measure, spacing, surface light/dark, dan skala headline tanpa mengubah kontrak API; ilustrasi pada dua pasangan section kemudian diringkas melalui FE-D-027.
+- Menambahkan pilot visual system berbasis prinsip Supertype Foundations pada
+  enam route perwakilan, dengan semantic light/dark tokens, tipografi, primitive
+  komponen, regression test, dan atribusi MIT. Sepuluh desain kartu nama dan
+  artwork kartu publik secara eksplisit tidak diubah.
+- Menormalkan spacing dan layout pilot melalui satu scale kanonis, menghapus
+  akumulasi hero/dekorasi lama, serta memasukkan halaman Contact sehingga tujuh
+  route review memiliki ritme visual yang konsisten.
+- Memadatkan heading editorial Foundations pada desktop, melebarkan reading
+  measure agar judul About tidak terpecah menjadi tiga baris, dan menghapus
+  aksen garis panel warisan pada route pilot.
+- Merefactor resep marketing About, FAQ, dan Contact ke peran tipografi semantic, grid Card responsif, dan Disclosure native agar skala judul, reading rail, serta interaksi FAQ mengikuti prinsip Foundations tanpa mengubah kartu publik atau kontrak API.
+- Membuat pembacaan file .env pada npm run dev bersifat opsional sehingga
+  default lokal aman tetap dapat dipakai tanpa membuat atau menimpa .env.
 - Menghapus snapshot `docs/_legacy-sot/` setelah dokumentasinya dikonsolidasikan
   ke `docs/` utama.
 

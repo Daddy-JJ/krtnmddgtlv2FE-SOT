@@ -1,0 +1,130 @@
+/*
+ * KartuNamaDigital Foundations adapter.
+ * Adapted from @supertype.ai/foundations 0.2.5 (MIT), commit 5925e214.
+ * Opt-in through ui-foundations. Public-card themes are excluded.
+ */
+:root {
+  --fdn-background: #faf8f3;
+  --fdn-foreground: #231f1b;
+  --fdn-card: #ffffff;
+  --fdn-card-foreground: #231f1b;
+  --fdn-muted: #ebe7e0;
+  --fdn-muted-foreground: #5b544d;
+  --fdn-subtle-foreground: #777069;
+  --fdn-primary: #4a5d4e;
+  --fdn-primary-foreground: #ffffff;
+  --fdn-primary-ink: #405244;
+  --fdn-secondary: #e8a38d;
+  --fdn-secondary-foreground: #3f211a;
+  --fdn-secondary-ink: #a4442f;
+  --fdn-accent: #e2ebe3;
+  --fdn-accent-foreground: #34483a;
+  --fdn-border: #cfc8ba;
+  --fdn-input: #cfc8ba;
+  --fdn-ring: #4a5d4e;
+  --fdn-success: #267343;
+  --fdn-success-ink: #1f6539;
+  --fdn-warn: #c76800;
+  --fdn-warn-ink: #934410;
+  --fdn-info: #276aa5;
+  --fdn-info-ink: #235f91;
+  --fdn-danger: #ad382f;
+  --fdn-sidebar: #f5f2ec;
+  --fdn-sidebar-foreground: #403a35;
+  --fdn-sidebar-accent: #dce7dd;
+  --fdn-sidebar-border: #c8c0b2;
+  /* Deliberate system-font build: no undeclared web-font/CDN dependency. */
+  --fdn-font-sans: "Segoe UI", system-ui, Arial, sans-serif;
+  --fdn-font-mono: Consolas, "Liberation Mono", monospace;
+  --fdn-font-heading: var(--fdn-font-sans);
+  --fdn-type-page-title: clamp(1.75rem, 3vw, 2.25rem);
+  --fdn-type-section-title: clamp(1.35rem, 2vw, 1.75rem);
+  --fdn-type-card-title: 1.125rem;
+  --fdn-type-control: 0.875rem;
+  --fdn-radius-sm: 0.375rem;
+  --fdn-radius-md: 0.5rem;
+  --fdn-radius-lg: 0.625rem;
+  --fdn-radius-xl: 0.75rem;
+  --fdn-radius-2xl: 1.125rem;
+  --fdn-space-page: clamp(1rem, 3vw, 2rem);
+  --fdn-space-1: 0.25rem;
+  --fdn-space-2: 0.5rem;
+  --fdn-space-3: 0.75rem;
+  --fdn-space-4: 1rem;
+  --fdn-space-5: 1.5rem;
+  --fdn-space-6: 2rem;
+  --fdn-space-7: 3rem;
+  --fdn-space-8: 4rem;
+  --fdn-content: 72rem;
+  --fdn-reading: 56rem;
+  --fdn-sidebar-width: 14rem;
+  --fdn-section-gap: clamp(1.5rem, 3vw, 2.5rem);
+  --fdn-card-padding: clamp(1.25rem, 2.5vw, 2rem);
+  --fdn-shadow-raised: 0 1px 2px rgb(35 31 27 / 8%), 0 8px 24px rgb(35 31 27 / 8%);
+  --fdn-shadow-overlay: 0 18px 50px rgb(35 31 27 / 18%);
+  --fdn-shadow-recessed: inset 0 1px 3px rgb(35 31 27 / 8%);
+}
+
+html.ui-foundations.editorial {
+  --fdn-font-heading: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+html[data-site-theme="dark"] {
+  --fdn-background: #14110f;
+  --fdn-foreground: #eee9df;
+  --fdn-card: #26211f;
+  --fdn-card-foreground: #eee9df;
+  --fdn-muted: #312b28;
+  --fdn-muted-foreground: #d4cbbd;
+  --fdn-subtle-foreground: #aaa096;
+  --fdn-primary: #3d824f;
+  --fdn-primary-foreground: #ffffff;
+  --fdn-primary-ink: #aed8b6;
+  --fdn-secondary: #a84431;
+  --fdn-secondary-foreground: #ffffff;
+  --fdn-secondary-ink: #efa28f;
+  --fdn-accent: #29382d;
+  --fdn-accent-foreground: #c5e2ca;
+  --fdn-border: #554b45;
+  --fdn-input: #554b45;
+  --fdn-ring: #8abd94;
+  --fdn-success: #2f8552;
+  --fdn-success-ink: #83d4a1;
+  --fdn-warn: #d47716;
+  --fdn-warn-ink: #edbd82;
+  --fdn-info: #4a8ac4;
+  --fdn-info-ink: #8fc2ee;
+  --fdn-danger: #e28a80;
+  --fdn-sidebar: #211d1b;
+  --fdn-sidebar-foreground: #e9e1d5;
+  --fdn-sidebar-accent: #302b28;
+  --fdn-sidebar-border: #4e4540;
+  --fdn-shadow-raised: 0 1px 2px rgb(0 0 0 / 28%), 0 10px 30px rgb(0 0 0 / 24%);
+  --fdn-shadow-overlay: 0 20px 55px rgb(0 0 0 / 42%);
+  --fdn-shadow-recessed: inset 0 1px 3px rgb(0 0 0 / 34%);
+}
+
+.ui-foundations,
+html.ui-foundations[data-site-theme] {
+  /* Bridge existing owners; keep both palettes authoritative at the html root. */
+  --site-paper: var(--fdn-background);
+  --site-ink: var(--fdn-foreground);
+  --site-muted: var(--fdn-muted-foreground);
+  --site-line: var(--fdn-border);
+  --site-inverse: var(--fdn-background);
+  --site-surface-strong: var(--fdn-muted);
+  --site-link: var(--fdn-primary-ink);
+  --site-focus: var(--fdn-ring);
+  --site-success: var(--fdn-success-ink);
+  --site-warning: var(--fdn-warn-ink);
+  --site-font-mono: var(--fdn-font-mono);
+  --site-font-editorial: var(--fdn-font-heading);
+  --site-bg: var(--fdn-background);
+  --site-surface: var(--fdn-card);
+  --site-surface-muted: var(--fdn-muted);
+  --site-text: var(--fdn-foreground);
+  --site-text-muted: var(--fdn-muted-foreground);
+  --site-border: var(--fdn-border);
+  --site-accent: var(--fdn-primary);
+  --site-accent-strong: var(--fdn-primary-ink);
+  --site-danger: var(--fdn-danger);
+}

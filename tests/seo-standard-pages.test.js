@@ -15,6 +15,53 @@ const privatePages = [
 const articlePath = 'blog/satu-link-untuk-identitas-profesional';
 const resumeArticlePath = 'blog/cv-resume-builder';
 
+test('all sitemap pages have unique keyword-aware metadata and social previews', async () => {
+  const sitemap = await readFile(new URL('../sitemap.xml', import.meta.url), 'utf8');
+  const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]);
+  assert.equal(new Set(urls).size, 10);
+  const titles = new Set(), descriptions = new Set();
+  for (const url of urls) {
+    const path = new URL(url).pathname;
+    const html = await readFile(new URL('..' + path + 'index.html', import.meta.url), 'utf8');
+    const title = html.match(/<title>([^<]+)<\/title>/)?.[1];
+    const description = html.match(/<meta name="description" content="([^"]+)">/)?.[1];
+    assert.ok(title && description, path);
+    assert.match(description, /kartu nama digital/i, path);
+    assert.ok(!titles.has(title) && !descriptions.has(description), path);
+    titles.add(title); descriptions.add(description);
+    assert.equal((html.match(/<link rel="canonical"/g) ?? []).length, 1, path);
+    assert.ok(html.includes('href="' + url + '"'), path);
+    for (const key of ['og:type', 'og:title', 'og:description', 'og:url', 'og:locale', 'og:site_name']) {
+      assert.equal((html.match(new RegExp('property="' + key + '"', 'g')) ?? []).length, 1, path + key);
+    }
+    for (const key of ['twitter:card', 'twitter:title', 'twitter:description']) {
+      assert.equal((html.match(new RegExp('name="' + key + '"', 'g')) ?? []).length, 1, path + key);
+    }
+    assert.ok(html.includes('property="og:url" content="' + url + '"'), path);
+    for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+      const schema = JSON.parse(match[1]);
+      assert.equal(schema['@context'], 'https://schema.org');
+      assert.ok(schema['@type']);
+    }
+    assert.doesNotMatch(html, /name="keywords"/);
+  }
+});
+
+test('all private route shells stay noindex, including compatibility redirects', async () => {
+  async function inspect(url) {
+    for (const entry of await readdir(url, { withFileTypes: true })) {
+      const child = new URL(entry.name + (entry.isDirectory() ? '/' : ''), url);
+      if (entry.isDirectory()) await inspect(child);
+      else if (entry.name === 'index.html') {
+        const html = await readFile(child, 'utf8');
+        assert.match(html, /<meta name="robots" content="noindex[^"]*">/, child.pathname);
+      }
+    }
+  }
+  for (const group of ['app', 'admin', 'specialist']) await inspect(new URL('../' + group + '/', import.meta.url));
+});
+
+
 test('standard public pages expose unique indexable SEO metadata and landmarks', async () => {
   const titles = new Set();
   const descriptions = new Set();

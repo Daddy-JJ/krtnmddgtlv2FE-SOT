@@ -1,0 +1,820 @@
+/* Component primitives for opted-in Foundations pilot routes. */
+body.ui-foundations,
+html.ui-foundations body {
+  background: var(--fdn-background) !important;
+  color: var(--fdn-foreground) !important;
+  font-family: var(--fdn-font-sans) !important;
+}
+
+.ui-foundations :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--fdn-ring) 55%, transparent) !important;
+  outline-offset: 3px !important;
+}
+
+.ui-foundations :is(.marketing-header, .auth-header, .dashboard-header) {
+  background: color-mix(in srgb, var(--fdn-background) 90%, transparent) !important;
+  border-color: var(--fdn-border) !important;
+  color: var(--fdn-foreground) !important;
+  backdrop-filter: blur(14px);
+}
+
+.ui-foundations :is(
+  .marketing-header > nav,
+  .auth-header > nav,
+  .dashboard-header > nav,
+  .app-shell__header-nav,
+  .site-footer__inner
+) {
+  width: min(calc(100% - 2rem), var(--fdn-content)) !important;
+  margin-inline: auto;
+  max-width: var(--fdn-content);
+}
+
+.ui-foundations .site-main {
+  box-sizing: border-box;
+  width: min(calc(100% - 2rem), var(--fdn-content)) !important;
+  margin-inline: auto !important;
+  padding: var(--fdn-space-7) var(--fdn-space-page) !important;
+}
+
+.ui-foundations .marketing-shell .site-main,
+.ui-foundations .site-main.fdn-reading-shell {
+  max-width: 48rem !important;
+}
+
+.ui-foundations .site-hero {
+  max-width: var(--fdn-reading) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.ui-foundations .site-hero::after {
+  content: none !important;
+  display: none !important;
+}
+
+.ui-foundations .site-panel::before {
+  content: none !important;
+  display: none !important;
+}
+
+.ui-foundations .site-content {
+  margin-top: var(--fdn-section-gap) !important;
+  gap: var(--fdn-space-5) !important;
+}
+
+.ui-foundations .fdn-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fdn-space-3);
+}
+
+.ui-foundations .fdn-card {
+  min-height: 100%;
+  border-radius: var(--fdn-radius-md) !important;
+  box-shadow: none !important;
+}
+
+.ui-foundations .fdn-card > :is(h2, h3) {
+  font-family: var(--fdn-font-sans) !important;
+  font-size: 1.125rem !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.25 !important;
+}
+
+.ui-foundations .fdn-card > :is(h2, h3) + p {
+  margin-top: var(--fdn-space-3);
+}
+
+.ui-foundations .fdn-card p + p {
+  margin-top: var(--fdn-space-4);
+}
+
+.ui-foundations .fdn-disclosure-list {
+  display: grid;
+  gap: var(--fdn-space-3);
+}
+
+.ui-foundations .fdn-disclosure {
+  overflow: hidden;
+  background: var(--fdn-card);
+  border: 1px solid var(--fdn-border);
+  border-radius: var(--fdn-radius-md);
+  box-shadow: none;
+  color: var(--fdn-card-foreground);
+}
+
+.ui-foundations .fdn-disclosure summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fdn-space-4);
+  padding: var(--fdn-space-5) var(--fdn-card-padding);
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--fdn-font-sans);
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  line-height: 1.35;
+}
+
+.ui-foundations .fdn-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.ui-foundations .fdn-disclosure summary::after {
+  content: "+";
+  flex: 0 0 auto;
+  color: var(--fdn-primary-ink);
+  font-family: var(--fdn-font-sans);
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.ui-foundations .fdn-disclosure[open] summary::after {
+  content: "\2212";
+}
+
+.ui-foundations .fdn-disclosure__content {
+  padding: 0 var(--fdn-card-padding) var(--fdn-card-padding);
+}
+
+.ui-foundations .fdn-disclosure__content p {
+  margin: 0;
+}
+
+.ui-foundations .auth-main {
+  width: min(calc(100% - 2rem), 34rem) !important;
+  margin-inline: auto !important;
+  padding-block: clamp(2.5rem, 6vw, 4.5rem) !important;
+}
+
+.ui-foundations .auth-main--wide {
+  width: min(calc(100% - 2rem), var(--fdn-reading)) !important;
+}
+
+.ui-foundations :is(.site-panel, .auth-panel, .auth-card, .dashboard-panel, .dashboard-card) {
+  background: var(--fdn-card) !important;
+  border: 1px solid var(--fdn-border) !important;
+  border-radius: var(--fdn-radius-md) !important;
+  box-shadow: none !important;
+  color: var(--fdn-card-foreground) !important;
+}
+
+.ui-foundations .site-panel.fdn-card {
+  border-radius: var(--fdn-radius-md) !important;
+  box-shadow: none !important;
+}
+html.ui-foundations[data-site-theme] body :is(.fdn-panel, .billing-plan, .billing-notify),
+html.ui-foundations[data-site-theme] .app-shell-page .app-shell__main .fdn-panel {
+  background: var(--fdn-card) !important;
+  color: var(--fdn-card-foreground) !important;
+  border: 1px solid var(--fdn-border) !important;
+  border-radius: var(--fdn-radius-md) !important;
+  box-shadow: none !important;
+}
+
+html.ui-foundations body.dashboard-shell .fdn-nav-link {
+  background: transparent !important;
+  color: var(--fdn-muted-foreground) !important;
+  border-color: var(--fdn-border) !important;
+}
+
+html.ui-foundations body.dashboard-shell .fdn-nav-link:is(:hover, [aria-current="page"]) {
+  background: var(--fdn-accent) !important;
+  color: var(--fdn-accent-foreground) !important;
+  border-color: var(--fdn-ring) !important;
+}
+
+.ui-foundations :is(.site-panel, .auth-panel, .auth-card) {
+  padding: var(--fdn-card-padding) !important;
+}
+
+.ui-foundations .marketing-shell::before,
+.ui-foundations .auth-shell::before {
+  content: none !important;
+  display: none !important;
+}
+
+.ui-foundations .auth-main::after {
+  content: none !important;
+  display: none !important;
+}
+
+.ui-foundations :is(.site-eyebrow, .auth-eyebrow, .workspace-eyebrow, .dashboard-eyebrow, .site-theme-chooser__eyebrow) {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--fdn-primary-ink) !important;
+  display: block;
+  padding: 0 !important;
+}
+
+html.ui-foundations :is(
+  .fdn-button--primary,
+  .site-nav-primary,
+  .auth-primary,
+  .primary-cta,
+  .dashboard-action,
+  .auth-header__cta,
+  button.bg-slate-100,
+  button.bg-slate-900,
+  button.bg-teal-700,
+  .billing-notify__form .primary-cta
+) {
+  background: var(--fdn-primary) !important;
+  border: 1px solid var(--fdn-primary) !important;
+  border-radius: var(--fdn-radius-md) !important;
+  box-shadow: 0 1px 2px rgb(35 31 27 / 12%) !important;
+  color: var(--fdn-primary-foreground) !important;
+  font-family: var(--fdn-font-sans) !important;
+  font-size: var(--fdn-type-control) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
+}
+
+html.ui-foundations :is(
+  .fdn-button--primary,
+  .site-nav-primary,
+  .auth-primary,
+  .primary-cta,
+  .dashboard-action,
+  .auth-header__cta,
+  button.bg-slate-100,
+  button.bg-slate-900,
+  button.bg-teal-700
+):hover:not(:disabled) {
+  filter: brightness(0.93);
+  transform: translateY(-1px);
+}
+
+html.ui-foundations :is(.fdn-button--secondary, .secondary-cta, .auth-secondary, .dashboard-link, button.border, .app-shell__logout, .app-shell__menu-button, .app-shell__sidebar-logout, .mono-button--outline) {
+  background: var(--fdn-card) !important;
+  border: 1px solid var(--fdn-border) !important;
+  border-radius: var(--fdn-radius-md) !important;
+  color: var(--fdn-foreground) !important;
+}
+
+html.ui-foundations :is(.fdn-button--secondary, .secondary-cta, .auth-secondary, .dashboard-link, .app-shell__logout, .app-shell__menu-button, .app-shell__sidebar-logout, .mono-button--outline) {
+  font-family: var(--fdn-font-sans) !important;
+  font-size: var(--fdn-type-control) !important;
+  font-weight: 650 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
+html.ui-foundations :is(.fdn-button--secondary, .secondary-cta, .auth-secondary, .app-shell__logout, .app-shell__menu-button, .app-shell__sidebar-logout, .mono-button--outline):hover:not(:disabled) {
+  background: var(--fdn-accent) !important;
+  color: var(--fdn-accent-foreground) !important;
+}
+
+html.ui-foundations :is(.fdn-button--primary, .fdn-button--secondary) {
+  min-height: 2.75rem;
+  padding: var(--fdn-space-3) var(--fdn-space-4);
+  cursor: pointer;
+}
+
+html.ui-foundations :is(input, select, textarea, button) {
+  max-width: 100%;
+}
+
+.ui-foundations :is(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--fdn-primary);
+}
+
+html.ui-foundations[data-site-theme] body :is(input, select, textarea) {
+  font-family: var(--fdn-font-sans) !important;
+  background: var(--fdn-card) !important;
+  border: 1px solid var(--fdn-input) !important;
+  border-radius: var(--fdn-radius-md) !important;
+  box-shadow: var(--fdn-shadow-recessed) !important;
+  color: var(--fdn-card-foreground) !important;
+}
+
+html.ui-foundations body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.ui-foundations :is(input, select, textarea)::placeholder {
+  color: var(--fdn-subtle-foreground) !important;
+  opacity: 1;
+}
+
+.ui-foundations :is(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+  filter: saturate(0.35);
+  opacity: 0.58;
+}
+
+.ui-foundations :is(.app-sidebar, .dashboard-sidebar, .app-shell__sidebar) {
+  background: var(--fdn-sidebar) !important;
+  border-color: var(--fdn-sidebar-border) !important;
+  border-radius: var(--fdn-radius-lg) !important;
+  color: var(--fdn-sidebar-foreground) !important;
+}
+
+.ui-foundations :is(.app-sidebar, .dashboard-sidebar, .app-shell__sidebar) a[aria-current="page"],
+.ui-foundations :is(.app-sidebar, .dashboard-sidebar, .app-shell__sidebar) .is-active,
+.ui-foundations .app-shell__sidebar .dashboard-link--active {
+  background: var(--fdn-sidebar-accent) !important;
+  border-radius: var(--fdn-radius-sm) !important;
+  color: var(--fdn-accent-foreground) !important;
+}
+
+.ui-foundations .app-shell__layout {
+  width: min(calc(100% - 2rem), var(--fdn-content)) !important;
+  grid-template-columns: var(--fdn-sidebar-width) minmax(0, 1fr) !important;
+  gap: var(--fdn-space-5) !important;
+  padding-block: var(--fdn-space-5) var(--fdn-space-7) !important;
+}
+
+.ui-foundations :is(.app-shell__main, [data-admin-root], .dashboard-panel, .dashboard-card) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ui-foundations .dashboard-shell > main:not(.app-shell__main) {
+  width: min(calc(100% - 2rem), var(--fdn-content));
+  margin-inline: auto;
+  padding-inline: 0;
+}
+
+.ui-foundations .dashboard-panel:has(> table) {
+  overflow-x: auto;
+}
+
+.ui-foundations table :is(th, td) {
+  padding: var(--fdn-space-3);
+  text-align: start;
+}
+
+.ui-foundations thead {
+  background: var(--fdn-muted);
+}
+
+.ui-foundations .app-shell__sidebar {
+  top: 6.5rem;
+  padding: var(--fdn-space-3) !important;
+}
+
+.ui-foundations .app-shell__main.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: var(--fdn-space-5) !important;
+}
+
+.ui-foundations [data-admin-root] {
+  width: min(calc(100% - 2rem), var(--fdn-content)) !important;
+  max-width: var(--fdn-content) !important;
+  padding: var(--fdn-space-6) 0 var(--fdn-space-7) !important;
+}
+
+.ui-foundations [data-admin-root] > * + * {
+  margin-top: var(--fdn-space-5) !important;
+}
+
+.ui-foundations [data-admin-root] .dashboard-panel {
+  padding: var(--fdn-card-padding) !important;
+}
+
+.ui-foundations table {
+  background: var(--fdn-card) !important;
+  border-color: var(--fdn-border) !important;
+  border-radius: var(--fdn-radius-lg);
+  color: var(--fdn-card-foreground) !important;
+}
+
+.ui-foundations :is(th, td) {
+  border-color: var(--fdn-border) !important;
+}
+
+.ui-foundations :is(dialog, [role="dialog"]) {
+  background: var(--fdn-card) !important;
+  border: 1px solid var(--fdn-border) !important;
+  border-radius: var(--fdn-radius-2xl) !important;
+  box-shadow: var(--fdn-shadow-overlay) !important;
+  color: var(--fdn-card-foreground) !important;
+}
+
+.ui-foundations :is(.site-theme-chooser__choice, .site-theme-toggle) {
+  background: var(--fdn-card) !important;
+  border: 1px solid var(--fdn-border) !important;
+  border-radius: var(--fdn-radius-md) !important;
+  color: var(--fdn-card-foreground) !important;
+}
+
+.ui-foundations .site-theme-chooser__choice:hover,
+.ui-foundations .site-theme-chooser__choice:focus-visible {
+  background: var(--fdn-accent) !important;
+  color: var(--fdn-accent-foreground) !important;
+  border-color: var(--fdn-ring) !important;
+}
+
+.ui-foundations .site-theme-chooser__choice-title {
+  font-family: var(--fdn-font-sans);
+  text-transform: none;
+}
+
+.ui-foundations .site-theme-chooser::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+.ui-foundations :is(.billing-plan, .billing-notify, .theme-option) {
+  border-radius: var(--fdn-radius-md) !important;
+  border-color: var(--fdn-border) !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 767px) {
+  .ui-foundations .site-main {
+    width: min(calc(100% - 1.25rem), var(--fdn-content)) !important;
+    padding: var(--fdn-space-6) var(--fdn-space-3) !important;
+  }
+
+  .ui-foundations .site-content {
+    margin-top: var(--fdn-space-5) !important;
+  }
+
+  .ui-foundations .fdn-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-foundations :is(.site-panel, .auth-panel, .auth-card, .dashboard-panel, .dashboard-card) {
+    border-radius: var(--fdn-radius-lg) !important;
+  }
+
+  .ui-foundations .app-shell__layout {
+    width: min(calc(100% - 1.25rem), var(--fdn-content)) !important;
+    padding-block: var(--fdn-space-4) var(--fdn-space-6) !important;
+  }
+
+  .ui-foundations [data-admin-root] {
+    width: min(calc(100% - 1.25rem), var(--fdn-content)) !important;
+    padding-block: var(--fdn-space-5) var(--fdn-space-6) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-foundations *,
+  .ui-foundations *::before,
+  .ui-foundations *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/* Foundations adapter for legacy monochrome marketing and article blocks. */
+html.ui-foundations.editorial .mono-page {
+  --mono-paper: var(--fdn-background);
+  --mono-soft: var(--fdn-muted);
+  --mono-ink: var(--fdn-foreground);
+  --mono-muted: var(--fdn-muted-foreground);
+  --mono-line: var(--fdn-border);
+}
+
+html.ui-foundations.editorial :is(.mono-article-page, .resume-page) .mono-section {
+  padding-block: var(--fdn-space-7);
+}
+
+html.ui-foundations.editorial :is(.mono-article-hero, .resume-hero) h1 {
+  max-width: 28ch;
+}
+
+.ui-foundations .mono-article-content {
+  padding-bottom: var(--fdn-space-7);
+}
+
+.ui-foundations .mono-article-content > h2,
+.ui-foundations :is(.mono-article-cta, .mono-related) {
+  margin-top: var(--fdn-space-6);
+}
+
+.ui-foundations :is(.mono-article-visual, .mono-inline-diagram) {
+  margin-block: var(--fdn-space-6);
+}
+
+.ui-foundations :is(.resume-hero__grid, .resume-split, .resume-final-cta) {
+  gap: var(--fdn-space-6);
+}
+
+.ui-foundations :is(.resume-bordered-panel, .resume-final-cta, .resume-countdown) {
+  background: var(--fdn-card);
+  color: var(--fdn-card-foreground);
+  border-color: var(--fdn-border);
+  border-radius: var(--fdn-radius-md);
+}
+
+html.ui-foundations.editorial .mono-section--dark {
+  background: var(--fdn-muted);
+  color: var(--fdn-foreground);
+}
+
+html.ui-foundations.editorial .mono-section--dark :is(p, li, .mono-kicker) {
+  color: var(--fdn-muted-foreground) !important;
+}
+
+.ui-foundations .mono-inline-diagram b {
+  background: var(--fdn-primary);
+  color: var(--fdn-primary-foreground);
+}
+
+@media (max-width: 767px) {
+  .ui-foundations .mono-article-visual {
+    grid-template-columns: 1fr;
+    gap: var(--fdn-space-3);
+  }
+
+  .ui-foundations .mono-article-visual i {
+    justify-self: center;
+    transform: rotate(90deg);
+  }
+
+  .ui-foundations .resume-security-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ui-foundations .mono-container {
+  width: min(calc(100% - 2rem), var(--fdn-content));
+}
+
+html.ui-foundations.editorial :is(.mono-article-page, .resume-page) :is(.mono-button, .mono-menu-button, .mono-brand__mark) {
+  border-radius: var(--fdn-radius-md) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+.ui-foundations.editorial :is(.mono-eyebrow, .mono-kicker, .mono-plan-label) {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--fdn-primary-ink) !important;
+  padding: 0 !important;
+}
+
+.ui-foundations :is(.mono-button--dark, .mono-footer .mono-button--dark) {
+  background: var(--fdn-primary) !important;
+  border-color: var(--fdn-primary) !important;
+  border-radius: var(--fdn-radius-md) !important;
+  color: var(--fdn-primary-foreground) !important;
+}
+
+.ui-foundations.editorial :is(
+  .mono-plans article,
+  .mono-profile-card,
+  .mono-contact-card,
+  .mono-final-cta,
+  .mono-article-callout,
+  .mono-article-cta,
+  .mono-related a,
+  .resume-document
+) {
+  background: var(--fdn-card) !important;
+  border-color: var(--fdn-border) !important;
+  border-radius: var(--fdn-radius-md) !important;
+  box-shadow: none !important;
+}
+
+.ui-foundations.editorial :is(.mono-plans article, .mono-profile-card, .mono-contact-card) h3 {
+  font-family: var(--fdn-font-sans) !important;
+  font-size: 1.125rem !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.015em !important;
+}
+
+/* Landing recipe normalization. Keep the remaining illustration markup, but make
+ * its surfaces, spacing, and reading measure follow the Foundations roles. */
+html.ui-foundations.editorial body.mono-landing-page {
+  --mono-paper: var(--fdn-background);
+  --mono-ink: var(--fdn-foreground);
+  --mono-muted: var(--fdn-muted-foreground);
+  --mono-line: var(--fdn-border);
+  --mono-soft: var(--fdn-muted);
+  --mono-content: 64rem;
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-container {
+  width: min(calc(100% - 2rem), var(--mono-content));
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-section {
+  padding-block: clamp(3rem, 6vw, var(--fdn-space-8));
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-section--compact {
+  padding-block: clamp(2.5rem, 5vw, var(--fdn-space-7));
+}
+
+html.ui-foundations.editorial body.mono-landing-page h1 {
+  max-width: 24ch;
+  margin-bottom: var(--fdn-space-4);
+}
+
+html.ui-foundations.editorial body.mono-landing-page h2 {
+  max-width: 26ch;
+  margin-bottom: var(--fdn-space-3);
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-hero {
+  padding-top: clamp(3rem, 6vw, var(--fdn-space-8));
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-hero__grid,
+html.ui-foundations.editorial body.mono-landing-page .mono-split {
+  gap: var(--fdn-space-7);
+}
+
+html.ui-foundations.editorial body.mono-landing-page :is(
+  .mono-phone,
+  .mono-qr-panel,
+  .mono-vcard-panel,
+  .mono-browser-illustration,
+  .mono-profile-card,
+  .mono-contact-card,
+  .mono-security-mark,
+  .mono-final-cta
+) {
+  background: var(--fdn-card);
+  border-color: var(--fdn-border);
+  color: var(--fdn-card-foreground);
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-footer {
+  background: var(--fdn-foreground);
+  color: var(--fdn-background);
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-footer p {
+  color: color-mix(in srgb, var(--fdn-background) 72%, transparent);
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-footer :is(.mono-brand, nav a, .mono-footer__bottom) {
+  color: var(--fdn-background) !important;
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-footer :is(.mono-brand__mark, .mono-footer__bottom) {
+  border-color: color-mix(in srgb, var(--fdn-background) 45%, transparent) !important;
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-benefits article,
+html.ui-foundations.editorial body.mono-landing-page .mono-steps li {
+  border-color: var(--fdn-border);
+}
+html.ui-foundations.editorial body.mono-landing-page :is(.mono-header, .mono-mobile-menu) {
+  background: var(--fdn-card) !important;
+  color: var(--fdn-card-foreground) !important;
+  border-color: var(--fdn-border) !important;
+}
+
+html.ui-foundations.editorial body.mono-landing-page :is(.mono-brand__mark, .mono-button, .mono-menu-button) {
+  border-radius: var(--fdn-radius-md) !important;
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-button {
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-nav {
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+}
+
+html.ui-foundations.editorial body.mono-landing-page .mono-hero__copy h1 {
+  font-size: clamp(2.4rem, 5vw, 3.4rem) !important;
+  max-width: 22ch;
+}
+
+/* Consolidated landing blocks: local layout ownership, no card-artwork scope. */
+.ui-foundations .mono-landing-page .landing-section-intro {
+  max-width: 46rem;
+  margin-bottom: var(--fdn-space-6);
+}
+
+html.ui-foundations.editorial body.mono-landing-page :is(.landing-features, .landing-closing) h2 {
+  max-width: 30ch;
+  font-size: clamp(1.75rem, 3vw, 2.25rem) !important;
+  line-height: 1.2 !important;
+}
+
+.ui-foundations .mono-landing-page .landing-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--fdn-space-4);
+}
+
+.ui-foundations .mono-landing-page .landing-feature {
+  min-width: 0;
+  padding: var(--fdn-space-5);
+  background: var(--fdn-card);
+  color: var(--fdn-card-foreground);
+  border: 1px solid var(--fdn-border);
+  border-radius: var(--fdn-radius-md);
+}
+
+.ui-foundations .mono-landing-page .landing-feature__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: var(--fdn-space-4);
+  border-radius: var(--fdn-radius-sm);
+  background: var(--fdn-accent);
+  color: var(--fdn-primary-ink);
+}
+
+html.ui-foundations.editorial body.mono-landing-page :is(.landing-feature, .landing-closing__security) h3 {
+  margin: 0 0 var(--fdn-space-3);
+  font-family: var(--fdn-font-sans) !important;
+  font-size: 1.125rem !important;
+  font-weight: 650 !important;
+  line-height: 1.4 !important;
+  letter-spacing: -0.015em !important;
+}
+
+.ui-foundations .mono-landing-page :is(.landing-feature, .landing-closing__security) p,
+.ui-foundations .mono-landing-page .landing-security-list {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.ui-foundations .mono-landing-page .landing-closing__panel {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: var(--fdn-space-6);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: var(--fdn-card);
+  color: var(--fdn-card-foreground);
+  border: 1px solid var(--fdn-border);
+  border-radius: var(--fdn-radius-md);
+}
+
+.ui-foundations .mono-landing-page :is(.landing-closing__cta, .landing-closing__security) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ui-foundations .mono-landing-page .landing-closing__security {
+  border-inline-start: 1px solid var(--fdn-border);
+  padding-inline-start: var(--fdn-space-6);
+}
+
+.ui-foundations .mono-landing-page .landing-closing .mono-actions {
+  margin-top: var(--fdn-space-5);
+  gap: var(--fdn-space-3);
+}
+
+.ui-foundations .mono-landing-page .landing-security-list {
+  display: grid;
+  gap: var(--fdn-space-2);
+  margin: var(--fdn-space-4) 0 0;
+  padding-inline-start: 1.25rem;
+  list-style: disc;
+  color: var(--fdn-muted-foreground);
+}
+
+.ui-foundations .mono-landing-page .landing-security-list li::marker {
+  color: var(--fdn-primary-ink);
+}
+
+@media (max-width: 59.99rem) {
+  .ui-foundations .mono-landing-page .landing-feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ui-foundations .mono-landing-page .landing-closing__panel {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-foundations .mono-landing-page .landing-closing__security {
+    border-inline-start: 0;
+    border-top: 1px solid var(--fdn-border);
+    padding-inline-start: 0;
+    padding-top: var(--fdn-space-5);
+  }
+}
+
+@media (max-width: 35.99rem) {
+  .ui-foundations .mono-landing-page .landing-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-foundations .mono-landing-page .landing-closing .mono-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (min-width: 48rem) and (max-width: 69.99rem) {
+  html.ui-foundations.editorial body.mono-landing-page .mono-hero__grid {
+    grid-template-columns: 1fr;
+  }
+
+  html.ui-foundations.editorial body.mono-landing-page .mono-product-scene {
+    min-height: 27rem;
+  }
+}

@@ -17,7 +17,7 @@ test('every authenticated user page loads the shared application shell', async (
   for (const page of pages) {
     const source = await readFile(new URL(page, root), 'utf8');
     assert.match(source, /\/components\/app-shell\.js/, page);
-    assert.match(source, /<html lang="id" class="app-theme-dark">/, page);
+    assert.match(source, /<html lang="id" class="[^"]*\bapp-theme-dark\b[^"]*">/, page);
     assert.match(source, /<body class="[^"]*\bdashboard-shell\b[^"]*\bapp-shell-page\b/, page);
   }
 });

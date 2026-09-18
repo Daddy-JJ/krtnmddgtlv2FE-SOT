@@ -1,6 +1,9 @@
+import { existsSync } from 'node:fs';
 import { createLocalFrontendServer } from './local-server.mjs';
 
-process.loadEnvFile?.();
+if (process.loadEnvFile && existsSync('.env')) {
+  process.loadEnvFile();
+}
 
 const host = process.env.FRONTEND_HOST ?? '127.0.0.1';
 const port = Number(process.env.FRONTEND_PORT ?? 8080);

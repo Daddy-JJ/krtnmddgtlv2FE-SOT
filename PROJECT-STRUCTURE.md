@@ -49,7 +49,7 @@ editor and are intentional when tested.
 - 61 route `index.html` shells.
 - 28 page-controller modules under `pages/`.
 - 10 allowlisted card-theme templates.
-- Static build baseline: 158 runtime files in `dist/`.
+- Static build baseline: 162 runtime files in `dist/`.
 
 Counts describe the verified Phase 10 repository and must be refreshed when the
 runtime inventory changes.
@@ -68,9 +68,17 @@ Shared responsibility owners include:
 - `components/card-live-preview.js` for isolated member theme previews.
 - `services/auth-service.js` for current-user `GET /me` access.
 - `validators/resume-file-validator.js` for DOCX-only 10 MB source validation.
+- `assets/css/foundations-tokens.css` for opt-in semantic design tokens.
+- `assets/css/foundations-typography.css` for opt-in type hierarchy.
+- `assets/css/foundations-primitives.css` for opt-in shared UI primitives.
+- `assets/css/foundations-tokens.css` for opt-in semantic design tokens.
+- `assets/css/foundations-typography.css` for opt-in type hierarchy.
+- `assets/css/foundations-primitives.css` for opt-in shared UI primitives.
 
 Search for an existing owner before adding a module; repeated business rules must
 be consolidated instead of maintained in parallel.
+
+The Foundations adapter is loaded by all visible route shells except redirect-only compatibility routes. It must not be imported by the ten card-theme templates or used to restyle public-card artwork.
 
 ## Email template management
 

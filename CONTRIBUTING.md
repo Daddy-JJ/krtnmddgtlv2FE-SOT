@@ -39,6 +39,13 @@ Gunakan prefix yang menjelaskan tujuan: `feat:`, `fix:`, `docs:`, `refactor:`,
 
 ## Review checklist
 
+For shared UI work, use the existing three Foundations CSS layers and semantic
+component roles documented in docs/01-FRONTEND-ARCHITECTURE.md. Do not introduce
+parallel theme files or duplicate page overrides. Inspect Light/Dark, mobile
+and desktop, long content, keyboard focus, disabled/error states and dynamic
+panels. Mocked browser checks do not replace real-data UAT. Keep all ten public
+card templates excluded unless their redesign is separately approved.
+
 - Scope dan tier tidak berubah diam-diam.
 - UI tetap keyboard-accessible dan mobile-first.
 - Tidak ada unsafe DOM sink atau credential browser storage.

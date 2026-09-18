@@ -61,6 +61,37 @@ slug fallback. Nested unknown routes are not public-card slugs.
 - All substantive website shells load compiled CSS and website theme assets.
 - Compatibility routes may use redirects when covered by tests.
 
+## SEO ownership (2026-09-19)
+
+Indexable marketing metadata is authored in each static HTML head, not injected
+by JavaScript. The ten URLs in sitemap.xml retain unique intent:
+home targets "kartu nama digital"; About explains the service, FAQ answers
+questions, Contact provides support, and legal pages retain their policy titles.
+The profile article targets practical usage; the CV article retains CV intent.
+Each has a canonical production URL, description, Open Graph/Twitter metadata
+and appropriate WebSite/Organization/WebPage/ContactPage/BlogPosting JSON-LD.
+Do not add keyword stuffing, invented ratings or unsupported rich-result claims.
+
+Auth, create, management, member, admin and specialist routes remain noindex,
+including internal compatibility redirects. robots.txt allows crawling so robots
+meta can be read; it is not authorization. No private routes enter the sitemap.
+Update lastmod only when that page changes meaningfully.
+
+The existing public-card controller owns per-person metadata and canonical URLs.
+It still requires JavaScript/API rendering; static social crawlers cannot be
+assumed to receive personalized metadata. SSR/prerender and dynamic-card sitemap
+need separate backend/deployment coordination and privacy review.
+The ten card designs are unchanged. Admin-managed landing copy may override
+the fallback H1: keep CMS heroTitle aligned with the static metadata without
+silently overwriting published content.
+
+Release checks: verify canonical-domain deployment, inspect production robots
+and response headers, submit sitemap in Search Console, then monitor indexing
+and search queries. Local test success does not prove indexing or rankings.
+
+Google references: https://developers.google.com/search/docs/appearance/title-link
+and https://developers.google.com/search/docs/crawling-indexing/special-tags .
+
 ## Card rendering
 
 `config/theme-registry.json` defines ten immutable theme codes, display metadata,
@@ -93,6 +124,34 @@ Runtime locale support is currently limited to `id`; English resources remain
 dormant scaffolding. `assets/js/site-theme.js` mounts an accessible Light/Dark
 chooser only when `knd.theme.preference` has no valid stored value, then keeps the
 global toggle available for later changes.
+
+## Opt-in visual-system adapter
+
+The Foundations-inspired adapter is split into three native CSS layers:
+
+- assets/css/foundations-tokens.css owns semantic light/dark tokens.
+- assets/css/foundations-typography.css owns the type hierarchy.
+- assets/css/foundations-primitives.css owns common layout and control styling.
+
+Every visible route shell loads all three files after site-theme.css and applies the ui-foundations scope. Marketing and blog shells also apply editorial mode; authentication, member workspace, and internal workspace retain the interface type role. The adapter owns the shared token, layout, component, and spacing rhythm. It adds no React or Next.js runtime and changes no API behavior.
+
+The ten card-theme templates, assets/css/card-themes.css,
+services/card-theme-renderer.js, config/theme-registry.json, and the public-card
+artwork are outside this visual migration. Their presentation must remain
+stable unless the owner approves a separate card-design project.
+
+### Shared UI ownership (2026-09-19)
+
+Place `ui-foundations` on html so dynamically inserted controls and overlays
+inherit the same tokens. Page, section, card and control typography use the
+shared `--fdn-type-*` tokens. System sans/serif font stacks are deliberate;
+the adapter does not load Ubuntu/Average or depend on a font CDN.
+
+Reuse `fdn-panel`, `fdn-button--primary`, `fdn-button--secondary` and
+`fdn-nav-link` for new components. Existing class aliases remain for migration
+compatibility. Update the owning token/type/primitive rule rather than creating
+per-page copies. Legacy color variables bridge to semantic theme tokens.
+Public-card templates remain outside this scope.
 
 ## Local development server
 
