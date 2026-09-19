@@ -129,6 +129,14 @@ dormant scaffolding. `assets/js/site-theme.js` mounts an accessible Light/Dark
 chooser only when `knd.theme.preference` has no valid stored value, then keeps the
 global toggle available for later changes.
 
+## Web analytics boundary
+
+`scripts/build-static.mjs` injects the Vercel Web Analytics HTML snippet only
+into the ten indexable marketing pages listed in `sitemap.xml`. Query strings
+and URL fragments are removed in `beforeSend`. Authentication, Starter form,
+member, internal admin/specialist, and dynamic public-card routes are excluded.
+The integration is build-owned so source HTML does not duplicate the snippet.
+
 ## Opt-in visual-system adapter
 
 The Foundations-inspired adapter is split into three native CSS layers:

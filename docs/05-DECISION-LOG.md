@@ -371,6 +371,18 @@ Production browser hosts `kartunamadigital.id`, `www.kartunamadigital.id`, and
 routing path: the Vercel Function remains a fail-closed same-origin fallback,
 with its upstream timeout no shorter than the 30-second Starter create timeout.
 
+## FE-D-030 - Privacy-scoped Vercel Web Analytics
+
+Date: 2026-09-19
+Status: Accepted
+
+Vercel Web Analytics is injected at static-build time only into the ten
+indexable marketing pages in the sitemap. The integration uses no analytics
+cookie, removes query strings and URL fragments before sending an event, and
+excludes authentication, Starter form, member, internal workspace, and dynamic
+public-card routes. This keeps one modular integration owner without copying
+tracking markup across source pages.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

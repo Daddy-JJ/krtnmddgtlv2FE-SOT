@@ -4,7 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
+  ANALYTICS_HTML_FILES,
   buildStaticSite,
+  injectVercelAnalytics,
   PUBLIC_DIRECTORIES,
   PUBLIC_ROOT_FILES,
 } from '../scripts/build-static.mjs';
@@ -62,6 +64,41 @@ test('static deployment output contains runtime files and excludes internal mate
 
   assert.ok(outputFiles.every((file) => !file.toLowerCase().endsWith('.md')));
   assert.ok(outputFiles.every((file) => !file.split('/').some((part) => part.startsWith('.'))));
+
+  const analyticsFiles = new Set(ANALYTICS_HTML_FILES);
+  for (const file of outputFiles.filter(file => file.endsWith('.html'))) {
+    const html = await readFile(path.join(outputRoot, file), 'utf8');
+    const expectedCount = analyticsFiles.has(file) ? 1 : 0;
+    assert.equal(
+      (html.match(/src="\/_vercel\/insights\/script\.js"/g) ?? []).length,
+      expectedCount,
+      file,
+    );
+  }
+});
+
+test('Vercel Analytics injection is idempotent and removes URL query and fragment data', () => {
+  const source = '<!doctype html><html><head><title>Test</title></head><body></body></html>';
+  const injected = injectVercelAnalytics(source);
+
+  assert.equal(injectVercelAnalytics(injected), injected);
+  assert.equal((injected.match(/src="\/_vercel\/insights\/script\.js"/g) ?? []).length, 1);
+  assert.match(injected, /window\.va = window\.va \|\| function/);
+  assert.match(injected, /url\.search = ''/);
+  assert.match(injected, /url\.hash = ''/);
+  assert.match(injected, /catch \{\s*return null;/);
+  assert.ok(injected.indexOf('/_vercel/insights/script.js') < injected.indexOf('</head>'));
+});
+
+test('Vercel Analytics is limited to sitemap marketing pages', async () => {
+  const sitemap = await readFile(path.join(PROJECT_ROOT, 'sitemap.xml'), 'utf8');
+  const sitemapFiles = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map(([, value]) => new URL(value).pathname)
+    .map(pathname => pathname === '/' ? 'index.html' : `${pathname.slice(1)}index.html`)
+    .sort();
+
+  assert.deepEqual([...ANALYTICS_HTML_FILES].sort(), sitemapFiles);
+  assert.ok(ANALYTICS_HTML_FILES.every(file => !/^(?:admin|app|specialist|public-card|starter)\//.test(file)));
 });
 
 test('deployment configuration uses an explicit static output boundary', async () => {

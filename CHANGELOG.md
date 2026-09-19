@@ -5,6 +5,11 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Menambahkan Vercel Web Analytics secara modular saat static build untuk 10
+  halaman marketing di sitemap. Query/fragment dibuang sebelum event; route
+  akun, admin, Starter form, dan kartu publik dinamis dikecualikan. Kebijakan
+  privasi/cookies dan regression test deployment ikut diperbarui. Build tetap
+  162 file dan seluruh 164 test lulus.
 - Memperbaiki pemilihan API production untuk `kartunamadigital.id`, `www`, dan
   hostname Vercel agar memakai `https://api.kartunamadigital.id/api/v1`;
   localhost tetap memakai backend port 3000. Timeout proxy fallback dinaikkan

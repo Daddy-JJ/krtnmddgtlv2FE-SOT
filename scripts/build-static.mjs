@@ -40,6 +40,19 @@ export const PUBLIC_ROOT_FILES = Object.freeze([
   'sitemap.xml',
 ]);
 
+export const ANALYTICS_HTML_FILES = Object.freeze([
+  'index.html',
+  'about/index.html',
+  'blog/cv-resume-builder/index.html',
+  'blog/satu-link-untuk-identitas-profesional/index.html',
+  'contact/index.html',
+  'cookies/index.html',
+  'faq/index.html',
+  'privacy/index.html',
+  'refund/index.html',
+  'terms/index.html',
+]);
+
 const ALLOWED_STATIC_EXTENSIONS = new Set([
   '.css',
   '.html',
@@ -57,12 +70,41 @@ const ALLOWED_STATIC_EXTENSIONS = new Set([
 ]);
 
 const RUNTIME_CONFIG_FILE = 'config/runtime-config.js';
+const ANALYTICS_HTML_FILE_SET = new Set(ANALYTICS_HTML_FILES);
+const VERCEL_ANALYTICS_MARKER = 'data-knd-vercel-analytics';
+const VERCEL_ANALYTICS_SNIPPET = `  <script ${VERCEL_ANALYTICS_MARKER}>
+    window.va = window.va || function () {
+      (window.vaq = window.vaq || []).push(arguments);
+    };
+    window.va('beforeSend', function (event) {
+      try {
+        const url = new URL(event.url);
+        url.search = '';
+        url.hash = '';
+        return Object.assign({}, event, { url: url.toString() });
+      } catch {
+        return null;
+      }
+    });
+  </script>
+  <script defer src="/_vercel/insights/script.js" ${VERCEL_ANALYTICS_MARKER}></script>`;
 
 export function renderRuntimeConfig(source, env = process.env) {
   return source
     .replaceAll('__PUBLIC_API_BASE_URL_LOCAL__', String(env.PUBLIC_API_BASE_URL_LOCAL ?? '__PUBLIC_API_BASE_URL_LOCAL__'))
     .replaceAll('__PUBLIC_API_BASE_URL_PRODUCTION__', String(env.PUBLIC_API_BASE_URL_PRODUCTION ?? '__PUBLIC_API_BASE_URL_PRODUCTION__'))
     .replaceAll('__PUBLIC_API_TIMEOUT_MS__', String(env.PUBLIC_API_TIMEOUT_MS ?? '__PUBLIC_API_TIMEOUT_MS__'));
+}
+
+export function injectVercelAnalytics(source) {
+  if (source.includes(VERCEL_ANALYTICS_MARKER)) return source;
+
+  const closingHead = source.search(/<\/head>/i);
+  if (closingHead === -1) {
+    throw new Error('Cannot inject Vercel Analytics into HTML without a closing head tag.');
+  }
+
+  return `${source.slice(0, closingHead)}${VERCEL_ANALYTICS_SNIPPET}\n${source.slice(closingHead)}`;
 }
 
 function relativeDisplayPath(sourceRoot, sourcePath) {
@@ -107,6 +149,9 @@ async function copyPublicDirectory(sourceRoot, sourceDirectory, outputDirectory,
     if (relativePath === RUNTIME_CONFIG_FILE) {
       const source = await readFile(sourcePath, 'utf8');
       await writeFile(outputPath, renderRuntimeConfig(source), 'utf8');
+    } else if (ANALYTICS_HTML_FILE_SET.has(relativePath)) {
+      const source = await readFile(sourcePath, 'utf8');
+      await writeFile(outputPath, injectVercelAnalytics(source), 'utf8');
     } else {
       await copyFile(sourcePath, outputPath);
     }
@@ -143,7 +188,13 @@ export async function buildStaticSite({
     if (!metadata.isFile() || metadata.isSymbolicLink()) {
       throw new Error(`Invalid public root file: ${file}`);
     }
-    await copyFile(sourcePath, path.join(resolvedOutputRoot, file));
+    const outputPath = path.join(resolvedOutputRoot, file);
+    if (ANALYTICS_HTML_FILE_SET.has(file)) {
+      const source = await readFile(sourcePath, 'utf8');
+      await writeFile(outputPath, injectVercelAnalytics(source), 'utf8');
+    } else {
+      await copyFile(sourcePath, outputPath);
+    }
     copiedFiles.push(file);
   }
 

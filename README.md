@@ -14,6 +14,7 @@ database.
 - Fetch API melalui satu client cookie-authenticated.
 - Native Node.js test runner.
 - Vercel untuk hosting frontend dan same-origin API proxy.
+- Vercel Web Analytics tanpa cookie untuk halaman marketing yang ada di sitemap.
 
 Tidak ada React, Vue, Next.js, atau framework SPA di repository ini.
 
@@ -146,6 +147,9 @@ same-origin dan meneruskannya ke origin HTTPS dari `BACKEND_API_BASE_URL`.
 
 Hanya isi `dist/` yang menjadi aset statis publik. Dokumentasi, test, metadata
 repository, dan source proxy tidak dimasukkan ke output tersebut.
+Saat build, snippet Vercel Web Analytics ditambahkan hanya ke sepuluh halaman
+marketing di sitemap. Route akun/internal, form Starter, dan kartu publik
+dinamis dikecualikan; query string serta fragment URL dibuang sebelum event.
 
 ## Status penting
 

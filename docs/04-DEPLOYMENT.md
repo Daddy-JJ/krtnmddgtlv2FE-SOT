@@ -63,6 +63,7 @@ static-only fallback and does not provide slug routing or an API proxy.
   referrer policy, dan restrictive permissions policy untuk seluruh route.
 - `/api/v1/:path*` rewrite to the Vercel proxy Function.
 - One-segment public slug rewrite to `/public-card/index.html`.
+- Build-time Vercel Web Analytics injection for sitemap marketing pages only.
 
 The root project setting must not override these with output `.`.
 
@@ -125,6 +126,13 @@ Then verify:
 - Landing and indexable public routes.
 - Auth and member routes remain `noindex`.
 - API health through same-origin `/api/v1`.
+- `/_vercel/insights/script.js` loads on an indexable marketing page and a
+  `/_vercel/insights/view` request appears after visiting it.
+- Analytics script is absent from account, admin, Starter form, and dynamic
+  public-card pages.
+
+Web Analytics must be enabled in the Vercel project dashboard before deployment.
+No analytics-specific environment variable or frontend secret is required.
 - Cookie, CSRF, login, refresh, logout.
 - Starter creation, email handoff, Login/Signup, claim, edit.
 - Public card exact-case slug, vCard, and QR.

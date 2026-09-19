@@ -13,7 +13,7 @@ Overall: **Frontend source and SOT aligned; local frontend/API/database integrat
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
 | Static build | 162 allowlisted runtime files in `dist/` |
-| Automated tests | 162 passing; no known test failure |
+| Automated tests | 164 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Paused pending explicit Midtrans API readiness decision |
@@ -49,6 +49,7 @@ on `http://127.0.0.1:3000/api/v1`; the fallback proxy timeout is 30 seconds.
 | Internal workspace | Super Admin and assignment-scoped CV Specialist shells |
 | API transport | Cookie credentials, CSRF contexts, production-host routing, timeout, refresh, normalized errors |
 | Deployment | `dist/` allowlist, direct production API base, and Vercel HTTPS fallback proxy |
+| Web analytics | Vercel Web Analytics on 10 sitemap marketing pages; sensitive routes excluded |
 | Visual system | Foundations-inspired adapter active on all 51 visible non-card route shells; 10 card designs excluded |
 
 ## Visual system
