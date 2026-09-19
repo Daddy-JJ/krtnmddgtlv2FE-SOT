@@ -13,7 +13,7 @@ Overall: **Frontend source and SOT aligned; local frontend/API/database integrat
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
 | Static build | 162 allowlisted runtime files in `dist/` |
-| Automated tests | 159 passing; no known test failure |
+| Automated tests | 162 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Paused pending explicit Midtrans API readiness decision |
@@ -30,6 +30,10 @@ The displayed apex/`www` records route toward shared hosting rather than
 Vercel, so canonical frontend routing remains an external configuration check.
 The migrated API health endpoint has been owner-verified at HTTP 200.
 
+Production runtime routing now recognizes the apex, `www`, and canonical Vercel
+hostname and selects `https://api.kartunamadigital.id/api/v1`. Localhost remains
+on `http://127.0.0.1:3000/api/v1`; the fallback proxy timeout is 30 seconds.
+
 ## Implemented frontend surfaces
 
 | Surface | Current implementation |
@@ -43,8 +47,8 @@ The migrated API health endpoint has been owner-verified at HTTP 200.
 | Card themes | 1 Starter, 3 cumulative Basic, 10 cumulative Pro |
 | Resume Enhancement | Pro member forms/detail/revision, DOCX 10 MB validation, internal workspaces |
 | Internal workspace | Super Admin and assignment-scoped CV Specialist shells |
-| API transport | Cookie credentials, CSRF contexts, timeout, refresh, normalized errors |
-| Deployment | `dist/` allowlist and Vercel HTTPS upstream proxy |
+| API transport | Cookie credentials, CSRF contexts, production-host routing, timeout, refresh, normalized errors |
+| Deployment | `dist/` allowlist, direct production API base, and Vercel HTTPS fallback proxy |
 | Visual system | Foundations-inspired adapter active on all 51 visible non-card route shells; 10 card designs excluded |
 
 ## Visual system

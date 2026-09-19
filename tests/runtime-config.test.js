@@ -11,6 +11,14 @@ function runtimeConfig(existingConfig, hostname, injected = {}) {
   if (hostname) context.location = { hostname };
   const evaluatedSource = source
     .replace(
+      "const injectedLocalApiBaseUrl = '__PUBLIC_API_BASE_URL_LOCAL__';",
+      `const injectedLocalApiBaseUrl = ${JSON.stringify(injected.localApiBaseUrl ?? '__PUBLIC_API_BASE_URL_LOCAL__')};`,
+    )
+    .replace(
+      "const injectedProductionApiBaseUrl = '__PUBLIC_API_BASE_URL_PRODUCTION__';",
+      `const injectedProductionApiBaseUrl = ${JSON.stringify(injected.productionApiBaseUrl ?? '__PUBLIC_API_BASE_URL_PRODUCTION__')};`,
+    )
+    .replace(
       "const injectedApiBaseUrl = '__PUBLIC_API_BASE_URL__';",
       `const injectedApiBaseUrl = ${JSON.stringify(injected.apiBaseUrl ?? '__PUBLIC_API_BASE_URL__')};`,
     )
@@ -30,13 +38,13 @@ test('undeployed placeholders safely use the same-origin API route', () => {
 });
 
 test('127.0.0.1 frontend uses the local backend API port', () => {
-  const config = runtimeConfig(undefined, '127.0.0.1', { apiBaseUrl: 'http://127.0.0.1:3000/api/v1' });
+  const config = runtimeConfig(undefined, '127.0.0.1', { localApiBaseUrl: 'http://127.0.0.1:3000/api/v1' });
   assert.equal(config.apiBaseUrl, 'http://127.0.0.1:3000/api/v1');
   assert.equal(config.requestTimeoutMs, 12_000);
 });
 
 test('localhost uses the 127.0.0.1 backend hostname for cookie consistency', () => {
-  const config = runtimeConfig(undefined, 'localhost', { apiBaseUrl: 'http://127.0.0.1:3000/api/v1' });
+  const config = runtimeConfig(undefined, 'localhost', { localApiBaseUrl: 'http://127.0.0.1:3000/api/v1' });
   assert.equal(config.apiBaseUrl, 'http://127.0.0.1:3000/api/v1');
   assert.equal(config.requestTimeoutMs, 12_000);
 });
@@ -48,9 +56,26 @@ test('non-local hosts retain the same-origin API route', () => {
 });
 
 test('the production Vercel host uses the production API environment value', () => {
-  const config = runtimeConfig(undefined, 'krtnmdgtlv2-fe-ten.vercel.app', { apiBaseUrl: 'https://api.kartunamadigital.id/api/v1' });
+  const config = runtimeConfig(undefined, 'krtnmdgtlv2-fe-ten.vercel.app', {
+    productionApiBaseUrl: 'https://api.kartunamadigital.id/api/v1',
+    timeout: '30000',
+  });
   assert.equal(config.apiBaseUrl, 'https://api.kartunamadigital.id/api/v1');
-  assert.equal(config.requestTimeoutMs, 12_000);
+  assert.equal(config.requestTimeoutMs, 30_000);
+});
+
+test('the production apex host uses the production API environment value', () => {
+  const config = runtimeConfig(undefined, 'kartunamadigital.id', {
+    productionApiBaseUrl: 'https://api.kartunamadigital.id/api/v1',
+  });
+  assert.equal(config.apiBaseUrl, 'https://api.kartunamadigital.id/api/v1');
+});
+
+test('the production www host uses the production API environment value', () => {
+  const config = runtimeConfig(undefined, 'www.kartunamadigital.id', {
+    productionApiBaseUrl: 'https://api.kartunamadigital.id/api/v1',
+  });
+  assert.equal(config.apiBaseUrl, 'https://api.kartunamadigital.id/api/v1');
 });
 
 test('injected public API base remains authoritative on a local host', () => {

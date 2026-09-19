@@ -15,7 +15,10 @@ email, file storage, and response schema.
   `http://127.0.0.1:3000/api/v1` so the separate Express backend is reached
   directly. Both local hostnames intentionally use the backend hostname
   `127.0.0.1` for cookie consistency.
-- Vercel: same-origin `/api/v1` diteruskan oleh `api/v1/[...path].js`.
+- Production browser hosts `kartunamadigital.id`, `www.kartunamadigital.id`,
+  and `krtnmdgtlv2-fe-ten.vercel.app` use
+  `https://api.kartunamadigital.id/api/v1` directly.
+- Same-origin fallback `/api/v1` is forwarded by `api/v1/[...path].js`.
 - Server-side upstream: `BACKEND_API_BASE_URL`, HTTPS origin tanpa path.
 - Fallback direct base hanya melalui reviewed public runtime configuration.
 
@@ -35,7 +38,8 @@ configured API base yang sama.
 - `Accept: application/json` dan unique `X-Request-ID` dikirim.
 - JSON request memakai `Content-Type: application/json`.
 - File upload memakai `FormData`; browser menentukan multipart boundary.
-- Default timeout 12 detik.
+- Default timeout tanpa environment override adalah 12 detik; production
+  injects `PUBLIC_API_TIMEOUT_MS=30000`.
 - Satu 401 dapat memicu satu refresh lalu satu retry, kecuali request memilih
   `skipRefresh`.
 - Unsafe cookie-authenticated method memakai `X-CSRF-Token`.

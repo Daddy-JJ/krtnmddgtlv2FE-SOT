@@ -138,9 +138,11 @@ melihat preview.
 
 ## Deployment
 
-Target kanonis frontend adalah Vercel. Browser memanggil same-origin `/api/v1`;
-Vercel Function `api/v1/[...path].js` meneruskannya ke origin backend HTTPS yang
-ditentukan melalui `BACKEND_API_BASE_URL`.
+Target kanonis frontend adalah Vercel. Browser pada `kartunamadigital.id`,
+`www.kartunamadigital.id`, dan `krtnmdgtlv2-fe-ten.vercel.app` memanggil
+`https://api.kartunamadigital.id/api/v1` melalui public runtime configuration.
+Vercel Function `api/v1/[...path].js` tetap tersedia sebagai fallback
+same-origin dan meneruskannya ke origin HTTPS dari `BACKEND_API_BASE_URL`.
 
 Hanya isi `dist/` yang menjadi aset statis publik. Dokumentasi, test, metadata
 repository, dan source proxy tidak dimasukkan ke output tersebut.

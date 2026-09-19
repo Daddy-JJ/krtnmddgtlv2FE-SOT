@@ -10,7 +10,12 @@ const hostname = typeof globalThis.location?.hostname === 'string'
   ? globalThis.location.hostname.toLowerCase()
   : '';
 const isLocalHostname = hostname === 'localhost' || hostname === '127.0.0.1';
-const isVercelProductionHostname = hostname === 'krtnmdgtlv2-fe-ten.vercel.app';
+const productionHostnames = new Set([
+  'kartunamadigital.id',
+  'www.kartunamadigital.id',
+  'krtnmdgtlv2-fe-ten.vercel.app',
+]);
+const isProductionHostname = productionHostnames.has(hostname);
 const localPlaceholder = '__PUBLIC_' + 'API_BASE_URL_LOCAL__';
 const productionPlaceholder = '__PUBLIC_' + 'API_BASE_URL_PRODUCTION__';
 const localApiBaseUrl = injectedLocalApiBaseUrl === localPlaceholder
@@ -21,7 +26,7 @@ const productionApiBaseUrl = injectedProductionApiBaseUrl === productionPlacehol
   : injectedProductionApiBaseUrl;
 const apiBaseUrl = isLocalHostname
   ? localApiBaseUrl
-  : isVercelProductionHostname
+  : isProductionHostname
     ? productionApiBaseUrl
     : sameOriginApiBaseUrl;
 const configuredApiBaseUrl = injectedApiBaseUrl === '__PUBLIC_API_BASE_URL__'

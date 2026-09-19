@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import proxy from '../api/v1/[...path].js';
+
+const proxySource = await readFile(new URL('../api/v1/[...path].js', import.meta.url), 'utf8');
+const starterServiceSource = await readFile(new URL('../services/starter-service.js', import.meta.url), 'utf8');
+
+function numericConstant(source, name) {
+  const match = source.match(new RegExp(`const ${name} = (\\d[\\d_]*)`));
+  assert.ok(match, `${name} must be declared as a numeric constant`);
+  return Number(match[1].replaceAll('_', ''));
+}
 
 async function withEnvironment(value, callback) {
   const previous = process.env.BACKEND_API_BASE_URL;
@@ -55,4 +65,11 @@ test('Vercel API proxy forwards to the configured origin', { concurrency: false 
       globalThis.fetch = originalFetch;
     }
   });
+});
+
+test('Vercel proxy timeout is not shorter than the Starter create timeout', () => {
+  const proxyTimeoutMs = numericConstant(proxySource, 'PROXY_UPSTREAM_TIMEOUT_MS');
+  const starterCreateTimeoutMs = numericConstant(starterServiceSource, 'STARTER_CREATE_TIMEOUT_MS');
+  assert.ok(proxyTimeoutMs >= starterCreateTimeoutMs);
+  assert.match(proxySource, /AbortSignal\.timeout\(PROXY_UPSTREAM_TIMEOUT_MS\)/);
 });

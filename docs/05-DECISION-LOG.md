@@ -359,6 +359,18 @@ use local system stacks; no remote font dependency is implied.
 Ten public-card designs remain excluded. Browser fixtures provide presentation
 evidence only; real authenticated workflows still require UAT.
 
+## FE-D-029 - Production browser API hostname routing
+
+Date: 2026-09-19
+Status: Accepted
+
+Production browser hosts `kartunamadigital.id`, `www.kartunamadigital.id`, and
+`krtnmdgtlv2-fe-ten.vercel.app` use the injected production API base
+`https://api.kartunamadigital.id/api/v1`. Localhost continues to use
+`http://127.0.0.1:3000/api/v1`. This supersedes FE-D-006 only for the browser
+routing path: the Vercel Function remains a fail-closed same-origin fallback,
+with its upstream timeout no shorter than the 30-second Starter create timeout.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

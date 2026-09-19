@@ -8,6 +8,7 @@ const HOP_BY_HOP_HEADERS = new Set([
   'transfer-encoding',
   'upgrade',
 ]);
+const PROXY_UPSTREAM_TIMEOUT_MS = 30_000;
 
 function configuredBackendOrigin() {
   const configured = String(process.env.BACKEND_API_BASE_URL ?? '').trim();
@@ -81,7 +82,7 @@ export default {
       method,
       headers: forwardedHeaders(request.headers),
       redirect: 'manual',
-      signal: AbortSignal.timeout(12_000),
+      signal: AbortSignal.timeout(PROXY_UPSTREAM_TIMEOUT_MS),
     };
 
     if (method !== 'GET' && method !== 'HEAD') {

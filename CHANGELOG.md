@@ -5,6 +5,11 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Memperbaiki pemilihan API production untuk `kartunamadigital.id`, `www`, dan
+  hostname Vercel agar memakai `https://api.kartunamadigital.id/api/v1`;
+  localhost tetap memakai backend port 3000. Timeout proxy fallback dinaikkan
+  menjadi 30 detik dan dikunci agar tidak lebih pendek dari Starter create.
+  Build 162 file dan seluruh 162 test lulus.
 - Mendokumentasikan migrasi backend shared hosting ke `sierra` /
   `nimbus_plus` dengan shared IP `202.155.137.45`; domain, API path, dan
   layout remote tetap. IP lama `202.10.43.184` dinyatakan superseded.

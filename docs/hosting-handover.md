@@ -8,15 +8,15 @@ repository backend terpisah.
 
 ```text
 Browser
-  → Vercel frontend
-  → same-origin /api/v1/*
-  → Vercel Function proxy
+  → Vercel frontend on a recognized production hostname
+  → https://api.kartunamadigital.id/api/v1/*
   → backend HTTPS di shared hosting
 ```
 
-Frontend tidak mengetahui credential backend. Proxy hanya membutuhkan
-`BACKEND_API_BASE_URL`, misalnya `https://api.kartunamadigital.id`, tanpa path
-`/api/v1`, query, fragment, username, atau password.
+Frontend tidak mengetahui credential backend. Vercel Function proxy tetap ada
+sebagai fallback same-origin. Proxy hanya membutuhkan `BACKEND_API_BASE_URL`,
+misalnya `https://api.kartunamadigital.id`, tanpa path `/api/v1`, query,
+fragment, username, atau password.
 
 ## Current backend hosting baseline
 
@@ -115,7 +115,9 @@ tetap harus diizinkan backend; penggunaan `127.0.0.1` adalah jalur kanonis.
 | Install Command | `npm ci` |
 | Build Command | `npm run build` |
 | Output Directory | `dist` melalui `vercel.json` |
-| Server variable | `BACKEND_API_BASE_URL` untuk Preview dan Production |
+| Production browser API | `PUBLIC_API_BASE_URL_PRODUCTION=https://api.kartunamadigital.id/api/v1` |
+| Browser timeout | `PUBLIC_API_TIMEOUT_MS=30000` |
+| Server proxy origin | `BACKEND_API_BASE_URL=https://api.kartunamadigital.id` |
 
 Jangan mengubah Output Directory kembali ke `.`. Source root memuat dokumentasi,
 test, dan metadata yang bukan public asset.
@@ -131,7 +133,8 @@ test, dan metadata yang bukan public asset.
 6. Promote deployment yang sama setelah acceptance; jangan rebuild source berbeda.
 
 Proxy fail-closed ketika upstream kosong/tidak valid, memakai HTTP, localhost,
-credentialed URL, path tambahan, atau `*.trycloudflare.com`.
+credentialed URL, path tambahan, atau `*.trycloudflare.com`. Timeout fallback
+proxy adalah 30 detik dan tidak boleh lebih pendek dari Starter create.
 
 ## Transitional cPanel fallback
 
@@ -158,8 +161,9 @@ backup diverifikasi. Operasi tersebut tidak dilakukan dari fase reintegrasi ini.
 - `BACKEND_NOT_CONFIGURED`: periksa `BACKEND_API_BASE_URL` di Vercel lalu redeploy.
 - Static route hilang: pastikan directory/file runtime masuk allowlist
   `scripts/build-static.mjs` dan hasilnya ada di `dist/`.
-- Login loop atau CSRF error: verifikasi same-origin proxy, cookie Secure/HttpOnly,
-  backend origin, dan tidak ada direct cross-origin override yang tidak disetujui.
+- Login loop atau CSRF error: verifikasi production API base, credentialed CORS,
+  cookie Secure/HttpOnly, dan backend origin; periksa proxy hanya jika request
+  memang memakai fallback same-origin.
 - Frontend lama: verifikasi deployment ID/commit Vercel dan lakukan hard refresh.
 - API error: catat request ID; troubleshooting backend dilakukan di repository
   dan hosting backend terpisah.

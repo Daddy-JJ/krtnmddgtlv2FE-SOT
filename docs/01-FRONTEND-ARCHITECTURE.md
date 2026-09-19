@@ -110,15 +110,19 @@ not appear in card artwork.
 
 - API base values come from `PUBLIC_API_BASE_URL_LOCAL` and
   `PUBLIC_API_BASE_URL_PRODUCTION` in the environment. Local hosts use the
-  local value; `krtnmdgtlv2-fe-ten.vercel.app` uses the production value.
-- Request timeout 12 seconds.
+  local value; `kartunamadigital.id`, `www.kartunamadigital.id`, and
+  `krtnmdgtlv2-fe-ten.vercel.app` use the production value.
+- Request timeout defaults to 12 seconds when no public value is injected;
+  production deployment sets `PUBLIC_API_TIMEOUT_MS=30000`.
 - Locale `id`.
 
 `config/runtime-config.js` is public configuration only. It must never contain
 credentials. Server-owned `globalThis.__KND_CONFIG__` remains authoritative;
 environment-injected public values select local or production routing. The
-Vercel proxy remains available for same-origin `/api/v1` fallback traffic and
-uses `BACKEND_API_BASE_URL` server-side.
+three recognized production hosts call the production API base directly. The
+Vercel proxy remains available for same-origin `/api/v1` fallback traffic,
+uses `BACKEND_API_BASE_URL` server-side, and waits at least as long as the
+30-second Starter create request.
 
 Runtime locale support is currently limited to `id`; English resources remain
 dormant scaffolding. `assets/js/site-theme.js` mounts an accessible Light/Dark

@@ -75,10 +75,12 @@ The current server is `sierra` on package `nimbus_plus`, with shared IP
 DNS/SSL and `/api/v1/health` must be reverified after migration; the prior IP
 `202.10.43.184` is superseded.
 
-Required Vercel server-side variable:
+Required Vercel variables:
 
 ```text
 BACKEND_API_BASE_URL=https://api.kartunamadigital.id
+PUBLIC_API_BASE_URL_PRODUCTION=https://api.kartunamadigital.id/api/v1
+PUBLIC_API_TIMEOUT_MS=30000
 ```
 
 Rules:
@@ -90,10 +92,11 @@ Rules:
 - No temporary `*.trycloudflare.com` upstream.
 - Configure separately for Preview and Production.
 
-This value is consumed server-side by the proxy. Public browser routing is
-configured separately with `PUBLIC_API_BASE_URL_LOCAL` and
-`PUBLIC_API_BASE_URL_PRODUCTION`; these values contain the complete `/api/v1`
-base URL and are safe to expose in the static bundle.
+`BACKEND_API_BASE_URL` is consumed server-side by the proxy. The other two
+values are public browser configuration and are safe to expose in the static
+bundle. Set `PUBLIC_API_BASE_URL_LOCAL=http://127.0.0.1:3000/api/v1` only in
+local/pre-production development environments. The proxy fallback timeout is
+30 seconds, so it is not shorter than the Starter create timeout.
 
 ## Static-public boundary
 
