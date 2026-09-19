@@ -17,6 +17,15 @@ database.
 
 Tidak ada React, Vue, Next.js, atau framework SPA di repository ini.
 
+## Hosting production
+
+Frontend tetap di Vercel dan API tetap menggunakan
+`https://api.kartunamadigital.id`. Migrasi shared hosting 2026-09-19 tidak
+mengubah domain, API path, atau susunan file remote. Baseline server non-secret
+terbaru—termasuk shared IP `202.155.137.45`—dicatat di
+`docs/hosting-handover.md`. Jangan menggunakan kembali IP lama
+`202.10.43.184`.
+
 ## Menjalankan pemeriksaan lokal
 
 Gunakan Node.js 22 dan npm:

@@ -5,6 +5,12 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Mendokumentasikan migrasi backend shared hosting ke `sierra` /
+  `nimbus_plus` dengan shared IP `202.155.137.45`; domain, API path, dan
+  layout remote tetap. IP lama `202.10.43.184` dinyatakan superseded.
+- Mencatat baseline DNS panel Domainesia serta potensi konflik record apex/www
+  shared hosting dengan target frontend Vercel; record mail/SPF tidak diubah.
+
 - SEO: optimasi 10 halaman publik untuk intent kartu nama digital; metadata
   unik, Open Graph/Twitter, heading utama, internal link artikel, structured
   data dan tanggal sitemap. Koreksi FAQ Starter/WhatsApp dan input CV DOCX

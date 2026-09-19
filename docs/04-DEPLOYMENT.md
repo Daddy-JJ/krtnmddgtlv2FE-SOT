@@ -68,6 +68,13 @@ The root project setting must not override these with output `.`.
 
 ## Environment
 
+The backend shared-hosting migration reported on 2026-09-19 keeps the production
+origin `https://api.kartunamadigital.id`, API paths, and remote layout unchanged.
+The current server is `sierra` on package `nimbus_plus`, with shared IP
+`202.155.137.45`. See `docs/hosting-handover.md` for the non-secret inventory.
+DNS/SSL and `/api/v1/health` must be reverified after migration; the prior IP
+`202.10.43.184` is superseded.
+
 Required Vercel server-side variable:
 
 ```text

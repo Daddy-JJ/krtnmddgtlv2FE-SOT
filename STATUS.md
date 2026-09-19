@@ -19,6 +19,17 @@ Overall: **Frontend source and SOT aligned; local frontend/API/database integrat
 | Checkout | Paused pending explicit Midtrans API readiness decision |
 | Production readiness | Not yet approved |
 
+External hosting update (owner-reported, pending post-migration health/UAT):
+backend moved to `sierra` / `nimbus_plus`, shared IP `202.155.137.45`.
+Production domain, API paths, and remote layout remain unchanged. Hosting
+panel recommends Node.js 24.20.0; application compatibility is not inferred from
+availability alone. Old IP `202.10.43.184` is superseded.
+
+DNS panel evidence reports `ns1.domainesia.net` and `ns2.domainesia.net`.
+The displayed apex/`www` records route toward shared hosting rather than
+Vercel, so canonical frontend routing remains an external configuration check.
+The migrated API health endpoint has been owner-verified at HTTP 200.
+
 ## Implemented frontend surfaces
 
 | Surface | Current implementation |

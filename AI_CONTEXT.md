@@ -56,6 +56,16 @@ dan hasil validasi final tetap authoritative di backend.
 
 ## Current readiness gaps
 
+- Owner reported backend shared-hosting migration to server `sierra`, package
+  `nimbus_plus`, shared IP `202.155.137.45`; domain, API paths, and remote
+  file layout are unchanged. Hosting panel recommends Node.js 24.20.0, but backend runtime
+  compatibility must be verified in the backend repository. The old shared IP
+  `202.10.43.184` is superseded.
+- DNS panel evidence reports configured nameservers `ns1.domainesia.net` and
+  `ns2.domainesia.net`. Its visible apex/`www` records point to shared
+  hosting, which may conflict with the canonical Vercel frontend topology;
+  public delegation and intended web routing require explicit verification.
+
 - Super Admin email template management has an active local backend contract and
   an implemented editor/service adapter at `/admin/mail/templates/`. Authenticated
   browser and designated-mailbox UAT remain external readiness evidence.

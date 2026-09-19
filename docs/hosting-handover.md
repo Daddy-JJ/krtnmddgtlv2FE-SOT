@@ -18,6 +18,67 @@ Frontend tidak mengetahui credential backend. Proxy hanya membutuhkan
 `BACKEND_API_BASE_URL`, misalnya `https://api.kartunamadigital.id`, tanpa path
 `/api/v1`, query, fragment, username, atau password.
 
+## Current backend hosting baseline
+
+Owner-confirmed migration baseline (2026-09-19):
+
+| Item | Current value |
+|---|---|
+| Hosting package | `nimbus_plus` |
+| Server name | `sierra` |
+| cPanel | 138.0 (build 7) |
+| Apache | 2.4.68 |
+| Database service | MariaDB 11.4.13-cll-lve-log |
+| Architecture / OS | x86_64 / Linux |
+| Shared public IP | `202.155.137.45` |
+| Sendmail path | `/usr/sbin/sendmail` |
+| Perl | 5.40.2 at `/usr/bin/perl` |
+| Kernel | `6.12.0-211.49.1.el10_2.x86_64` |
+| Python | 3.12.14 |
+| Node.js selected/recommended by hosting panel | 24.20.0 |
+
+The production API domain remains `api.kartunamadigital.id`; frontend domains,
+API paths, and the remote file/application layout are unchanged. Authoritative
+DNS for host `api` must point to the new shared IP `202.155.137.45`. The old
+shared IP `202.10.43.184` is superseded and must not be reused.
+
+Node.js 24.20.0 above is a hosting capability shown by the panel. It does not
+by itself change the backend repository's supported engine range. Validate the
+backend dependency lockfile, tests, migrations, mail worker, and startup under
+Node.js 24 in the backend repository before treating that runtime as approved.
+No credential, database name, or connection string is recorded here.
+
+## Current DNS-zone baseline
+
+Owner-provided panel evidence dated 2026-09-19 reports the zone's configured
+nameservers as:
+
+- `ns1.domainesia.net`
+- `ns2.domainesia.net`
+
+Visible records in that panel use TTL 14400:
+
+| Host | Type | Target / value |
+|---|---|---|
+| `kartunamadigital.id` | A | `202.155.137.45` |
+| `kartunamadigital.id` | MX priority 0 | `kartunamadigital.id` |
+| `mail.kartunamadigital.id` | CNAME | `kartunamadigital.id` |
+| `www.kartunamadigital.id` | CNAME | `kartunamadigital.id` |
+| `ftp.kartunamadigital.id` | A | `202.155.137.45` |
+
+The visible SPF TXT record contains the new IP plus legacy IP entries
+`202.10.43.183` and `202.10.43.184`, as well as `a`, `mx`, and the
+MailChannels relay include. Do not remove legacy SPF mechanisms until actual
+outbound mail sources are audited; DNS web/API routing and mail authorization
+are separate concerns.
+
+Important topology check: the visible apex A record and `www` CNAME resolve
+toward shared hosting, while this frontend SOT still names Vercel as canonical.
+Before the next frontend deployment, verify public NS delegation and decide
+whether apex/`www` should target Vercel or shared hosting. Do not infer the
+public delegation from a zone-editor screenshot alone. The production API
+health endpoint was owner-verified as HTTP 200 after migration.
+
 ## Local integration
 
 Untuk pengembangan lokal, jalankan frontend source pada
