@@ -44,6 +44,7 @@ test('account page exposes only reset password and locks delivery to the current
   assert.match(page, /id="reset-email"[^>]*readonly[^>]*aria-readonly="true"/);
   assert.match(page, /data-account-reset-submit disabled/);
   assert.match(controller, /await authService\.current\(\)/);
+  assert.match(controller, /account\?\.user\?\.email/);
   assert.match(controller, /resetForm\.elements\.email\.value = email/);
   assert.doesNotMatch(controller, /verifyEmailOtp|resendEmailOtp|validateVerifyOtp|verifyForm|verifiedState/);
   assert.doesNotMatch(controller, /Data email akun tidak tersedia\./);

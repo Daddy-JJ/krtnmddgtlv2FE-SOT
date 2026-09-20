@@ -13,7 +13,7 @@ async function loadAccount() {
   showStatus(status, 'Memuat keamanan akun...', 'info');
   try {
     const account = await authService.current();
-    const email = normalizeEmail(account?.email);
+    const email = normalizeEmail(account?.user?.email);
     if (!email) throw new Error('Email akun belum dapat dimuat.');
 
     if (resetForm?.elements.email) resetForm.elements.email.value = email;
