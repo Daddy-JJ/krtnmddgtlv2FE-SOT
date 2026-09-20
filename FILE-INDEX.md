@@ -44,6 +44,7 @@ locally; planned frontend runtime files are not included in the inventory below.
 | `login/`, `register/` | Authentication |
 | `app/` | Member workspace |
 | `admin/` | Super Admin workspace |
+| `admin/feedback/` | Dedicated Super Admin Feedback Inbox |
 | `specialist/` | CV Specialist workspace |
 | `public-card/index.html` | Shell kartu publik root-slug |
 | `api/v1/[...path].js` | Vercel same-origin API proxy |
@@ -65,8 +66,12 @@ locally; planned frontend runtime files are not included in the inventory below.
 | `scripts/local-server.mjs` | Local route, asset, slug, and API proxy server |
 | `scripts/dev-server.mjs` | npm run dev entry point on 127.0.0.1:8080 |
 
-Current inventory: 61 route shells, 28 page controllers, dan 10 card theme
+Current inventory: 62 route shells, 28 page controllers, dan 10 card theme
 templates. Angka ini bersifat turunan dan harus mengikuti repository.
+
+Super Admin operations use `services/admin-operations-service.js` as the
+single endpoint adapter for statistics, feedback, cards, reports, system,
+security, and existing operational lists.
 
 Foundations adapter CSS:
 

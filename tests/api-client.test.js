@@ -183,3 +183,15 @@ test('null payload is omitted for strict no-body POST endpoints', async () => {
   assert.equal(observed.headers.has('content-type'), false);
   assert.equal(observed.headers.get('x-csrf-token'), 'access-csrf');
 });
+
+test('callers can opt into the complete success envelope for pagination metadata', async () => {
+  const envelope = {
+    success: true,
+    data: [{ publicId: 'feedback-public-id' }],
+    meta: { page: 2, limit: 25, total: 30, pages: 2 },
+  };
+  const client = new ApiClient({ fetchImpl: async () => jsonResponse(envelope) });
+
+  assert.deepEqual(await client.get('/admin/feedback?page=2', { includeEnvelope: true }), envelope);
+  assert.deepEqual(await client.get('/admin/feedback?page=2'), envelope.data);
+});

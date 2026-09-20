@@ -5,6 +5,12 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Menambahkan Super Admin operations command center: Feedback Inbox dedicated,
+  statistik operasional terkelompok, card ownership intervention final, serta
+  endpoint dan renderer terpisah untuk Reports, System, dan Security. Navigasi
+  kini dikelompokkan dan responsif; mutation memakai CSRF, alasan, konfirmasi,
+  recent-auth handling, dan double-submit guard. Build menghasilkan 164 file
+  dan seluruh 174 test lulus.
 - Menambahkan Vercel Web Analytics secara modular saat static build untuk 10
   halaman marketing di sitemap. Query/fragment dibuang sebelum event; route
   akun, admin, Starter form, dan kartu publik dinamis dikecualikan. Kebijakan

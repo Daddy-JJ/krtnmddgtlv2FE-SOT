@@ -383,6 +383,24 @@ excludes authentication, Starter form, member, internal workspace, and dynamic
 public-card routes. This keeps one modular integration owner without copying
 tracking markup across source pages.
 
+## FE-D-031 - Super Admin operations command center
+
+Date: 2026-09-20
+Status: Accepted
+
+The owner approves a frontend-only Super Admin operations pass against the
+completed backend contract. The existing shared controller remains the DOM
+owner, while one admin operations service owns endpoint transport. The workspace
+adds a dedicated Feedback Inbox, explicit command-center statistics, final card
+ownership interventions, and separate Reports, System, and Security surfaces.
+
+The navigation is grouped by operational responsibility without changing
+existing URLs. Mutations use credentialed access-context CSRF, reason,
+confirmation, recent-auth handling, and double-submit protection. Admin response
+data is not persisted in Web Storage, and generic rendering is denylisted
+against internal IDs, tokens, hashes, secrets, and private paths. Backend and
+database changes are outside this decision.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

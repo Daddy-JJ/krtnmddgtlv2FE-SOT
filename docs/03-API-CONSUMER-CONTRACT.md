@@ -204,16 +204,46 @@ backend tetap melakukan authorization setiap operasi.
 
 ### Super Admin
 
-Current pages consume read/mutation families under `/admin` for statistics, users,
-cards, subscriptions, usage, interventions, settings/activity, mail outbox,
-CV specialists, landing content, and Resume Services. High-risk mutations require
-backend permission, CSRF, confirmation/reason where applicable, recent auth when
-required, and immutable audit.
+The shared workspace is guarded for `super_admin` UX, while the backend remains
+authoritative. `services/admin-operations-service.js` owns these transport
+operations and uses the shared credentialed API client.
 
-The current activity surface is read-only through `GET /admin/activity`. No exact
-method/path/payload is approved here for plan mutation, admin payment mutation,
-theme-catalog mutation, or QR regeneration. Those controls must not be added until
-the backend contract and its authorization/audit behavior are synchronized.
+Operational read contracts:
+
+- `GET /admin/statistics` for the command-center counters and Feedback badge.
+- `GET /admin/feedback?page&limit&status&search&from&to` for the paginated
+  Feedback Inbox. `limit` is at most 100.
+- `GET /admin/cards?q={search}` and `GET /admin/cards/{publicId}` for card
+  search and detail.
+- `GET /admin/reports?days={7|30|90|365}`, `GET /admin/system`, and
+  `GET /admin/security` are distinct contracts and must not fall back to a
+  shared activity/statistics endpoint.
+- Existing users, subscriptions, usage, interventions, settings, mail outbox,
+  CV specialists, landing content, email templates, and Resume Services routes
+  remain unchanged.
+
+Feedback status mutation uses
+`PATCH /admin/feedback/{publicId}/status` with
+`{ status, reason, confirm: true }`. The reason is 10-1000 characters, the
+request uses access-context CSRF, and `409 FEEDBACK_STATUS_UNCHANGED` is a
+non-destructive conflict. The frontend does not create or delete feedback.
+
+Card ownership intervention uses
+`POST /admin/cards/{publicId}/interventions` with
+`CONNECT_MATCHING_VERIFIED_ACCOUNT` or `RELEASE_CARD`, a 10-1000 character
+reason, and `confirm: true`. Release copy must explain that the card remains
+detached until it is connected again.
+
+All mutations require backend permission, CSRF, explicit confirmation/reason,
+recent authentication where required, and immutable audit. A
+`403 RECENT_AUTH_REQUIRED` response directs the operator to login again.
+The frontend renders only explicit operational fields and never stores admin
+responses in Web Storage.
+
+No exact method/path/payload is approved here for plan mutation, admin payment
+mutation, theme-catalog mutation, or QR regeneration. Those controls must not be
+added until the backend contract and its authorization/audit behavior are
+synchronized.
 
 ## Confirmed dependency: Super Admin email templates (backend active)
 

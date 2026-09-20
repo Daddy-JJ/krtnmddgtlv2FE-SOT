@@ -22,13 +22,14 @@ test('Super Admin dashboard guards role, redirects anonymous sessions, exposes l
 });
 
 test('Super Admin mail outbox is sanitized and retry is explicitly confirmed', async () => {
-  const [workspace, page] = await Promise.all([
+  const [workspace, service, page] = await Promise.all([
     readFile(resolve(root, 'pages/admin/super-admin-workspace.js'), 'utf8'),
+    readFile(resolve(root, 'services/admin-operations-service.js'), 'utf8'),
     readFile(resolve(root, 'admin/mail/index.html'), 'utf8'),
   ]);
   assert.match(page, /noindex,nofollow/);
   assert.match(page, /data-admin-view="mail"/);
-  assert.match(workspace, /\/admin\/mail\/outbox\?limit=100/);
+  assert.match(service, /\/mail\/outbox\?limit=100/);
   assert.match(workspace, /maskedRecipient/);
   assert.match(workspace, /confirm:true/);
   assert.match(workspace, /window\.confirm/);

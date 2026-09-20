@@ -46,10 +46,10 @@ editor and are intentional when tested.
 
 ## Current inventory
 
-- 61 route `index.html` shells.
+- 62 route `index.html` shells.
 - 28 page-controller modules under `pages/`.
 - 10 allowlisted card-theme templates.
-- Static build baseline: 162 runtime files in `dist/`.
+- Static build baseline: 164 runtime files in `dist/`.
 
 Counts describe the verified Phase 10 repository and must be refreshed when the
 runtime inventory changes.
@@ -67,6 +67,8 @@ Shared responsibility owners include:
 
 - `components/card-live-preview.js` for isolated member theme previews.
 - `services/auth-service.js` for current-user `GET /me` access.
+- `services/admin-operations-service.js` for Super Admin statistics, feedback,
+  cards, reports, system, security, and existing operational endpoints.
 - `validators/resume-file-validator.js` for DOCX-only 10 MB source validation.
 - `assets/css/foundations-tokens.css` for opt-in semantic design tokens.
 - `assets/css/foundations-typography.css` for opt-in type hierarchy.

@@ -1,8 +1,10 @@
 # Frontend Repository Status
 
-Updated: 2026-09-19
+Updated: 2026-09-20
 
-Overall: **Frontend source and SOT aligned; local frontend/API/database integration verified. Production readiness still requires external UAT.**
+Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
+and live local health/authorization guards verified. Production readiness still
+requires authenticated Super Admin UAT.**
 
 ## Baseline
 
@@ -12,8 +14,8 @@ Overall: **Frontend source and SOT aligned; local frontend/API/database integrat
 | Stack | Static HTML, Vanilla JS modules, Tailwind CSS 4 |
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
-| Static build | 162 allowlisted runtime files in `dist/` |
-| Automated tests | 164 passing; no known test failure |
+| Static build | 164 allowlisted runtime files in `dist/` |
+| Automated tests | 174 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Paused pending explicit Midtrans API readiness decision |
@@ -50,7 +52,26 @@ on `http://127.0.0.1:3000/api/v1`; the fallback proxy timeout is 30 seconds.
 | API transport | Cookie credentials, CSRF contexts, production-host routing, timeout, refresh, normalized errors |
 | Deployment | `dist/` allowlist, direct production API base, and Vercel HTTPS fallback proxy |
 | Web analytics | Vercel Web Analytics on 10 sitemap marketing pages; sensitive routes excluded |
-| Visual system | Foundations-inspired adapter active on all 51 visible non-card route shells; 10 card designs excluded |
+| Visual system | Foundations-inspired adapter active on all 52 visible non-card route shells; 10 card designs excluded |
+
+## Super Admin operations
+
+- FE-D-031 adds `/admin/feedback/`, a new-feedback badge, URL-preserving
+  status/search/date/pagination filters, and guarded status mutation through the
+  dedicated backend routes.
+- The Dashboard is an explicit command center grouped by action, users and
+  subscriptions, cards and tiers, Resume Service, mail, and feedback.
+- Card search/detail/intervention use the final route family. Reports, System,
+  and Security use three separate endpoints and explicit safe renderers.
+- Navigation is grouped into Overview, Customer operations, Content and
+  communication, Service operations, and Governance while retaining all
+  existing URLs.
+- Focused regression tests pass 24/24. Full `npm test` and `npm run qa`
+  pass 174/174; static output contains 164 allowlisted files.
+- Read-only local smoke confirms backend health, frontend proxy health, and
+  `http://127.0.0.1:8080/admin/feedback/` return HTTP 200. Anonymous requests
+  to statistics and feedback return HTTP 401 as required. Authenticated Super
+  Admin UAT remains pending; no backend or database change was made.
 
 ## Visual system
 
@@ -67,7 +88,7 @@ This verifies presentation, not live authenticated workflows; real-data UAT
 remains pending. See `REVIEW-REPORT.md` for evidence and limitations.
 Full QA passes (162 build files, 157 tests); no backend or card-artwork changes.
 
-The Foundations adapter is active on all 51 visible route shells: marketing,
+The Foundations adapter is active on all 52 visible route shells: marketing,
 authentication/onboarding, member workspace, internal workspace, and blog. It is
 native scoped CSS, owns the shared token/type/layout rhythm, and does not add a
 React or Next.js runtime.

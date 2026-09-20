@@ -87,6 +87,7 @@ export class ApiClient {
           requestId: payload?.request_id ?? proxyError?.request_id ?? response.headers.get('x-request-id'),
         });
       }
+      if (options.includeEnvelope) return payload;
       return payload && Object.hasOwn(payload, 'data') ? payload.data : payload;
     } catch (error) {
       if (error instanceof ApiError) throw error;

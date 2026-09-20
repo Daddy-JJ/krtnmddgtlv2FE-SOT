@@ -36,7 +36,7 @@ feature service.
 
 ## Route model
 
-Source contains 61 route shells plus ten card-theme HTML templates.
+Source contains 62 route shells plus ten card-theme HTML templates.
 
 Main route groups:
 
@@ -197,6 +197,8 @@ Adding a new public route or runtime directory therefore requires:
 - Page controllers do not construct backend origins.
 - API request dan download link memakai `buildApiUrl()` dengan configured API base.
 - Services do not manipulate unrelated page DOM.
+- `services/admin-operations-service.js` owns Super Admin operational endpoint
+  paths; `pages/admin/super-admin-workspace.js` owns their DOM presentation.
 - API client does not encode feature-specific business rules.
 - Validators do not grant permission or entitlement.
 - Browser state never substitutes for backend authorization.
