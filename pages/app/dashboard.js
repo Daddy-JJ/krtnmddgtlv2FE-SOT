@@ -1,4 +1,3 @@
-import { authService } from '../../services/auth-service.js';
 import { dashboardService } from '../../services/dashboard-service.js';
 
 const state = { cards: [], subscription: null, loading: true, error: null };
@@ -13,13 +12,11 @@ const nodes = {
   primaryCardAction: document.querySelector('[data-primary-card-action]'),
   starterAction: document.querySelector('[data-starter-action]'),
   navLinks: document.querySelectorAll('[data-app-link]'),
-  logout: document.querySelector('[data-logout]'),
 };
 
 init();
 
 function init() {
-  bindEvents();
   load();
 }
 
@@ -41,19 +38,6 @@ async function load() {
     state.loading = false;
     render();
   }
-}
-
-function bindEvents() {
-  nodes.logout?.addEventListener('click', async () => {
-    nodes.logout.disabled = true;
-    try {
-      await authService.logout();
-      location.assign('/login/');
-    } catch (error) {
-      setText(nodes.status, error.message);
-      nodes.logout.disabled = false;
-    }
-  });
 }
 
 function renderLoading() {

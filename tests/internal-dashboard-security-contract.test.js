@@ -15,6 +15,11 @@ test('Super Admin dashboard guards role, redirects anonymous sessions, exposes l
   assert.match(workspace, /roles\.includes\('super_admin'\)/);
   assert.match(workspace, /error\.status===401[\s\S]*\/login\//);
   assert.match(workspace, /authService\.logout\(\)/);
+  assert.match(workspace, /if\(logout\.disabled\)return/);
+  assert.match(workspace, /catch\(error\)/);
+  assert.match(workspace, /logout\.disabled=false/);
+  assert.match(workspace, /location\.replace\('\/login\/'\)/);
+  assert.doesNotMatch(workspace, /finally\{location\.assign\('\/login\/'\)/);
   for (const tier of ['starterUsers', 'basicUsers', 'proUsers']) assert.match(workspace, new RegExp(tier));
   assert.match(login, /postLoginDestination/);
   assert.match(authFlow, /super_admin[\s\S]*\/admin\//);

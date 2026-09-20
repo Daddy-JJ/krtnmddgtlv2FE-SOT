@@ -433,7 +433,8 @@ textarea:focus-visible {
 .app-shell-page main#main:not(.app-shell__main) { opacity: 0; }
 
 .app-shell__header-nav,
-.app-shell__layout {
+.app-shell__layout,
+.app-shell__logout-status {
   width: min(100% - 2rem, 80rem);
   margin-inline: auto;
 }
@@ -533,6 +534,16 @@ textarea:focus-visible {
 .app-shell__logout:hover,
 .app-shell__menu-button:hover { border-color: rgba(56,189,248,.45); background: rgba(56,189,248,.1); }
 .app-shell__menu-button { display: none; margin-left: auto; }
+.app-shell__logout-status {
+  position: absolute;
+  top: calc(100% + .25rem);
+  right: 1rem;
+  color: var(--site-danger, #fecaca);
+  font-size: .8rem;
+  font-weight: 700;
+  text-align: right;
+}
+.app-shell__logout-status[hidden] { display: none; }
 .app-shell__textarea {
   border: 1px solid rgba(148,163,184,.3);
   color: #f8fafc;
@@ -852,7 +863,8 @@ html:not([data-site-theme="light"]) .app-shell-page .app-shell__main textarea {
 
 @media (max-width: 767px) {
   .app-shell__header-nav,
-  .app-shell__layout { width: min(100% - 1.25rem, 80rem); }
+  .app-shell__layout,
+  .app-shell__logout-status { width: min(100% - 1.25rem, 80rem); }
   .app-shell__menu-button { display: inline-flex; align-items: center; }
   .app-shell__logout { display: none; }
   .app-shell__layout { display: block; padding-top: 1rem; }
@@ -860,6 +872,7 @@ html:not([data-site-theme="light"]) .app-shell-page .app-shell__main textarea {
   .app-shell--menu-open .app-shell__sidebar { display: block; }
   .app-shell__nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .app-shell__sidebar-logout { display: block; }
+  .app-shell__logout-status { left: .625rem; right: auto; text-align: left; }
   [data-feedback-form] .justify-between {
     flex-direction: column;
     align-items: flex-start;

@@ -6,7 +6,7 @@ openapi/
 database/
 deploy/
 prompts/
-templates/
+/templates/
 backend/
 coverage/
 dist/

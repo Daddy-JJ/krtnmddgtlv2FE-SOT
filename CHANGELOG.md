@@ -5,6 +5,12 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Memperbaiki ownership logout user dan Super Admin agar double-submit dicegah,
+  kegagalan tidak lagi hanya membuat layar berkedip, dan pesan pemulihan tampil
+  tanpa memalsukan logout sukses. `.vercelignore` kini hanya mengabaikan folder
+  root `/templates/`, sehingga route Template email ikut terunggah. Error 404
+  endpoint operasional Super Admin kini menjelaskan backend yang belum
+  ter-deploy/restart tanpa menggandakan pesan, disertai regression test.
 - Menambahkan Super Admin operations command center: Feedback Inbox dedicated,
   statistik operasional terkelompok, card ownership intervention final, serta
   endpoint dan renderer terpisah untuk Reports, System, dan Security. Navigasi

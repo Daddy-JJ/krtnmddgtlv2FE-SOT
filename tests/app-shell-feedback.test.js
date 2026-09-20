@@ -42,6 +42,25 @@ test('shared shell avoids delayed exit flashes and keeps a reduced-motion-aware 
   assert.match(css, /header:not\(\.app-shell__header\)/);
 });
 
+test('shared shell exclusively owns logout and exposes recoverable failure feedback', async () => {
+  const [shell, dashboard, account, css] = await Promise.all([
+    readFile(new URL('components/app-shell.js', root), 'utf8'),
+    readFile(new URL('pages/app/dashboard.js', root), 'utf8'),
+    readFile(new URL('pages/app/account.js', root), 'utf8'),
+    readFile(new URL('assets/css/app.css', root), 'utf8'),
+  ]);
+
+  assert.match(shell, /authService\.logout\(\)/);
+  assert.match(shell, /if \(logout\.disabled \|\| mobileLogout\.disabled\) return/);
+  assert.match(shell, /error\?\.status === 401[\s\S]*location\.replace\('\/login\/'\)/);
+  assert.match(shell, /CSRF_INVALID/);
+  assert.match(shell, /logout\.disabled = false/);
+  assert.match(shell, /aria-live/);
+  assert.match(css, /\.app-shell__logout-status/);
+  assert.doesNotMatch(dashboard, /authService\.logout\(\)/);
+  assert.doesNotMatch(account, /authService\.logout\(\)/);
+});
+
 test('identity and contact are merged into one Kartu Nama editor with a legacy redirect', async () => {
   const [shell, dashboard, editor, legacyContact] = await Promise.all([
     readFile(new URL('components/app-shell.js', root), 'utf8'),

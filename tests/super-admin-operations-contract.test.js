@@ -102,6 +102,11 @@ test('Super Admin guard runs before operations and all states are represented', 
   assert.ok(guard > 0 && firstStatistics > guard);
   assert.match(workspace, /error\.status===401[\s\S]*\/login\//);
   assert.match(workspace, /location\.replace\(roles\.includes\('cv_specialist'\)\?'\/specialist\/'\:'\/app\/'\)/);
+  assert.match(workspace, /operationalRouteViews=new Set\(\['feedback','reports','system','security'\]\)/);
+  assert.match(workspace, /Endpoint operasional belum tersedia pada backend production/);
+  assert.match(workspace, /handleError\(error,\{render:false,announce:false\}\)/);
+  assert.match(workspace, /setAttribute\('role','alert'\)/);
+  assert.match(workspace, /status\.setAttribute\('aria-live','polite'\)/);
   for (const state of ["dataset.state='loading'","dataset.state='empty'","dataset.state='error'"]) assert.ok(workspace.includes(state));
 });
 

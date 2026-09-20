@@ -3,6 +3,7 @@ import { authService } from '../../services/auth-service.js';
 import { renderEmailTemplateManager } from './email-templates.js';
 
 const view=document.body.dataset.adminView??'dashboard';
+const operationalRouteViews=new Set(['feedback','reports','system','security']);
 const root=document.querySelector('[data-admin-root]');
 const navigationGroups=[
   ['Overview',[['Dashboard','/admin/','dashboard'],['Feedback','/admin/feedback/','feedback'],['Reports','/admin/reports/','reports']]],
@@ -21,8 +22,8 @@ for(const[groupLabel,links]of navigationGroups){
   group.append(heading,items);nav.append(group);
 }
 const logout=document.createElement('button');logout.type='button';logout.className='dashboard-action';logout.textContent='Logout admin';logout.dataset.logout='';
-logout.addEventListener('click',async()=>{logout.disabled=true;try{await authService.logout();}finally{location.assign('/login/');}});nav.append(logout);
-header.append(title,nav);content.className='dashboard-panel mt-6 overflow-x-auto p-5';status.className='mt-4 text-slate-300';status.textContent='Memuat data terotorisasi…';root.append(header,content,status);
+logout.addEventListener('click',async()=>{if(logout.disabled)return;logout.disabled=true;status.textContent='Keluar dari Super Admin...';try{await authService.logout();location.replace('/login/');}catch(error){if(error?.status===401){location.replace('/login/');return;}status.textContent=errorMessage(error);logout.disabled=false;}});nav.append(logout);
+header.append(title,nav);content.className='dashboard-panel mt-6 overflow-x-auto p-5';status.className='mt-4 text-slate-300';status.setAttribute('aria-live','polite');status.textContent='Memuat data terotorisasi…';root.append(header,content,status);
 
 load();
 
@@ -214,7 +215,7 @@ async function renderFeedback(){
     else for(const item of items)list.append(feedbackCard(item));
     results.replaceChildren(list,feedbackPagination(filters,meta));
     status.textContent=`${meta.total??items.length} feedback ditemukan. Halaman ${meta.page??filters.page} dari ${Math.max(1,meta.pages??1)}.`;
-  }catch(error){results.replaceChildren(errorState(error));handleError(error,{render:false});}
+  }catch(error){results.replaceChildren(errorState(error));handleError(error,{render:false,announce:false});}
 }
 
 function feedbackFilterForm(filters){
@@ -285,7 +286,7 @@ async function renderReports(){
     seriesPanel('Subscription per tier',data.subscriptionsByTier,['tier','count']),
     seriesPanel('Mail per status',data.mailByStatus,['status','count']),
     seriesPanel('Resume per status',data.resumeByStatus,['status','count']),
-  );status.textContent=`Laporan agregat ${days} hari.`;}catch(error){results.replaceChildren(errorState(error));handleError(error,{render:false});}
+  );status.textContent=`Laporan agregat ${days} hari.`;}catch(error){results.replaceChildren(errorState(error));handleError(error,{render:false,announce:false});}
 }
 
 function seriesPanel(label,rows,keys){
@@ -328,7 +329,7 @@ function emptyState(message){
 }
 
 function errorState(error){
-  const state=document.createElement('div'),heading=document.createElement('h2'),message=document.createElement('p');state.className='admin-state admin-state--error';state.dataset.state='error';heading.textContent='Data tidak dapat dimuat';message.textContent=errorMessage(error);state.append(heading,message);return state;
+  const state=document.createElement('div'),heading=document.createElement('h2'),message=document.createElement('p');state.className='admin-state admin-state--error';state.dataset.state='error';state.setAttribute('role','alert');heading.textContent='Data tidak dapat dimuat';message.textContent=errorMessage(error);state.append(heading,message);return state;
 }
 
 function emptySection(section,heading,message){
@@ -336,6 +337,7 @@ function emptySection(section,heading,message){
 }
 
 const errorMessages={
+  CSRF_INVALID:'Sesi keamanan tidak sinkron. Muat ulang halaman, lalu coba kembali.',
   FEEDBACK_STATUS_UNCHANGED:'Status feedback tidak berubah. Pilih status lain.',
   CARD_ALREADY_CONNECTED:'Kartu sudah terhubung ke akun.',
   CARD_NOT_CONNECTED:'Kartu belum terhubung ke akun.',
@@ -345,6 +347,8 @@ const errorMessages={
 
 function errorMessage(error){
   if(errorMessages[error?.code])return errorMessages[error.code];
+  if(error?.status===404&&operationalRouteViews.has(view))return'Endpoint operasional belum tersedia pada backend production. Pastikan backend sudah diperbarui dan aplikasi Node.js telah direstart.';
+  if(error?.status===404)return'Data admin yang diminta tidak ditemukan.';
   if(error?.status===403)return'Akun ini tidak memiliki izin untuk operasi tersebut.';
   if(error?.status===409)return'Konflik data terdeteksi. Muat ulang dan periksa status terbaru.';
   if(error?.status===422)return'Data tidak valid. Periksa field dan alasan yang diisi.';
@@ -352,11 +356,11 @@ function errorMessage(error){
   return error?.message??'Permintaan tidak dapat diproses.';
 }
 
-function handleError(error,{render=true}={}){
+function handleError(error,{render=true,announce=true}={}){
   if(error.status===401){location.replace('/login/');return;}
   if(error?.status===403&&error?.code==='RECENT_AUTH_REQUIRED'){
     const wrapper=document.createElement('div'),message=document.createElement('p'),link=document.createElement('a');wrapper.className='admin-state admin-state--error';message.textContent='Autentikasi terbaru diperlukan untuk operasi sensitif ini. Silakan login ulang.';link.className='dashboard-action';link.textContent='Login ulang';link.href=`/login/?returnTo=${encodeURIComponent(location.pathname+location.search)}`;wrapper.append(message,link);if(render)content.replaceChildren(wrapper);status.textContent='RECENT_AUTH_REQUIRED: login ulang diperlukan.';return;
   }
-  status.textContent=errorMessage(error);
+  if(announce)status.textContent=errorMessage(error);
   if(render)content.replaceChildren(errorState(error));
 }

@@ -46,6 +46,7 @@ test('static deployment output contains runtime files and excludes internal mate
     'pages/public/card.js',
     'public-card/index.html',
     'services/api-client.js',
+    'admin/mail/templates/index.html',
   ]) {
     assert.ok(outputFiles.includes(requiredPath), `${requiredPath} must be deployed`);
   }
@@ -120,6 +121,8 @@ test('deployment configuration uses an explicit static output boundary', async (
   assert.match(cpanelConfig, /dist\/\*/);
   assert.match(vercelIgnore, /^docs\/$/m);
   assert.match(vercelIgnore, /^tests\/$/m);
+  assert.match(vercelIgnore, /^\/templates\/$/m);
+  assert.doesNotMatch(vercelIgnore, /^templates\/$/m);
 
   assert.ok(!PUBLIC_DIRECTORIES.includes('docs'));
   assert.ok(!PUBLIC_DIRECTORIES.includes('tests'));

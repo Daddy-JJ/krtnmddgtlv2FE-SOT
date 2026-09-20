@@ -66,7 +66,12 @@ function mountShell(content) {
   menuButton.setAttribute('aria-controls', 'app-sidebar');
   const logout = element('button', 'app-shell__logout fdn-button--secondary', 'Keluar');
   logout.type = 'button';
-  headerNav.append(brand, menuButton, logout);
+  const logoutStatus = element('p', 'app-shell__logout-status');
+  logoutStatus.hidden = true;
+  logoutStatus.setAttribute('role', 'status');
+  logoutStatus.setAttribute('aria-live', 'polite');
+  logoutStatus.setAttribute('aria-atomic', 'true');
+  headerNav.append(brand, menuButton, logout, logoutStatus);
   header.append(headerNav);
 
   const layout = element('div', 'app-shell__layout');
@@ -103,12 +108,20 @@ function mountShell(content) {
     menuButton.setAttribute('aria-expanded', String(open));
   });
   const handleLogout = async () => {
+    if (logout.disabled || mobileLogout.disabled) return;
     logout.disabled = true;
     mobileLogout.disabled = true;
+    logoutStatus.hidden = false;
+    logoutStatus.textContent = 'Keluar dari akun...';
     try {
       await authService.logout();
-      location.assign('/login/');
-    } catch {
+      location.replace('/login/');
+    } catch (error) {
+      if (error?.status === 401) {
+        location.replace('/login/');
+        return;
+      }
+      logoutStatus.textContent = logoutFailureMessage(error);
       logout.disabled = false;
       mobileLogout.disabled = false;
     }
@@ -205,4 +218,14 @@ function isActivePath(currentPath, href) {
 
 function normalizePath(path) {
   return path.endsWith('/') ? path : `${path}/`;
+}
+
+function logoutFailureMessage(error) {
+  if (error?.code === 'CSRF_INVALID') {
+    return 'Sesi keamanan tidak sinkron. Muat ulang halaman, lalu coba keluar kembali.';
+  }
+  if (error?.code === 'REQUEST_TIMEOUT' || error?.name === 'TypeError') {
+    return 'Tidak dapat menghubungi server. Periksa koneksi, lalu coba keluar kembali.';
+  }
+  return 'Logout gagal. Sesi Anda masih aktif; silakan coba lagi.';
 }

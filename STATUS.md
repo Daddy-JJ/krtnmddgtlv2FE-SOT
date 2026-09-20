@@ -3,8 +3,10 @@
 Updated: 2026-09-20
 
 Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
-and live local health/authorization guards verified. Production readiness still
-requires authenticated Super Admin UAT.**
+and live local health/authorization guards verified. The approved logout,
+Template email deployment-boundary, and Super Admin error-UX fixes are complete
+in source; production still requires frontend deploy, backend deploy/restart,
+and authenticated Super Admin UAT.**
 
 ## Baseline
 
@@ -15,7 +17,7 @@ requires authenticated Super Admin UAT.**
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
 | Static build | 164 allowlisted runtime files in `dist/` |
-| Automated tests | 174 passing; no known test failure |
+| Automated tests | 175 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Paused pending explicit Midtrans API readiness decision |
@@ -66,12 +68,22 @@ on `http://127.0.0.1:3000/api/v1`; the fallback proxy timeout is 30 seconds.
 - Navigation is grouped into Overview, Customer operations, Content and
   communication, Service operations, and Governance while retaining all
   existing URLs.
-- Focused regression tests pass 24/24. Full `npm test` and `npm run qa`
-  pass 174/174; static output contains 164 allowlisted files.
-- Read-only local smoke confirms backend health, frontend proxy health, and
-  `http://127.0.0.1:8080/admin/feedback/` return HTTP 200. Anonymous requests
-  to statistics and feedback return HTTP 401 as required. Authenticated Super
-  Admin UAT remains pending; no backend or database change was made.
+- Focused regression tests pass 38/38. Full `npm test` and `npm run qa`
+  pass 175/175; static output contains 164 allowlisted files, including
+  `admin/mail/templates/index.html`.
+- `.vercelignore` now scopes `/templates/` to the root only, so it no longer
+  suppresses the nested Template email route during Vercel upload.
+- Shared user-shell and Super Admin logout now prevent double-submit, preserve
+  a failed session, and expose accessible recovery feedback instead of silently
+  blinking. Per-page duplicate user logout handlers were removed.
+- Read-only local smoke returns HTTP 200 for backend health and HTTP 401 for
+  anonymous Feedback, Reports, System, and Security requests, proving the local
+  routes are registered behind authorization.
+- Read-only production smoke still returns HTTP 404 for the four operational
+  endpoints and for `/admin/mail/templates/`. The frontend route requires the
+  next Vercel deployment; the API routes require the backend release/restart.
+  Authenticated Super Admin UAT remains pending; no backend or database change
+  was made in this frontend remediation.
 
 ## Visual system
 

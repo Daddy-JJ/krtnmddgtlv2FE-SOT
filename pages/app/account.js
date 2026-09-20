@@ -3,7 +3,6 @@ import { normalizeEmail, validateForgotPassword } from '../../validators/auth-va
 import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
 
 const resetForm = document.querySelector('[data-account-reset-form]');
-const logoutButton = document.querySelector('[data-account-logout]');
 const status = document.querySelector('[data-form-status]');
 const resetSubmit = document.querySelector('[data-account-reset-submit]');
 
@@ -49,16 +48,5 @@ resetForm?.addEventListener('submit', async (event) => {
     showStatus(status, error.message, 'error');
   } finally {
     setBusy(resetForm, false);
-  }
-});
-logoutButton?.addEventListener('click', async () => {
-  logoutButton.disabled = true;
-  showStatus(status, 'Keluar dari akun...', 'info');
-  try {
-    await authService.logout();
-    location.assign('/login/');
-  } catch (error) {
-    showStatus(status, error.message, 'error');
-    logoutButton.disabled = false;
   }
 });
