@@ -5,6 +5,29 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Menyelaraskan frontend dengan security hardening backend: reset password
+  memprioritaskan fragment dan membersihkan token dari URL, refresh-once hanya
+  berlaku untuk read request `AUTH_REQUIRED`, serta POST/timeout tidak
+  direplay. Error rate limit, auth busy, CSRF, recent auth, read-only admin, dan
+  scanner CV kini dibedakan. Upload Resume tidak memalsukan sukses, file
+  `CLEAN_SIGNATURE_ONLY` diberi peringatan, refund pending-review dirender,
+  dan reconciliation memuat ulang subscription, payment, serta card.
+- Menuntaskan patch audit pre-release: validasi editor kartu kembali mencakup
+  batas nama/alamat, URL dari respons API disaring sebelum masuk ke href/src,
+  input URL dibatasi, dan workflow Resume memakai validator request/DOCX yang
+  konsisten. Operasi admin/specialist, retry klaim Starter, dan pencarian kartu
+  kini memiliki guard double-submit/race; detail Resume menyediakan retry
+  eksplisit. Sepuluh halaman sitemap serta public-card fallback kini memiliki
+  social image metadata, disertai regression coverage.
+- Memperkuat session dan integritas penyimpanan: CSRF access yang stale dapat
+  disinkronkan ulang tepat satu kali, refresh session membuang CSRF cache lama,
+  dan timeout tetap aktif bersama external abort signal. Card editor kini fail
+  closed ketika initial load gagal dan token reset segera dihapus dari URL.
+  Renderer Super Admin memakai allowlist per konteks, pesan error tidak
+  membocorkan payload backend, link kartu publik dibatasi ke same-origin, serta
+  aksi Resume dan Template email mencegah double-submit. Navigasi member kini
+  memperingatkan perubahan belum tersimpan, mengembalikan fokus setelah
+  navigasi, dan visual admin diperbaiki untuk responsivitas serta token danger.
 - Memperbaiki ownership logout user dan Super Admin agar double-submit dicegah,
   kegagalan tidak lagi hanya membuat layar berkedip, dan pesan pemulihan tampil
   tanpa memalsukan logout sukses. `.vercelignore` kini hanya mengabaikan folder

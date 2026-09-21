@@ -1,5 +1,7 @@
 import { resumeService } from '../../services/resume-service.js';
 import { validateResumeSourceDocx } from '../../validators/resume-file-validator.js';
+import { buildResumeRequestInput, validateResumeRequestInput } from '../../validators/resume-request-validator.js';
+import { apiErrorMessage, resumeUploadState } from '../../utils/api-error-message.js';
 
 const form = document.querySelector('[data-form]');
 const status = document.querySelector('[data-status]');
@@ -23,23 +25,16 @@ form.addEventListener('submit', async (event) => {
     return;
   }
 
-  const formData = new FormData(form);
-  const data = Object.fromEntries(formData);
-  delete data.sourceResume;
-  data.experienceYears = data.experienceYears ? Number(data.experienceYears) : null;
-  const consentAccepted = data.combinedConsent === 'on';
-  data.consents = {
-    accurate: consentAccepted,
-    specialistAccess: consentAccepted,
-    noFiction: consentAccepted,
-    userReview: consentAccepted,
-    retention: consentAccepted,
-  };
-  delete data.combinedConsent;
-  for (const key of [
-    'currentOrganization', 'targetCompany', 'linkedinUrl', 'pastedResumeText',
-    'pastedJobDescription', 'additionalAchievements', 'certifications',
-  ]) data[key] = String(data[key] ?? '').trim() || null;
+  const rawData = Object.fromEntries(new FormData(form));
+  delete rawData.sourceResume;
+  const data = buildResumeRequestInput(rawData);
+  const errors = validateResumeRequestInput(data);
+  if (Object.keys(errors).length) {
+    const [field, message] = Object.entries(errors)[0];
+    status.textContent = message;
+    form.elements[field]?.focus();
+    return;
+  }
 
   let publicId = null;
   setBusy(true, 'Membuat permintaan...');
@@ -51,10 +46,10 @@ form.addEventListener('submit', async (event) => {
     location.assign(`/app/resume-enhancement/request/?id=${encodeURIComponent(publicId)}`);
   } catch (error) {
     if (publicId) {
-      location.assign(`/app/resume-enhancement/request/?id=${encodeURIComponent(publicId)}&upload=pending`);
+      location.assign(`/app/resume-enhancement/request/?id=${encodeURIComponent(publicId)}&upload=${resumeUploadState(error)}`);
       return;
     }
-    status.textContent = error.message;
+    status.textContent = apiErrorMessage(error, 'Permintaan Resume belum dapat dibuat.');
     setBusy(false);
   }
 });

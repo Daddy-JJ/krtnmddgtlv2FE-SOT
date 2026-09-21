@@ -1,4 +1,5 @@
 import { dashboardService } from '../../services/dashboard-service.js';
+import { safeHttpUrl } from '../../utils/safe-url.js';
 
 const state = { cards: [], subscription: null, loading: true, error: null };
 const claimedStarter = new URLSearchParams(location.search).get('starter') === 'claimed';
@@ -58,15 +59,27 @@ function render() {
   setText(nodes.cardName, card?.contact?.fullName || 'Belum ada kartu');
   setText(nodes.cardMeta, card ? `${labelPlan(card.planCode)} · ${labelStatus(card.status)}` : 'Claim kartu Starter atau aktifkan paket Basic/Pro.');
   setText(nodes.cardStatus, card ? labelStatus(card.status) : 'Kosong');
-  if (card?.canonicalUrl) {
-    nodes.cardUrl.href = card.canonicalUrl;
-    setText(nodes.cardUrl, card.canonicalUrl);
+  const publicCardUrl = safePublicCardUrl(card?.canonicalUrl);
+  if (publicCardUrl) {
+    nodes.cardUrl.href = publicCardUrl;
+    setText(nodes.cardUrl, publicCardUrl);
   } else {
     nodes.cardUrl.removeAttribute('href');
     setText(nodes.cardUrl, '-');
   }
   setText(nodes.subscription, formatSubscription(state.subscription, card));
   nodes.navLinks.forEach((link) => link.removeAttribute('aria-disabled'));
+}
+
+function safePublicCardUrl(value) {
+  const safe = safeHttpUrl(value);
+  if (!safe) return '';
+  try {
+    const url = new URL(safe);
+    return url.origin === location.origin ? url.href : '';
+  } catch {
+    return '';
+  }
 }
 
 function renderCardActions(card) {

@@ -61,6 +61,18 @@ slug fallback. Nested unknown routes are not public-card slugs.
 - All substantive website shells load compiled CSS and website theme assets.
 - Compatibility routes may use redirects when covered by tests.
 
+The shared member shell owns in-app navigation integrity. Changes to editable
+forms mark the current document dirty, navigation and browser unload warn before
+discarding them, successful save events clear the marker, and dynamically loaded
+page content receives keyboard focus. Forms that are actively submitting are not
+misclassified as abandoned work.
+
+Super Admin generic payload rendering is deny-by-default: each view has an
+explicit field allowlist in addition to the forbidden secret/path patterns.
+Page-specific loaders return their asynchronous work to the common error owner,
+so loading failures render an accessible state instead of becoming unhandled
+promise rejections.
+
 ## SEO ownership (2026-09-19)
 
 Indexable marketing metadata is authored in each static HTML head, not injected
@@ -69,7 +81,8 @@ home targets "kartu nama digital"; About explains the service, FAQ answers
 questions, Contact provides support, and legal pages retain their policy titles.
 The profile article targets practical usage; the CV article retains CV intent.
 Each has a canonical production URL, description, Open Graph/Twitter metadata
-and appropriate WebSite/Organization/WebPage/ContactPage/BlogPosting JSON-LD.
+with the shared production social image, and appropriate
+WebSite/Organization/WebPage/ContactPage/BlogPosting JSON-LD.
 Do not add keyword stuffing, invented ratings or unsupported rich-result claims.
 
 Auth, create, management, member, admin and specialist routes remain noindex,
@@ -77,10 +90,11 @@ including internal compatibility redirects. robots.txt allows crawling so robots
 meta can be read; it is not authorization. No private routes enter the sitemap.
 Update lastmod only when that page changes meaningfully.
 
-The existing public-card controller owns per-person metadata and canonical URLs.
-It still requires JavaScript/API rendering; static social crawlers cannot be
-assumed to receive personalized metadata. SSR/prerender and dynamic-card sitemap
-need separate backend/deployment coordination and privacy review.
+The public-card shell provides a generic brand-safe Open Graph/Twitter fallback.
+Its controller then owns per-person title, description, and canonical/og:url in
+JavaScript after an authorized public response. Static social crawlers still
+cannot be assumed to receive personalized metadata. Personalized previews need
+SSR/prerender plus backend/deployment coordination and privacy review.
 The ten card designs are unchanged. Admin-managed landing copy may override
 the fallback H1: keep CMS heroTitle aligned with the static metadata without
 silently overwriting published content.

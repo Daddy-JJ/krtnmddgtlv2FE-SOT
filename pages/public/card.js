@@ -24,6 +24,11 @@ const nodes = {
   canonical: document.querySelector('link[rel="canonical"]'),
   description: document.querySelector('meta[name="description"]'),
   robots: document.querySelector('meta[name="robots"]'),
+  ogTitle: document.querySelector('meta[property="og:title"]'),
+  ogDescription: document.querySelector('meta[property="og:description"]'),
+  ogUrl: document.querySelector('meta[property="og:url"]'),
+  twitterTitle: document.querySelector('meta[name="twitter:title"]'),
+  twitterDescription: document.querySelector('meta[name="twitter:description"]'),
 };
 
 const slug = publicSlugFromPath(location.pathname);
@@ -103,9 +108,18 @@ function renderMeta(card, themeName) {
     || 'Kartu nama digital profesional.';
   document.title = title;
   nodes.description?.setAttribute('content', description);
+  nodes.ogTitle?.setAttribute('content', title);
+  nodes.ogDescription?.setAttribute('content', description);
+  nodes.twitterTitle?.setAttribute('content', title);
+  nodes.twitterDescription?.setAttribute('content', description);
   const canonicalUrl = safeHttpUrl(card.canonicalUrl);
-  if (canonicalUrl) nodes.canonical?.setAttribute('href', canonicalUrl);
-  else nodes.canonical?.removeAttribute('href');
+  if (canonicalUrl) {
+    nodes.canonical?.setAttribute('href', canonicalUrl);
+    nodes.ogUrl?.setAttribute('content', canonicalUrl);
+  } else {
+    nodes.canonical?.removeAttribute('href');
+    nodes.ogUrl?.setAttribute('content', '');
+  }
   nodes.themeRoot.setAttribute('aria-label', `${themeName}: ${card.contact?.fullName || 'Kartu nama digital'}`);
 }
 

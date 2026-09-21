@@ -1,6 +1,7 @@
 import { adminOperationsService as admin } from '../../services/admin-operations-service.js';
 import { authService } from '../../services/auth-service.js';
 import { renderEmailTemplateManager } from './email-templates.js';
+import { apiErrorMessage } from '../../utils/api-error-message.js';
 
 const view=document.body.dataset.adminView??'dashboard';
 const operationalRouteViews=new Set(['feedback','reports','system','security']);
@@ -22,7 +23,7 @@ for(const[groupLabel,links]of navigationGroups){
   group.append(heading,items);nav.append(group);
 }
 const logout=document.createElement('button');logout.type='button';logout.className='dashboard-action';logout.textContent='Logout admin';logout.dataset.logout='';
-logout.addEventListener('click',async()=>{if(logout.disabled)return;logout.disabled=true;status.textContent='Keluar dari Super Admin...';try{await authService.logout();location.replace('/login/');}catch(error){if(error?.status===401){location.replace('/login/');return;}status.textContent=errorMessage(error);logout.disabled=false;}});nav.append(logout);
+logout.addEventListener('click',async()=>{if(logout.disabled)return;logout.disabled=true;status.textContent='Keluar dari Super Admin...';try{await authService.logout();location.replace('/login/');}catch(error){if(error?.status===401&&error?.code==='AUTH_REQUIRED'){location.replace('/login/');return;}status.textContent=errorMessage(error);logout.disabled=false;}});nav.append(logout);
 header.append(title,nav);content.className='dashboard-panel mt-6 overflow-x-auto p-5';status.className='mt-4 text-slate-300';status.setAttribute('aria-live','polite');status.textContent='Memuat data terotorisasi…';root.append(header,content,status);
 
 load();
@@ -39,14 +40,14 @@ async function load(){
     if(view==='system')return renderSystem(await admin.system());
     if(view==='security')return renderSecurity(await admin.security());
     if(view==='users')return renderRows(await admin.users());
-    if(view==='cards')return renderCards(new URLSearchParams(location.search).get('q')??'');
+    if(view==='cards')return await renderCards(new URLSearchParams(location.search).get('q')??'');
     if(view==='card-detail')return renderCard(await admin.card(new URLSearchParams(location.search).get('id')??''));
     if(view==='subscriptions')return renderRows(await admin.subscriptions());
     if(view==='usage')return renderRows(await admin.usage());
     if(view==='interventions')return renderRows(await admin.interventions());
     if(view==='settings')return renderRows(await admin.settings());
     if(view==='mail')return renderMail(await admin.mailOutbox());
-    if(view==='email-templates')return renderEmailTemplateManager({content,status});
+    if(view==='email-templates')return await renderEmailTemplateManager({content,status});
     if(view==='cv-specialists')return renderRows(await admin.cvSpecialists());
     if(view==='user-detail')return renderUser(await admin.user(new URLSearchParams(location.search).get('id')??''));
   }catch(error){handleError(error);}
@@ -54,8 +55,25 @@ async function load(){
 
 async function renderCards(initialQuery){
   const form=document.createElement('form'),input=document.createElement('input'),submit=document.createElement('button'),hint=document.createElement('p'),list=document.createElement('div');
-  form.className='flex flex-wrap gap-3';input.type='search';input.name='q';input.value=initialQuery;input.placeholder='Cari nama, email, URL, atau public ID';input.className='min-w-0 flex-1 rounded border border-white/20 px-3 py-3';submit.type='submit';submit.className='dashboard-action';submit.textContent='Cari';hint.className='mt-3 text-sm text-slate-300';hint.textContent='Menampilkan data kontak untuk operasional Super Admin. Aksi relasi dicatat pada audit log.';list.className='mt-5 overflow-x-auto';form.append(input,submit);content.replaceChildren(form,hint,list);
-  const draw=async(query)=>{setLoading(list,'Memuat kartu...');const rows=await admin.cards(query);list.replaceChildren(cardTable(rows));status.textContent=`${rows.length} kartu ditampilkan.`;};
+  form.className='flex flex-wrap gap-3';input.type='search';input.name='q';input.value=initialQuery;input.placeholder='Cari nama, email, URL, atau public ID';input.setAttribute('aria-label','Cari kartu');input.className='min-w-0 flex-1 rounded border border-white/20 px-3 py-3';submit.type='submit';submit.className='dashboard-action';submit.textContent='Cari';hint.className='mt-3 text-sm text-slate-300';hint.textContent='Menampilkan data kontak untuk operasional Super Admin. Aksi relasi dicatat pada audit log.';list.className='mt-5 overflow-x-auto';form.append(input,submit);content.replaceChildren(form,hint,list);
+  let searchSequence=0;
+  const draw=async(query)=>{
+    const sequence=++searchSequence;
+    submit.disabled=true;
+    submit.setAttribute('aria-busy','true');
+    setLoading(list,'Memuat kartu...');
+    try{
+      const rows=await admin.cards(query);
+      if(sequence!==searchSequence)return;
+      list.replaceChildren(cardTable(rows));
+      status.textContent=`${rows.length} kartu ditampilkan.`;
+    }finally{
+      if(sequence===searchSequence){
+        submit.disabled=false;
+        submit.removeAttribute('aria-busy');
+      }
+    }
+  };
   form.addEventListener('submit',async(event)=>{event.preventDefault();const query=input.value.trim();history.replaceState(null,'',`${location.pathname}${query?`?q=${encodeURIComponent(query)}`:''}`);try{await draw(query);}catch(error){handleError(error);}});
   await draw(initialQuery);
 }
@@ -69,9 +87,10 @@ function cardTable(rows){
 
 function renderCard(data){
   const wrapper=document.createElement('div');wrapper.className='grid gap-5 lg:grid-cols-2';
-  wrapper.append(objectPanel('Data kartu & kontak',data.card));
-  wrapper.append(objectPanel('Pemilik akun',data.owner??{status:'Belum terhubung'}));
-  const actions=document.createElement('section');actions.className='rounded-2xl border border-white/10 p-5';const heading=document.createElement('h2');heading.className='text-xl font-black';heading.textContent='Aksi relasi terkontrol';const note=document.createElement('p');note.className='mt-2 text-sm text-slate-300';note.textContent='Hubungkan hanya ke akun aktif-terverifikasi dengan email yang persis sama. Semua aksi memerlukan alasan dan dicatat.';const preview=document.createElement('a');preview.className='dashboard-action mt-4 inline-block';preview.href=`/${encodeURIComponent(data.card.slug)}`;preview.target='_blank';preview.rel='noopener';preview.textContent='Buka kartu publik';const form=document.createElement('form');form.className='mt-4';const select=document.createElement('select');select.name='action';for(const value of['CONNECT_MATCHING_VERIFIED_ACCOUNT','RELEASE_CARD']){const option=document.createElement('option');option.value=value;option.textContent=value==='CONNECT_MATCHING_VERIFIED_ACCOUNT'?'Hubungkan ke akun email terverifikasi':'Lepaskan dari akun';select.append(option);}if(data.owner)select.value='RELEASE_CARD';const reason=document.createElement('textarea');reason.name='reason';reason.required=true;reason.minLength=10;reason.maxLength=1000;reason.placeholder='Alasan wajib (minimal 10 karakter)';const submit=document.createElement('button');submit.type='submit';submit.className='dashboard-action';submit.textContent='Konfirmasi aksi';for(const field of[select,reason,submit])field.classList.add('mt-3','block','w-full');form.append(select,reason,submit);actions.append(heading,note,preview,form);wrapper.append(actions,rowsPanel('Audit kartu',data.audit??[]));content.replaceChildren(wrapper);status.textContent='Data kontak hanya tersedia bagi Super Admin. Edit konten tetap melalui workspace pemilik.';
+  wrapper.append(objectPanel('Data kartu & kontak',data.card,'card'));
+  wrapper.append(objectPanel('Pemilik akun',data.owner??{status:'Belum terhubung'},'owner'));
+  const actions=document.createElement('section');actions.className='rounded-2xl border border-white/10 p-5';const heading=document.createElement('h2');heading.className='text-xl font-black';heading.textContent='Aksi relasi terkontrol';const note=document.createElement('p');note.className='mt-2 text-sm text-slate-300';note.textContent='Hubungkan hanya ke akun aktif-terverifikasi dengan email yang persis sama. Semua aksi memerlukan alasan dan dicatat.';const preview=document.createElement('a');preview.className='dashboard-action mt-4 inline-block';preview.href=`/${encodeURIComponent(data.card.slug)}`;preview.target='_blank';preview.rel='noopener';preview.textContent='Buka kartu publik';const form=document.createElement('form');form.className='mt-4';const select=document.createElement('select');select.name='action';for(const value of['CONNECT_MATCHING_VERIFIED_ACCOUNT','RELEASE_CARD']){const option=document.createElement('option');option.value=value;option.textContent=value==='CONNECT_MATCHING_VERIFIED_ACCOUNT'?'Hubungkan ke akun email terverifikasi':'Lepaskan dari akun';select.append(option);}if(data.owner)select.value='RELEASE_CARD';const reason=document.createElement('textarea');reason.name='reason';reason.required=true;reason.minLength=10;reason.maxLength=1000;reason.placeholder='Alasan wajib (minimal 10 karakter)';const submit=document.createElement('button');submit.type='submit';submit.className='dashboard-action';submit.textContent='Konfirmasi aksi';for(const field of[select,reason,submit])field.classList.add('mt-3','block','w-full');form.append(select,reason,submit);actions.append(heading,note,preview,form);wrapper.append(actions,rowsPanel('Audit kartu',data.audit??[],'audit'));content.replaceChildren(wrapper);status.textContent='Data kontak hanya tersedia bagi Super Admin. Edit konten tetap melalui workspace pemilik.';
+  select.setAttribute('aria-label','Aksi relasi kartu');reason.setAttribute('aria-label','Alasan aksi relasi kartu');
   const releaseWarning=document.createElement('p');releaseWarning.className='admin-release-warning';releaseWarning.textContent='PERINGATAN: RELEASE_CARD akan melepaskan kartu dari akun sampai kartu dihubungkan kembali.';form.insertBefore(releaseWarning,reason);
   const syncReleaseWarning=()=>{releaseWarning.hidden=select.value!=='RELEASE_CARD';};select.addEventListener('change',syncReleaseWarning);syncReleaseWarning();
   form.addEventListener('submit',async(event)=>{
@@ -97,7 +116,7 @@ function renderMail(rows){
   if(!rows.length){content.textContent='Belum ada mail job.';status.textContent='0 item.';return;}
   const table=document.createElement('table'),thead=document.createElement('thead'),tbody=document.createElement('tbody'),head=document.createElement('tr');
   for(const label of['Recipient','Template','Status','Attempts','Available','Error','Action']){const th=document.createElement('th');th.className='px-2 py-3 text-left text-slate-400';th.textContent=label;head.append(th);}thead.append(head);
-  for(const item of rows){const line=document.createElement('tr');line.className='border-t border-white/10';const values=[item.maskedRecipient,item.templateKey,item.status,`${item.attempts}/${item.maxAttempts}`,format(item.availableAt),item.lastErrorMessage??'—'];for(const value of values){const td=document.createElement('td');td.className='px-2 py-3 align-top break-words';td.textContent=String(value);line.append(td);}const action=document.createElement('td');action.className='px-2 py-3 align-top';if(item.status==='failed'){const retry=document.createElement('button');retry.type='button';retry.className='dashboard-action';retry.textContent='Retry';retry.addEventListener('click',()=>retryMail(item,retry));action.append(retry);}else action.textContent='—';line.append(action);tbody.append(line);}
+  for(const item of rows){const line=document.createElement('tr');line.className='border-t border-white/10';const values=[item.maskedRecipient,item.templateKey,item.status,`${item.attempts}/${item.maxAttempts}`,format(item.availableAt),item.errorCode??'—'];for(const value of values){const td=document.createElement('td');td.className='px-2 py-3 align-top break-words';td.textContent=String(value);line.append(td);}const action=document.createElement('td');action.className='px-2 py-3 align-top';if(item.status==='failed'){const retry=document.createElement('button');retry.type='button';retry.className='dashboard-action';retry.textContent='Retry';retry.addEventListener('click',()=>retryMail(item,retry));action.append(retry);}else action.textContent='—';line.append(action);tbody.append(line);}
   table.className='min-w-full text-sm';table.append(thead,tbody);content.replaceChildren(table);status.textContent=`${rows.length} mail job tersanitasi. Data sensitif dan secret tidak ditampilkan.`;
 }
 
@@ -112,7 +131,7 @@ async function retryMail(item,button){
 
 function renderRows(rows){
   if(!rows.length){content.textContent='Belum ada data.';status.textContent='0 item.';return;}
-  const table=document.createElement('table'),thead=document.createElement('thead'),tbody=document.createElement('tbody'),headers=Object.keys(rows[0]).filter(isSafeAdminField),tr=document.createElement('tr');
+  const table=document.createElement('table'),thead=document.createElement('thead'),tbody=document.createElement('tbody'),headers=Object.keys(rows[0]).filter((key)=>isSafeAdminField(key,view)),tr=document.createElement('tr');
   table.className='min-w-full text-left text-sm';for(const key of headers){const th=document.createElement('th');th.className='px-2 py-3 text-slate-400';th.textContent=key;tr.append(th);}thead.append(tr);
   for(const row of rows){const line=document.createElement('tr');line.className='border-t border-white/10';for(const key of headers){const td=document.createElement('td');td.className='px-2 py-3 align-top break-words';if(key==='publicId'&&['users','cv-specialists'].includes(view)){const link=document.createElement('a');link.className='text-cyan-300 hover:underline';link.href=`/admin/${view==='users'?'users':'cv-specialists'}/detail/?id=${encodeURIComponent(row[key])}`;link.textContent=String(row[key]).slice(0,8);td.append(link);}else td.textContent=format(row[key]);line.append(td);}tbody.append(line);}
   table.append(thead,tbody);content.replaceChildren(table);status.textContent=`${rows.length} item ditampilkan.`;
@@ -120,7 +139,7 @@ function renderRows(rows){
 
 function renderUser(data){
   const wrapper=document.createElement('div');wrapper.className='grid gap-5 lg:grid-cols-2';
-  wrapper.append(objectPanel('Identity & verification',data.identity));
+  wrapper.append(objectPanel('Identity & verification',data.identity,'identity'));
   for(const key of['subscriptions','payments','usage','resume','security','audit'])wrapper.append(rowsPanel(key,data[key]));
   const form=document.createElement('form');form.className='rounded-2xl border border-white/10 p-5';form.dataset.intervention='';
   const formTitle=document.createElement('h2');formTitle.className='text-xl font-black';formTitle.textContent='Controlled intervention';
@@ -128,20 +147,21 @@ function renderUser(data){
   const role=document.createElement('select');role.name='roleCode';for(const [value,label] of [['','Pilih role jika diperlukan'],['member','Member'],['cv_specialist','CV Specialist'],['resume_service_admin','Resume Service Admin'],['super_admin','Super Admin']]){const option=document.createElement('option');option.value=value;option.textContent=label;role.append(option);}
   const days=document.createElement('input');days.name='days';days.type='number';days.min='1';days.max='3650';days.placeholder='days jika diperlukan';
   const reason=document.createElement('textarea');reason.name='reason';reason.required=true;reason.minLength=10;reason.maxLength=1000;reason.placeholder='Alasan wajib (min. 10 karakter)';
+  action.setAttribute('aria-label','Jenis intervensi');role.setAttribute('aria-label','Role pengguna');days.setAttribute('aria-label','Durasi hari');reason.setAttribute('aria-label','Alasan intervensi');
   const submit=document.createElement('button');submit.type='submit';submit.className='dashboard-action';submit.textContent='Confirm intervention';
   for(const field of[action,role,days,reason,submit])field.classList.add('mt-3','block','w-full');
   form.append(formTitle,action,role,days,reason,submit);wrapper.append(form);content.replaceChildren(wrapper);status.textContent='Detail terotorisasi. Semua intervensi memerlukan recent authentication, CSRF, konfirmasi, dan alasan.';
   form.addEventListener('submit',async(event)=>{event.preventDefault();if(!window.confirm('Terapkan intervensi terkontrol dan tulis immutable audit event?'))return;const values=new FormData(form);submit.disabled=true;try{await admin.interveneUser(data.identity.publicId,{action:String(values.get('action')),reason:String(values.get('reason')),confirm:true,...(values.get('roleCode')?{roleCode:String(values.get('roleCode'))}:{}),...(values.get('days')?{days:Number(values.get('days'))}:{})});status.textContent='Intervensi berhasil dicatat.';}catch(error){handleError(error);}finally{submit.disabled=false;}});
 }
 
-function objectPanel(label,data){
+function objectPanel(label,data,context){
   const panel=document.createElement('section'),heading=document.createElement('h2'),list=document.createElement('dl');panel.className='rounded-2xl border border-white/10 p-5';heading.className='text-xl font-black';heading.textContent=label;list.className='mt-3 space-y-2';
-  for(const[key,value]of Object.entries(data)){if(!isSafeAdminField(key))continue;const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.className='text-slate-400';dt.textContent=key;dd.textContent=format(value);row.append(dt,dd);list.append(row);}panel.append(heading,list);return panel;
+  for(const[key,value]of Object.entries(data)){if(!isSafeAdminField(key,context))continue;const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.className='text-slate-400';dt.textContent=key;dd.textContent=format(value);row.append(dt,dd);list.append(row);}panel.append(heading,list);return panel;
 }
 
-function rowsPanel(label,rows){
+function rowsPanel(label,rows,context=label){
   const panel=document.createElement('section'),heading=document.createElement('h2'),list=document.createElement('ul');panel.className='rounded-2xl border border-white/10 p-5';heading.className='text-xl font-black';heading.textContent=label;
-  for(const row of rows){const item=document.createElement('li');item.className='mt-3 border-t border-white/10 pt-3 text-sm break-words';item.textContent=Object.entries(row).filter(([key])=>isSafeAdminField(key)).map(([key,value])=>`${key}: ${format(value)}`).join(' · ');list.append(item);}if(!rows.length){const empty=document.createElement('li');empty.className='mt-3';empty.textContent='Belum ada data.';list.append(empty);}panel.append(heading,list);return panel;
+  for(const row of rows){const item=document.createElement('li');item.className='mt-3 border-t border-white/10 pt-3 text-sm break-words';item.textContent=Object.entries(row).filter(([key])=>isSafeAdminField(key,context)).map(([key,value])=>`${key}: ${format(value)}`).join(' · ');list.append(item);}if(!rows.length){const empty=document.createElement('li');empty.className='mt-3';empty.textContent='Belum ada data.';list.append(empty);}panel.append(heading,list);return panel;
 }
 
 function format(value){
@@ -151,10 +171,27 @@ function format(value){
 }
 
 const forbiddenAdminFields=new Set(['id','internalId','internalNotes','storagePath','pastedResumeText','passwordHash','tokenHash','secret']);
-function isSafeAdminField(key){
-  if(['publicId','userPublicId','requestId','correlationId'].includes(key))return true;
-  if(/(?:^id$|Id$|_id$)/.test(key))return false;
-  return !forbiddenAdminFields.has(key)&&!/(?:token|hash|secret|password|credential|private.*path|storage.*path)/i.test(key);
+const adminFieldAllowlists={
+  users:new Set(['publicId','email','fullName','name','status','role','roles','emailVerified','isSuspended','createdAt','updatedAt','lastLoginAt']),
+  subscriptions:new Set(['publicId','userPublicId','email','planCode','tier','status','startsAt','endsAt','createdAt','updatedAt']),
+  usage:new Set(['publicId','userPublicId','email','featureCode','metric','used','limit','remaining','periodStart','periodEnd','updatedAt']),
+  interventions:new Set(['publicId','userPublicId','actorEmail','targetEmail','action','reason','status','createdAt']),
+  settings:new Set(['key','label','description','status','updatedAt']),
+  'cv-specialists':new Set(['publicId','email','fullName','name','status','role','activeRequests','createdAt','updatedAt']),
+  card:new Set(['publicId','slug','fullName','contactEmail','ownerEmail','planCode','status','themeCode','canonicalUrl','createdAt','updatedAt']),
+  owner:new Set(['publicId','email','fullName','status','emailVerified','planCode','createdAt','updatedAt']),
+  identity:new Set(['publicId','email','fullName','name','status','roles','emailVerified','isSuspended','createdAt','updatedAt']),
+  subscriptionsDetail:new Set(['publicId','planCode','tier','status','startsAt','endsAt','createdAt','updatedAt']),
+  payments:new Set(['publicId','status','amount','currency','provider','createdAt','paidAt']),
+  usageDetail:new Set(['featureCode','metric','used','limit','remaining','periodStart','periodEnd','updatedAt']),
+  resume:new Set(['publicId','status','revisionCount','createdAt','updatedAt']),
+  securityDetail:new Set(['lastLoginAt','activeSessions','revokedSessions24Hours','emailVerified','isSuspended']),
+  audit:new Set(['publicId','action','reason','actorEmail','status','createdAt']),
+};
+const detailContexts={subscriptions:'subscriptionsDetail',usage:'usageDetail',security:'securityDetail'};
+function isSafeAdminField(key,context=view){
+  if(forbiddenAdminFields.has(key)||/(?:token|hash|secret|password|credential|api.?key|private.*path|storage.*path|file.*path)/i.test(key))return false;
+  return adminFieldAllowlists[detailContexts[context]??context]?.has(key)===true;
 }
 
 function renderDashboard(data){
@@ -242,6 +279,7 @@ function feedbackCard(item){
   form.className='admin-feedback-action';const select=document.createElement('select');select.name='status';
   for(const value of['new','in_review','planned','resolved','dismissed']){const option=document.createElement('option');option.value=value;option.textContent=value.replace('_',' ');option.selected=item.status===value;select.append(option);}
   const reason=document.createElement('textarea');reason.name='reason';reason.required=true;reason.minLength=10;reason.maxLength=1000;reason.placeholder='Alasan perubahan status (minimal 10 karakter)';
+  select.setAttribute('aria-label','Status feedback');reason.setAttribute('aria-label','Alasan perubahan status feedback');
   const submit=document.createElement('button');submit.type='submit';submit.className='dashboard-action';submit.textContent='Ubah status';form.append(select,reason,submit);
   form.addEventListener('submit',async event=>{
     event.preventDefault();if(submit.disabled)return;
@@ -343,6 +381,9 @@ const errorMessages={
   CARD_NOT_CONNECTED:'Kartu belum terhubung ke akun.',
   MATCHING_VERIFIED_ACCOUNT_NOT_FOUND:'Akun terverifikasi dengan email yang sama tidak ditemukan.',
   PLAN_LIMIT_REACHED:'Batas kartu pada paket akun tujuan sudah tercapai.',
+  RESOURCE_READ_ONLY:'Data admin generik hanya dapat dibaca. Gunakan aksi operasional yang tersedia.',
+  RATE_LIMITED:'Terlalu banyak permintaan admin. Tunggu beberapa saat lalu coba kembali.',
+  AUTH_BUSY:'Layanan autentikasi sedang sibuk. Tunggu beberapa saat lalu coba kembali.',
 };
 
 function errorMessage(error){
@@ -353,7 +394,7 @@ function errorMessage(error){
   if(error?.status===409)return'Konflik data terdeteksi. Muat ulang dan periksa status terbaru.';
   if(error?.status===422)return'Data tidak valid. Periksa field dan alasan yang diisi.';
   if((error?.status??0)>=500)return'Layanan admin sedang bermasalah. Coba kembali beberapa saat lagi.';
-  return error?.message??'Permintaan tidak dapat diproses.';
+  return apiErrorMessage(error, 'Permintaan admin tidak dapat diproses.');
 }
 
 function handleError(error,{render=true,announce=true}={}){

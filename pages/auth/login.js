@@ -13,6 +13,7 @@ const intent = safeMembershipIntent(query.get('intent'));
 const starterId = starterPublicIdFromReturnTo(returnTo) || pendingStarterClaim();
 const registerLink = document.querySelector('a[href="/register/"]');
 let retryClaim;
+let claimPending = false;
 
 if (registerLink) registerLink.href = withAuthContext('/register/', { returnTo, intent });
 if (starterId) addStarterHandoffNotice();
@@ -49,6 +50,12 @@ form?.addEventListener('submit', async (event) => {
 });
 
 async function claimStarter(publicId) {
+  if (claimPending) return;
+  claimPending = true;
+  if (retryClaim) {
+    retryClaim.disabled = true;
+    retryClaim.setAttribute('aria-busy', 'true');
+  }
   showStatus(status, 'Menghubungkan kartu Starter ke akun Anda...', 'info');
   try {
     await starterService.claim(publicId);
@@ -64,6 +71,12 @@ async function claimStarter(publicId) {
     }
     showStatus(status, `${authErrorMessage(error, 'Kartu belum dapat dihubungkan.') } Gunakan Coba lagi atau kembali ke link email.`, 'error');
     retryClaim?.removeAttribute('hidden');
+  } finally {
+    claimPending = false;
+    if (retryClaim) {
+      retryClaim.disabled = false;
+      retryClaim.removeAttribute('aria-busy');
+    }
   }
 }
 

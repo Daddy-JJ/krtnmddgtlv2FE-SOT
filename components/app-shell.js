@@ -1,4 +1,5 @@
 import { authService } from '../services/auth-service.js';
+import { apiErrorMessage } from '../utils/api-error-message.js';
 
 const links = [
   ['/app/', 'Ringkasan'],
@@ -17,6 +18,8 @@ const main = document.querySelector('main#main');
 if (main) mountShell(main);
 let navigationController = null;
 let navigationSequence = 0;
+let hasUnsavedChanges = false;
+let currentDocumentUrl = location.href;
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -117,7 +120,7 @@ function mountShell(content) {
       await authService.logout();
       location.replace('/login/');
     } catch (error) {
-      if (error?.status === 401) {
+      if (error?.status === 401 && error?.code === 'AUTH_REQUIRED') {
         location.replace('/login/');
         return;
       }
@@ -128,6 +131,7 @@ function mountShell(content) {
   };
   logout.addEventListener('click', handleLogout);
   mobileLogout.addEventListener('click', handleLogout);
+  bindUnsavedChanges();
   bindPageNavigation();
   requestAnimationFrame(() => document.body.classList.add('app-shell--ready'));
 }
@@ -141,7 +145,14 @@ function bindPageNavigation() {
     if (destination.href === location.href) return;
     navigate(destination, true);
   });
-  addEventListener('popstate', () => navigate(new URL(location.href), false));
+  addEventListener('popstate', () => {
+    const destination = new URL(location.href);
+    if (!confirmDiscardChanges()) {
+      history.pushState({}, '', currentDocumentUrl);
+      return;
+    }
+    navigate(destination, false, true);
+  });
 }
 
 function isAppNavigation(event, link) {
@@ -151,7 +162,9 @@ function isAppNavigation(event, link) {
   return destination.origin === location.origin && destination.pathname.startsWith('/app/');
 }
 
-async function navigate(destination, pushHistory) {
+async function navigate(destination, pushHistory, discardConfirmed = false) {
+  if (!discardConfirmed && !confirmDiscardChanges()) return;
+  hasUnsavedChanges = false;
   navigationController?.abort();
   navigationController = new AbortController();
   const sequence = ++navigationSequence;
@@ -170,6 +183,7 @@ async function navigate(destination, pushHistory) {
     if (!sourceMain) throw new Error('Destination does not expose the application main region.');
     const nextMain = document.importNode(sourceMain, true);
     nextMain.classList.add('app-shell__main');
+    nextMain.tabIndex = -1;
     const moduleSources = [...page.querySelectorAll('script[type="module"][src]')]
       .map((script) => new URL(script.getAttribute('src'), destination).href)
       .filter((source) => !source.endsWith('/components/app-shell.js'));
@@ -178,6 +192,7 @@ async function navigate(destination, pushHistory) {
       document.querySelector('main#main')?.replaceWith(nextMain);
       document.title = page.title;
       if (pushHistory) history.pushState({}, '', destination);
+      currentDocumentUrl = destination.href;
       updateActiveLink(destination.pathname);
       scrollTo({ top: 0, behavior: 'auto' });
     };
@@ -189,6 +204,7 @@ async function navigate(destination, pushHistory) {
     }
     if (sequence !== navigationSequence) return;
     await Promise.all(moduleSources.map((source) => import(`${source}?navigation=${sequence}`)));
+    nextMain.focus({ preventScroll: true });
   } catch (error) {
     if (error.name !== 'AbortError') location.assign(destination.href);
   } finally {
@@ -220,6 +236,31 @@ function normalizePath(path) {
   return path.endsWith('/') ? path : `${path}/`;
 }
 
+function bindUnsavedChanges() {
+  document.addEventListener('input', (event) => {
+    const field = event.target;
+    if (!(field instanceof HTMLElement) || !field.closest('main#main form')) return;
+    if (field.matches('[readonly], [disabled], [data-ignore-dirty]')) return;
+    hasUnsavedChanges = true;
+  });
+  document.addEventListener('reset', () => {
+    queueMicrotask(() => { hasUnsavedChanges = false; });
+  });
+  for (const eventName of ['card:saved', 'slug:saved', 'app:changes-saved']) {
+    document.addEventListener(eventName, () => { hasUnsavedChanges = false; });
+  }
+  addEventListener('beforeunload', (event) => {
+    if (!hasUnsavedChanges || document.querySelector('main#main form[aria-busy=true]')) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+}
+
+function confirmDiscardChanges() {
+  if (!hasUnsavedChanges) return true;
+  return window.confirm('Perubahan belum disimpan. Tinggalkan halaman ini?');
+}
+
 function logoutFailureMessage(error) {
   if (error?.code === 'CSRF_INVALID') {
     return 'Sesi keamanan tidak sinkron. Muat ulang halaman, lalu coba keluar kembali.';
@@ -227,5 +268,5 @@ function logoutFailureMessage(error) {
   if (error?.code === 'REQUEST_TIMEOUT' || error?.name === 'TypeError') {
     return 'Tidak dapat menghubungi server. Periksa koneksi, lalu coba keluar kembali.';
   }
-  return 'Logout gagal. Sesi Anda masih aktif; silakan coba lagi.';
+  return apiErrorMessage(error, 'Logout gagal. Sesi Anda masih aktif; silakan coba lagi.');
 }

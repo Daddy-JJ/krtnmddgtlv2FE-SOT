@@ -17,7 +17,7 @@ const editableFields = [
   'addressStreet', 'addressCity', 'addressProvince', 'addressPostalCode', 'addressCountry',
   'mapsUrl',
 ];
-const state = { card: null, preview: null };
+const state = { card: null, preview: null, mode: 'loading' };
 
 init();
 bindWebsiteUrlInput(form?.elements.websiteUrl);
@@ -30,21 +30,25 @@ function init() {
 
 async function load() {
   if (!form) return;
+  state.mode = 'loading';
   setBusy(form, true);
   showStatus(status, 'Memuat data kartu...', 'info');
   try {
     const cards = await cardService.list();
     const first = Array.isArray(cards) ? cards[0] : null;
     if (!first) {
+      state.mode = 'empty';
       await loadLivePreview();
       showStatus(status, 'Belum ada kartu aktif. Isi form ini untuk membuat kartu Basic/Pro.', 'info');
       return;
     }
     state.card = await cardService.get(first.publicId);
+    state.mode = 'ready';
     fillForm(state.card);
     await loadLivePreview();
     showStatus(status, 'Data kartu siap diedit.', 'success');
   } catch (error) {
+    state.mode = 'load_failed';
     if (error.status === 401) {
       location.assign('/login/');
       return;
@@ -52,14 +56,27 @@ async function load() {
     showStatus(status, error.message, 'error');
   } finally {
     setBusy(form, false);
+    setEditorLocked(state.mode === 'load_failed');
   }
 }
 
 async function save(event) {
   event.preventDefault();
+  if (!['empty', 'ready'].includes(state.mode)) {
+    showStatus(status, 'Data kartu belum siap. Muat ulang halaman sebelum menyimpan.', 'error');
+    return;
+  }
   const values = formValues(form);
   const input = buildCardInput(values, state.card, document.documentElement.lang);
-  const errors = validateCardInput(input, editableFields);
+  const errors = validateCardInput(input);
+  if (errors.fullName) {
+    errors.firstName = errors.fullName;
+    delete errors.fullName;
+  }
+  if (errors.addressText) {
+    errors.addressStreet = errors.addressText;
+    delete errors.addressText;
+  }
   if (!String(values.firstName ?? '').trim()) errors.firstName = 'Nama depan wajib diisi.';
   if (Object.keys(errors).length) {
     showFieldErrors(form, errors);
@@ -74,6 +91,7 @@ async function save(event) {
     state.card = state.card
       ? await cardService.update(state.card.publicId, input)
       : await cardService.create(input);
+    state.mode = 'ready';
     fillForm(state.card);
     if (state.preview) state.preview.update(previewData());
     else await loadLivePreview();
@@ -111,6 +129,14 @@ function fillForm(card) {
   for (const field of editableFields) if (form.elements[field]) form.elements[field].value = values[field] ?? '';
   updateWhatsappPreview();
   updateLivePreview();
+}
+
+function setEditorLocked(locked) {
+  form.querySelectorAll('button,input,textarea,select').forEach((element) => {
+    element.disabled = locked;
+  });
+  if (locked) form.setAttribute('aria-disabled', 'true');
+  else form.removeAttribute('aria-disabled');
 }
 
 async function loadLivePreview() {

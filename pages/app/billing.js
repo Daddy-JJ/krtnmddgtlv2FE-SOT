@@ -1,7 +1,10 @@
 import { paymentService } from '../../services/payment-service.js';
+import { cardService } from '../../services/card-service.js';
 import { billingStatusLabel } from '../../validators/payment-validator.js';
 import { clearStatus, showStatus } from '../../components/forms/form-utils.js';
 import { safeMembershipIntent } from '../../utils/auth-flow.js';
+import { safeHttpUrl } from '../../utils/safe-url.js';
+import { apiErrorMessage } from '../../utils/api-error-message.js';
 
 const status = document.querySelector('[data-form-status]');
 const subscription = document.querySelector('[data-subscription-summary]');
@@ -12,7 +15,7 @@ const proUpgradePrice = document.querySelector('[data-pro-upgrade-price]');
 const proUpgradePath = document.querySelector('[data-pro-upgrade-path]');
 const notifyForm = document.querySelector('[data-notify-form]');
 const notifyStatus = document.querySelector('[data-notify-status]');
-const state = { payments: [], subscription: null };
+const state = { payments: [], subscription: null, cards: [] };
 const requestedIntent = safeMembershipIntent(new URLSearchParams(location.search).get('intent'));
 
 init();
@@ -26,12 +29,14 @@ function init() {
 async function load() {
   showStatus(status, 'Memuat billing...', 'info');
   try {
-    const [sub, payments] = await Promise.all([
+    const [sub, payments, cards] = await Promise.all([
       paymentService.currentSubscription().catch((error) => error.status === 404 ? null : Promise.reject(error)),
       paymentService.listPayments(),
+      cardService.list(),
     ]);
     state.subscription = sub;
     state.payments = Array.isArray(payments) ? payments : [];
+    state.cards = Array.isArray(cards) ? cards : [];
     render();
     if (requestedIntent) showStatus(status, 'Peningkatan membership masih Under development.', 'info');
     else clearStatus(status);
@@ -40,7 +45,7 @@ async function load() {
       location.assign('/login/');
       return;
     }
-    showStatus(status, error.message, 'error');
+    showStatus(status, apiErrorMessage(error, 'Billing belum dapat dimuat.'), 'error');
   }
 }
 
@@ -53,7 +58,7 @@ async function reconcile(event) {
     await paymentService.reconcile(button.dataset.reconcilePayment);
     await load();
   } catch (error) {
-    showStatus(status, error.message, 'error');
+    showStatus(status, apiErrorMessage(error, 'Status pembayaran belum dapat diperbarui.'), 'error');
     button.disabled = false;
   }
 }
@@ -122,10 +127,11 @@ function renderHistory() {
     meta.textContent = `${formatMoney(payment.amount, payment.currency)} · ${payment.durationDays??365} hari · ${formatDate(payment.createdAt)}`;
     const actions = document.createElement('div');
     actions.className = 'mt-3 flex flex-wrap gap-2';
-    if (payment.redirectUrl && payment.status === 'pending') {
+    const redirectUrl = safeHttpUrl(payment.redirectUrl);
+    if (redirectUrl && payment.status === 'pending') {
       const pay = document.createElement('a');
       pay.className = 'min-h-11 rounded-lg bg-slate-900 px-4 py-2.5 font-semibold text-white';
-      pay.href = payment.redirectUrl;
+      pay.href = redirectUrl;
       pay.target = '_blank';
       pay.rel = 'noopener noreferrer';
       pay.textContent = 'Lanjut bayar';

@@ -5,6 +5,7 @@ const body = document.querySelector('[data-queue]');
 const search = document.querySelector('[data-search]');
 const status = document.querySelector('[data-status]');
 let rows = [];
+search?.setAttribute('aria-label', 'Cari request yang ditugaskan');
 
 const logout = document.querySelector('[data-logout]');
 logout?.addEventListener('click', async () => {

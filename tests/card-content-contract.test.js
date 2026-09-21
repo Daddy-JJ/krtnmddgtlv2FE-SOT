@@ -36,6 +36,8 @@ test('social and catalog validators match backend-facing minimum contract', () =
   assert.deepEqual(catalog, { title: 'Produk', description: null, targetUrl: null, sortOrder: 1, isPublished: true });
   assert.deepEqual(validateCatalogInput(catalog), {});
   assert.equal(validateCatalogInput(buildCatalogInput({ title: '', targetUrl: 'ftp://bad.test' })).title, 'Judul wajib diisi.');
+  assert.match(validateSocialInput(buildSocialInput({ platform: 'linkedin', url: `https://example.com/${'a'.repeat(2048)}` })).url, /2048/);
+  assert.match(validateCatalogInput(buildCatalogInput({ title: 'Produk', targetUrl: `https://example.com/${'a'.repeat(2048)}` })).targetUrl, /2048/);
 });
 
 test('social and catalog deletion requires explicit user confirmation', async () => {

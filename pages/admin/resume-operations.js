@@ -6,6 +6,7 @@ const status = document.querySelector('[data-status]');
 const search = document.querySelector('[data-search]');
 const title = document.querySelector('[data-title]');
 let rows = [];
+search?.setAttribute('aria-label', 'Cari request Resume Services');
 
 init();
 

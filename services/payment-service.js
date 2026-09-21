@@ -8,9 +8,9 @@ export const paymentService = {
     return api.get('/payments');
   },
   checkout(planCode) {
-    return api.post('/payments/checkout', { planCode }, { csrfContext: 'access' });
+    return api.post('/payments/checkout', { planCode }, { csrfContext: 'access', skipRefresh: true });
   },
   reconcile(publicId) {
-    return api.post(`/payments/${encodeURIComponent(publicId)}/reconcile`, null, { csrfContext: 'access' });
+    return api.post(`/payments/${encodeURIComponent(publicId)}/reconcile`, null, { csrfContext: 'access', skipRefresh: true });
   },
 };

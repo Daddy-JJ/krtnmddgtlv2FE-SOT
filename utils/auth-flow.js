@@ -1,3 +1,5 @@
+import { apiErrorMessage } from './api-error-message.js';
+
 const allowedIntents = new Set(['basic', 'pro']);
 const pendingStarterClaimKey = 'knd.pendingStarterClaim';
 const starterPublicIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -77,6 +79,8 @@ export function authErrorMessage(error, fallback = 'Kami belum dapat memproses p
     NETWORK_ERROR: 'Koneksi ke layanan terputus. Periksa internet Anda lalu coba lagi.',
     REQUEST_TIMEOUT: 'Permintaan terlalu lama. Silakan coba lagi.',
   };
-  const message = messages[code] ?? error?.message ?? fallback;
-  return error?.requestId ? `${message} Referensi: ${error.requestId}.` : message;
+  if (messages[code]) {
+    return error?.requestId ? `${messages[code]} Referensi: ${error.requestId}.` : messages[code];
+  }
+  return apiErrorMessage(error, fallback);
 }

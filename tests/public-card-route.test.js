@@ -29,6 +29,8 @@ test('public card shell exposes accessible loading, content, action, and error s
   assert.match(shell, /data-full-details-list/);
   assert.match(shell, /data-copy-status aria-live="polite"/);
   assert.match(shell, /data-public-retry hidden/);
+  assert.match(shell, /property="og:image"/);
+  assert.match(shell, /name="twitter:card" content="summary_large_image"/);
   assert.doesNotMatch(shell, /rel="canonical" href="https:\/\/kartunamadigital\.id\/"/);
   assert.match(shell, /<script type="module" src="\/pages\/public\/card\.js"><\/script>/);
 });
@@ -39,6 +41,8 @@ test('public page allowlists registry templates and renders remote data through 
   assert.match(page, /replaceChildren/);
   assert.match(page, /textContent/);
   assert.match(page, /safeHttpUrl/);
+  assert.match(page, /nodes\.ogTitle\?\.setAttribute/);
+  assert.match(page, /nodes\.ogUrl\?\.setAttribute/);
   assert.match(page, /const whatsappUrl = safeWhatsAppUrl\(card\.whatsappUrl\);/);
   assert.match(page, /public-card-actions--with-whatsapp/);
   assert.match(page, /function renderFullDetails/);

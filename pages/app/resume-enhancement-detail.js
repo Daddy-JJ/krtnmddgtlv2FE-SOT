@@ -1,8 +1,10 @@
 import { resumeService } from '../../services/resume-service.js';
 import { validateResumeSourceDocx } from '../../validators/resume-file-validator.js';
+import { apiErrorMessage, resumeUploadStateMessage } from '../../utils/api-error-message.js';
 
 const publicId = new URLSearchParams(location.search).get('id');
-const uploadPending = new URLSearchParams(location.search).get('upload') === 'pending';
+const uploadState = new URLSearchParams(location.search).get('upload') ?? '';
+const uploadMessage = resumeUploadStateMessage(uploadState);
 const nodes = {
   name: document.querySelector('[data-name]'),
   meta: document.querySelector('[data-meta]'),
@@ -15,15 +17,21 @@ const nodes = {
   live: document.querySelector('[data-live]'),
   uploadPanel: document.querySelector('[data-source-upload-panel]'),
   uploadForm: document.querySelector('[data-source-upload-form]'),
+  retry: document.querySelector('[data-retry]'),
 };
 
 if (!publicId) location.assign('/app/resume-enhancement/');
 else {
   nodes.uploadForm.addEventListener('submit', uploadSource);
+  nodes.retry?.addEventListener('click', load);
   load();
 }
 
 async function load() {
+  nodes.retry.hidden = true;
+  nodes.download.hidden = true;
+  nodes.revision.hidden = true;
+  nodes.live.textContent = 'Memuat detail permintaan...';
   try {
     const request = await resumeService.detail(publicId);
     nodes.name.textContent = request.beneficiaryName;
@@ -33,8 +41,8 @@ async function load() {
       ? `SLA: ${date(request.slaDueAt)}`
       : 'SLA dimulai setelah data lengkap.';
     nodes.uploadPanel.hidden = request.status !== 'DRAFT';
-    if (uploadPending && request.status === 'DRAFT') {
-      nodes.live.textContent = 'Permintaan tersimpan. Upload CV belum selesai; pilih kembali file untuk melanjutkan.';
+    if (uploadMessage && request.status === 'DRAFT') {
+      nodes.live.textContent = uploadMessage;
     }
     if (request.completedAt) renderCountdown(request);
     if (request.status === 'COMPLETED' && !request.isExpired) {
@@ -43,8 +51,17 @@ async function load() {
       nodes.revision.hidden = request.revisionCount >= request.maxRevisions;
       nodes.revision.href = `/app/resume-enhancement/revision/?id=${encodeURIComponent(publicId)}`;
     }
+    if (!uploadMessage) nodes.live.textContent = '';
   } catch (error) {
-    nodes.live.textContent = error.message;
+    nodes.name.textContent = 'Detail tidak dapat dimuat';
+    nodes.meta.textContent = '';
+    nodes.status.textContent = error.status === 404
+      ? 'Permintaan tidak ditemukan atau tidak lagi tersedia.'
+      : 'Terjadi gangguan saat memuat permintaan.';
+    nodes.sla.textContent = '';
+    nodes.uploadPanel.hidden = true;
+    nodes.live.textContent = 'Periksa koneksi Anda lalu coba lagi.';
+    nodes.retry.hidden = false;
   }
 }
 
@@ -66,7 +83,7 @@ async function uploadSource(event) {
     history.replaceState({}, '', `/app/resume-enhancement/request/?id=${encodeURIComponent(publicId)}`);
     await load();
   } catch (error) {
-    nodes.live.textContent = error.message;
+    nodes.live.textContent = apiErrorMessage(error, 'CV belum dapat diupload.');
   } finally {
     button.disabled = false;
   }

@@ -31,13 +31,14 @@ test('all sitemap pages have unique keyword-aware metadata and social previews',
     titles.add(title); descriptions.add(description);
     assert.equal((html.match(/<link rel="canonical"/g) ?? []).length, 1, path);
     assert.ok(html.includes('href="' + url + '"'), path);
-    for (const key of ['og:type', 'og:title', 'og:description', 'og:url', 'og:locale', 'og:site_name']) {
+    for (const key of ['og:type', 'og:title', 'og:description', 'og:url', 'og:locale', 'og:site_name', 'og:image', 'og:image:alt']) {
       assert.equal((html.match(new RegExp('property="' + key + '"', 'g')) ?? []).length, 1, path + key);
     }
-    for (const key of ['twitter:card', 'twitter:title', 'twitter:description']) {
+    for (const key of ['twitter:card', 'twitter:title', 'twitter:description', 'twitter:image', 'twitter:image:alt']) {
       assert.equal((html.match(new RegExp('name="' + key + '"', 'g')) ?? []).length, 1, path + key);
     }
     assert.ok(html.includes('property="og:url" content="' + url + '"'), path);
+    assert.ok(html.includes('name="twitter:card" content="summary_large_image"'), path);
     for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
       const schema = JSON.parse(match[1]);
       assert.equal(schema['@context'], 'https://schema.org');

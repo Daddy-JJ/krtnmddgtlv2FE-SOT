@@ -1,6 +1,7 @@
 import { authService } from '../../services/auth-service.js';
 import { normalizeEmail, validateForgotPassword } from '../../validators/auth-validator.js';
 import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
+import { apiErrorMessage } from '../../utils/api-error-message.js';
 
 const resetForm = document.querySelector('[data-account-reset-form]');
 const status = document.querySelector('[data-form-status]');
@@ -24,7 +25,7 @@ async function loadAccount() {
       location.assign('/login/');
       return;
     }
-    showStatus(status, error.message || 'Keamanan akun belum dapat dimuat.', 'error');
+    showStatus(status, apiErrorMessage(error, 'Keamanan akun belum dapat dimuat.'), 'error');
   }
 }
 
@@ -45,7 +46,7 @@ resetForm?.addEventListener('submit', async (event) => {
     showStatus(status, 'Jika email valid, instruksi reset akan dikirim.', 'success');
   } catch (error) {
     showFieldErrors(resetForm, mapApiFieldErrors(error.details));
-    showStatus(status, error.message, 'error');
+    showStatus(status, apiErrorMessage(error, 'Instruksi reset belum dapat dikirim.'), 'error');
   } finally {
     setBusy(resetForm, false);
   }

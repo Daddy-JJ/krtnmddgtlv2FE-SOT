@@ -24,7 +24,7 @@ export const authService = {
       // An access token can expire while the page remains open. Rotate the
       // session once, then retry the server-side revocation with the fresh
       // access/CSRF pair. CSRF failures are never bypassed or retried.
-      if (error?.status !== 401) throw error;
+      if (error?.status !== 401 || error?.code !== 'AUTH_REQUIRED') throw error;
       await api.post('/auth/refresh', null, { csrfContext: 'access', skipRefresh: true });
       return request();
     }

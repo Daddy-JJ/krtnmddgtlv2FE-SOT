@@ -1,12 +1,12 @@
 # Frontend Repository Status
 
-Updated: 2026-09-20
+Updated: 2026-09-21
 
 Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
-and live local health/authorization guards verified. The approved logout,
-Template email deployment-boundary, and Super Admin error-UX fixes are complete
-in source; production still requires frontend deploy, backend deploy/restart,
-and authenticated Super Admin UAT.**
+and live local health/authorization guards verified. The approved session,
+data-protection, error/double-submit, navigation, visual, validation, URL-sink,
+accessibility, and social-metadata audit fixes are complete in source;
+production still requires frontend deploy and authenticated workflow UAT.**
 
 ## Baseline
 
@@ -16,8 +16,8 @@ and authenticated Super Admin UAT.**
 | Stack | Static HTML, Vanilla JS modules, Tailwind CSS 4 |
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
-| Static build | 164 allowlisted runtime files in `dist/` |
-| Automated tests | 175 passing; no known test failure |
+| Static build | 166 allowlisted runtime files in `dist/` |
+| Automated tests | 199 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Paused pending explicit Midtrans API readiness decision |
@@ -55,6 +55,36 @@ on `http://127.0.0.1:3000/api/v1`; the fallback proxy timeout is 30 seconds.
 | Deployment | `dist/` allowlist, direct production API base, and Vercel HTTPS fallback proxy |
 | Web analytics | Vercel Web Analytics on 10 sitemap marketing pages; sensitive routes excluded |
 | Visual system | Foundations-inspired adapter active on all 52 visible non-card route shells; 10 card designs excluded |
+
+## Backend security alignment 2026-09-21
+
+- Reset password menerima fragment token baru dan legacy query token, menyimpan
+  keduanya hanya di memory, lalu segera membersihkan URL.
+- Refresh-once hanya berjalan untuk read request `AUTH_REQUIRED`; credential
+  error, unsafe mutation, dan timeout tidak direplay. POST dengan CSRF invalid
+  juga tidak diulang otomatis.
+- Generic `/admin/data/*` tetap tanpa mutation caller; domain actions seperti
+  Feedback status tetap tersedia. Tidak ada caller perubahan email pada UI
+  account saat ini, sehingga kontrak `PUT /me` tidak menambah menu baru.
+- Resume scanner errors, legacy signature-only warning, refund states, dan
+  authoritative subscription/card reload telah diterapkan. `npm run qa`
+  membangun 166 file dan 199 test lulus; dependency audit melaporkan 0
+  vulnerability. Authenticated browser UAT tetap diperlukan.
+
+## Audit remediation 2026-09-20
+
+- Access CSRF recovery untuk PUT/PATCH/DELETE dibatasi satu sinkronisasi dan
+  satu replay; POST tidak direplay. Session refresh hanya mereplay GET/HEAD
+  dengan `AUTH_REQUIRED`.
+- Card editing fails closed after an initial load error; reset-password tokens
+  are held only in controller memory and removed from the address bar.
+- Super Admin generic rendering uses per-view field allowlists and safe error
+  copy. Resume revision and email-template actions block duplicate submission.
+- Member navigation warns before discarding form edits, restores focus after
+  in-app navigation, and admin controls reflow without overlap on narrow widths.
+- `npm run qa` passes 185/185 tests and builds 164 allowlisted files. Dependency
+  audit reports zero known vulnerabilities. Local backend health returns HTTP
+  200 with the database available.
 
 ## Super Admin operations
 

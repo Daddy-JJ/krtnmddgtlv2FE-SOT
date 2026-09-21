@@ -1,6 +1,7 @@
 import { cardService } from '../../services/card-service.js';
 import { canEditSlug, normalizeSlug, validateSlug } from '../../validators/slug-validator.js';
 import { clearFieldErrors, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
+import { safeHttpUrl, safeImageUrl } from '../../utils/safe-url.js';
 
 const form = document.querySelector('[data-card-settings-form]');
 const status = document.querySelector('[data-form-status]');
@@ -65,11 +66,24 @@ function render() {
   nodes.saveSlug.disabled = !canEditSlug(card.planCode);
   nodes.checkSlug.disabled = !canEditSlug(card.planCode);
   nodes.getSuggestion.disabled = !canEditSlug(card.planCode);
-  setText(nodes.currentUrl, card.canonicalUrl ?? '-');
-  if (card.canonicalUrl) nodes.publicOpen.href = card.canonicalUrl;
-  if (card.qrImageUrl) {
-    nodes.qrImage.src = card.qrImageUrl;
-    nodes.qrDownload.href = `${card.qrImageUrl}${card.qrImageUrl.includes('?') ? '&' : '?'}download=true`;
+  const canonicalUrl = safeHttpUrl(card.canonicalUrl);
+  const qrImageUrl = safeImageUrl(card.qrImageUrl);
+  setText(nodes.currentUrl, canonicalUrl || '-');
+  if (canonicalUrl) {
+    nodes.publicOpen.href = canonicalUrl;
+    nodes.publicOpen.removeAttribute('aria-disabled');
+  } else {
+    nodes.publicOpen.removeAttribute('href');
+    nodes.publicOpen.setAttribute('aria-disabled', 'true');
+  }
+  if (qrImageUrl) nodes.qrImage.src = qrImageUrl;
+  else nodes.qrImage.removeAttribute('src');
+  if (qrImageUrl && /^https?:/i.test(qrImageUrl)) {
+    nodes.qrDownload.href = `${qrImageUrl}${qrImageUrl.includes('?') ? '&' : '?'}download=true`;
+    nodes.qrDownload.removeAttribute('aria-disabled');
+  } else {
+    nodes.qrDownload.removeAttribute('href');
+    nodes.qrDownload.setAttribute('aria-disabled', 'true');
   }
   setText(nodes.availability, canEditSlug(card.planCode) ? 'Basic/Pro dapat mengubah custom URL.' : 'Starter memakai URL random read-only.');
   updateSlugWarning();

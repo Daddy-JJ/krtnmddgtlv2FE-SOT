@@ -434,7 +434,17 @@ function node(tag, className = '', text = '') {
 function action(label, handler) {
   const button = node('button', 'dashboard-action', label);
   button.type = 'button';
-  button.addEventListener('click', () => Promise.resolve(handler()).catch(() => {}));
+  button.addEventListener('click', async () => {
+    if (button.disabled) return;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    try {
+      await handler();
+    } finally {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
+  });
   return button;
 }
 

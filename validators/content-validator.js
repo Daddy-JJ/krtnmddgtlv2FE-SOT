@@ -45,6 +45,7 @@ function number(value) {
 }
 
 function http(value, label) {
+  if (value.length > 2048) return `${label} maksimal 2048 karakter.`;
   try {
     const url = new URL(value);
     return url.protocol === 'http:' || url.protocol === 'https:' ? '' : `${label} wajib HTTP(S).`;

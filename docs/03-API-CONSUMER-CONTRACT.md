@@ -40,9 +40,18 @@ configured API base yang sama.
 - File upload memakai `FormData`; browser menentukan multipart boundary.
 - Default timeout tanpa environment override adalah 12 detik; production
   injects `PUBLIC_API_TIMEOUT_MS=30000`.
-- Satu 401 dapat memicu satu refresh lalu satu retry, kecuali request memilih
-  `skipRefresh`.
+- Hanya `401 AUTH_REQUIRED` pada read request `GET/HEAD` yang dapat memicu
+  satu refresh lalu satu replay. Jika refresh gagal, error diteruskan tanpa
+  loop dan UI mengarahkan user ke Login.
+- `401 INVALID_CREDENTIALS` bukan session expiry dan tidak boleh memicu
+  refresh. Mutasi dan request yang timeout tidak pernah direplay otomatis.
 - Unsafe cookie-authenticated method memakai `X-CSRF-Token`.
+- Jika mutation idempotent `PUT/PATCH/DELETE` ditolak dengan
+  `403 CSRF_INVALID`, client membuang token access yang tersimpan, mengambil
+  token baru dari `/auth/csrf`, lalu mengulang tepat satu kali. `POST` tidak
+  direplay agar operasi non-idempotent tidak menjadi double-submit.
+- `429 RATE_LIMITED` dan `503 AUTH_BUSY` memiliki recovery copy tersendiri.
+  Timeout client tetap aktif ketika caller juga memasok `AbortSignal`.
 
 CSRF contexts:
 
@@ -85,6 +94,26 @@ SQL, storage path, token, atau internal exception.
 | POST | `/auth/forgot-password` | Request reset email |
 | POST | `/auth/reset-password` | Consume reset token |
 | GET | `/me` | Current user, verified-email state, and roles |
+| PUT | `/me` | Existing email-change caller only; no current account UI |
+
+Token reset password baru dibaca dari fragment
+`/reset-password/#token=<token>` ke memori controller, lalu fragment segera
+dihapus melalui `history.replaceState`. Query `?token=` lama tetap dibaca
+selama transisi 30 menit dan juga langsung dibersihkan. Fragment tidak pernah
+dipindah ke query; token/password tidak disimpan di Web Storage atau log dan
+token hanya dikirim pada body JSON `POST /auth/reset-password`.
+
+`PUT /me` untuk perubahan email membutuhkan
+`{ email, currentPassword }`, cookie, access CSRF, dan autentikasi maksimal
+15 menit. `401 INVALID_CREDENTIALS` berarti password saat ini salah tanpa
+refresh/retry. `403 RECENT_AUTH_REQUIRED` meminta Login ulang. Jika email
+berubah, seluruh sesi dicabut, email kembali unverified, dan user melanjutkan
+OTP lalu Login ulang. Frontend saat ini tidak memiliki menu/caller perubahan
+email, sehingga kontrak ini tidak menambah UI baru.
+
+Public `GET /health` sukses hanya mensyaratkan
+`data.status === "healthy"`; consumer tidak bergantung pada database,
+environment, atau latency.
 
 ### Starter
 
@@ -180,6 +209,9 @@ PNG contains the backend canonical public URL, not raw contact data.
 | POST | `/feedback` | Authenticated improvement message |
 
 Checkout must not be invoked while the product decision remains paused.
+Status payment `refunded` dan `refund_pending_review` harus dirender berbeda.
+Setelah reconciliation, subscription, payment history, dan cards dimuat ulang
+dari backend; tier/benefit tidak ditentukan dari cache frontend.
 
 ### Resume Enhancement
 
@@ -202,11 +234,22 @@ assignment, quality review, dan final release. Role lama
 `resume_quality_reviewer` telah dipensiunkan dan tidak dipetakan oleh frontend;
 backend tetap melakukan authorization setiap operasi.
 
+Upload tidak diretry otomatis. `503 RESUME_SCANNER_UNAVAILABLE`,
+`503 RESUME_SCANNER_BUSY`, dan `422 RESUME_FILE_UNSAFE` merupakan kegagalan
+upload, bukan sukses. Hanya hasil scanner backend yang current/accepted yang
+authoritative; file lama berstatus `CLEAN_SIGNATURE_ONLY` ditandai perlu
+upload ulang dan tidak dianggap aman oleh UI.
+
 ### Super Admin
 
 The shared workspace is guarded for `super_admin` UX, while the backend remains
 authoritative. `services/admin-operations-service.js` owns these transport
 operations and uses the shared credentialed API client.
+
+Semua `/admin/data/*` read-only. Frontend tidak menyediakan generic
+`POST/PUT/PATCH/DELETE` ke family tersebut; `405 RESOURCE_READ_ONLY`
+ditampilkan sebagai arahan memakai endpoint domain. Endpoint operasional
+seperti status Feedback tetap aktif sesuai permission backend.
 
 Operational read contracts:
 

@@ -3,6 +3,8 @@ import { csrfToken } from '../utils/cookies.js';
 import { ApiError } from './api-error.js';
 
 const unsafe = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const csrfRecoverable = new Set(['PUT', 'PATCH', 'DELETE']);
+const sessionRefreshable = new Set(['GET', 'HEAD']);
 const requestId = () => globalThis.crypto?.randomUUID?.() ?? `web-${Date.now()}`;
 
 export function buildApiUrl(path, baseUrl = appConfig.apiBaseUrl) {
@@ -39,17 +41,37 @@ export class ApiClient {
   delete(path, options) { return this.request(path, { ...options, method: 'DELETE' }); }
   async request(path, options = {}) {
     const method = String(options.method ?? 'GET').toUpperCase();
-    try { return await this.#send(path, { ...options, method }); }
+    const requestOptions = { ...options, method };
+    try { return await this.#send(path, requestOptions); }
     catch (error) {
-      if (!(error instanceof ApiError) || error.status !== 401 || options.skipRefresh || path === '/auth/refresh') throw error;
+      if (!(error instanceof ApiError)) throw error;
+      if (this.#canRecoverCsrf(error, requestOptions)) {
+        this.#invalidateAccessCsrf();
+        await this.#accessCsrf(true);
+        return this.#send(path, { ...requestOptions, forceAccessCsrf: true });
+      }
+      if (error.status !== 401
+        || error.code !== 'AUTH_REQUIRED'
+        || !sessionRefreshable.has(method)
+        || options.skipRefresh
+        || path === '/auth/refresh') throw error;
       await this.#refresh();
-      return this.#send(path, { ...options, method });
+      return this.#send(path, {
+        ...requestOptions,
+        forceAccessCsrf: unsafe.has(method) && requestOptions.csrfContext !== null,
+      });
     }
   }
 
   async #refresh() {
     if (!this.#refreshPromise) {
-      this.#refreshPromise = this.#send('/auth/refresh', { method: 'POST', csrfContext: 'access' })
+      this.#refreshPromise = this.request('/auth/refresh', {
+        method: 'POST', csrfContext: 'access', skipRefresh: true,
+      })
+        .then((payload) => {
+          this.#invalidateAccessCsrf();
+          return payload;
+        })
         .finally(() => { this.#refreshPromise = null; });
     }
     return this.#refreshPromise;
@@ -65,8 +87,10 @@ export class ApiClient {
       headers.set('X-Request-ID', requestId());
       if (unsafe.has(method) && options.csrfContext !== null) {
         const context = options.csrfContext ?? 'access';
-        const token = csrfToken(context, this.#cookies())
-          ?? (context === 'access' ? await this.#accessCsrf() : null);
+        const token = context === 'access' && options.forceAccessCsrf
+          ? await this.#accessCsrf()
+          : csrfToken(context, this.#cookies())
+            ?? (context === 'access' ? await this.#accessCsrf() : null);
         if (token) headers.set('X-CSRF-Token', token);
       }
       let body = options.body;
@@ -75,7 +99,10 @@ export class ApiClient {
         headers.set('Content-Type', 'application/json');
         body = JSON.stringify(body);
       }
-      const response = await Reflect.apply(this.#fetch, globalThis, [buildApiUrl(path, this.#baseUrl), { method, headers, body, credentials: 'include', signal: options.signal ?? controller.signal }]);
+      const signal = options.signal && typeof AbortSignal.any === 'function'
+        ? AbortSignal.any([controller.signal, options.signal])
+        : options.signal ?? controller.signal;
+      const response = await Reflect.apply(this.#fetch, globalThis, [buildApiUrl(path, this.#baseUrl), { method, headers, body, credentials: 'include', signal }]);
       const payload = response.status === 204 ? null : await response.json().catch(() => null);
       if (!response.ok) {
         const proxyError = payload?.error;
@@ -92,13 +119,28 @@ export class ApiClient {
     } catch (error) {
       if (error instanceof ApiError) throw error;
       if (controller.signal.aborted) throw new ApiError({ code: 'REQUEST_TIMEOUT', message: 'Request timed out.' });
+      if (options.signal?.aborted) throw new ApiError({ code: 'REQUEST_ABORTED', message: 'Request cancelled.' });
       throw new ApiError({ message: 'Network request failed.' });
     } finally {
       clearTimeout(timer);
     }
   }
 
-  async #accessCsrf() {
+  #canRecoverCsrf(error, options) {
+    const context = options.csrfContext ?? 'access';
+    return error.status === 403
+      && error.code === 'CSRF_INVALID'
+      && csrfRecoverable.has(options.method)
+      && context === 'access'
+      && !options.skipCsrfRecovery;
+  }
+
+  #invalidateAccessCsrf() {
+    this.#accessCsrfToken = null;
+  }
+
+  async #accessCsrf(force = false) {
+    if (force) this.#invalidateAccessCsrf();
     if (this.#accessCsrfToken) return this.#accessCsrfToken;
     if (!this.#csrfPromise) {
       this.#csrfPromise = this.#send('/auth/csrf', { method: 'GET', csrfContext: null })

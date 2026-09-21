@@ -832,11 +832,13 @@ html.ui-foundations.editorial body.mono-landing-page :is(.landing-feature, .land
 
 .ui-foundations .admin-navigation__label {
   color: var(--fdn-muted-foreground);
-  font-size: .75rem;
-  font-weight: 800;
-  letter-spacing: .08em;
+  font-family: var(--fdn-font-sans) !important;
+  font-size: .75rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+  line-height: 1.4 !important;
   margin-bottom: var(--fdn-space-2);
-  text-transform: uppercase;
+  text-transform: uppercase !important;
 }
 
 .ui-foundations .admin-navigation__links {
@@ -906,10 +908,16 @@ html.ui-foundations.editorial body.mono-landing-page :is(.landing-feature, .land
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
-.ui-foundations :is(.admin-filter-form, .admin-report-period, .admin-feedback-action) label,
-.ui-foundations :is(.admin-filter-form, .admin-report-period) label {
+.ui-foundations :is(.admin-filter-form, .admin-report-period, .admin-feedback-action) label {
   display: grid;
   gap: var(--fdn-space-2);
+  min-width: 0;
+}
+
+.ui-foundations :is(.admin-filter-form, .admin-report-period, .admin-feedback-action) :is(input, select, textarea, button) {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
 }
 
 .ui-foundations .admin-feedback-results,
@@ -942,8 +950,8 @@ html.ui-foundations.editorial body.mono-landing-page :is(.landing-feature, .land
 }
 
 .ui-foundations .admin-release-warning {
-  border: 2px solid var(--fdn-destructive);
-  color: var(--fdn-destructive);
+  border: 2px solid var(--fdn-danger);
+  color: var(--fdn-danger);
   font-weight: 900;
   margin-top: var(--fdn-space-3);
   padding: var(--fdn-space-3);
@@ -968,8 +976,8 @@ html.ui-foundations.editorial body.mono-landing-page :is(.landing-feature, .land
 }
 
 .ui-foundations .admin-state--error {
-  border-color: var(--fdn-destructive);
-  color: var(--fdn-destructive);
+  border-color: var(--fdn-danger);
+  color: var(--fdn-danger);
 }
 
 .ui-foundations .admin-series-row,

@@ -2,6 +2,7 @@ import { starterService } from '../../services/starter-service.js';
 import { buildStarterInput, validateStarterCreateValues } from '../../validators/starter-validator.js';
 import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
 import { bindWebsiteUrlInput } from '../../utils/website-url.js';
+import { safeHttpUrl } from '../../utils/safe-url.js';
 
 const form = document.querySelector('[data-starter-create-form]');
 const status = document.querySelector('[data-form-status]');
@@ -32,8 +33,15 @@ form?.addEventListener('submit', async (event) => {
       ? 'Kartu Starter berhasil dibuat. Link pengelolaan dikirim ke email Anda.'
       : 'Kartu berhasil dibuat, tetapi email pengelolaan gagal dikirim.', emailSent ? 'success' : 'error');
     result.hidden = false;
-    resultUrl.href = card.canonicalUrl;
-    resultUrl.textContent = card.canonicalUrl;
+    const canonicalUrl = safeHttpUrl(card.canonicalUrl);
+    resultUrl.hidden = !canonicalUrl;
+    if (canonicalUrl) {
+      resultUrl.href = canonicalUrl;
+      resultUrl.textContent = canonicalUrl;
+    } else {
+      resultUrl.removeAttribute('href');
+      resultUrl.textContent = 'URL kartu belum tersedia.';
+    }
     manageLink.href = `/starter/manage/?publicId=${encodeURIComponent(card.publicId)}`;
     if (emailStatus) emailStatus.textContent = emailSent
       ? 'Link pengelolaan kartu sudah dikirim ke email Anda.'

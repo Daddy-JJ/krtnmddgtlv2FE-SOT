@@ -1,5 +1,8 @@
 import { authService } from '../../services/auth-service.js';
 import { resumeService } from '../../services/resume-service.js';
+import { setBusy } from '../../components/forms/form-utils.js';
+import { validateResumeDocx } from '../../validators/resume-file-validator.js';
+import { apiErrorMessage } from '../../utils/api-error-message.js';
 
 const id = new URLSearchParams(location.search).get('id');
 const heading = document.querySelector('[data-heading]');
@@ -9,6 +12,8 @@ const status = document.querySelector('[data-status]');
 const uploadForm = document.querySelector('[data-upload-form]');
 const actionButtons = [...document.querySelectorAll('[data-action]')];
 let currentStatus = '';
+let mutationPending = false;
+let ready = false;
 
 const logout = document.querySelector('[data-logout]');
 logout?.addEventListener('click', async () => {
@@ -26,19 +31,16 @@ logout?.addEventListener('click', async () => {
 for (const button of actionButtons) {
   button.addEventListener('click', async () => {
     const action = button.dataset.action;
-    const reason = window.prompt(action === 'information' ? 'Informasi yang diperlukan (min. 10 karakter):' : 'Catatan perubahan status:');
+    const reason = validReason(window.prompt(action === 'information' ? 'Informasi yang diperlukan (min. 10 karakter):' : 'Catatan perubahan status:'));
     if (!reason) return;
-    button.disabled = true;
-    try {
+    await runMutation(async () => {
       if (action === 'information') await resumeService.requestInformation(id, reason);
       if (action === 'complete-data') await resumeService.markDataComplete(id, reason);
       if (action === 'start') {
         if (currentStatus === 'REVISION_REQUESTED') await resumeService.startRevision(id, reason);
         else await resumeService.start(id, reason);
       }
-      await load();
-    } catch (error) { status.textContent = error.message; }
-    finally { button.disabled = false; }
+    });
   });
 }
 
@@ -47,10 +49,9 @@ uploadForm?.addEventListener('submit', async (event) => {
   const form = new FormData(uploadForm);
   const file = form.get('file');
   const role = String(form.get('role'));
-  if (!(file instanceof File)) return;
-  const submit = uploadForm.querySelector('button');
-  submit.disabled = true;
-  try {
+  const fileError = validateResumeDocx(file, { label: 'Dokumen kerja' });
+  if (fileError) { status.textContent = fileError; uploadForm.elements.file.focus(); return; }
+  await runMutation(async () => {
     const uploaded = await resumeService.upload(id, role, file);
     if (role === 'DELIVERABLE') await resumeService.registerDeliverable(id, {
       filePublicId: uploaded.publicId,
@@ -58,11 +59,10 @@ uploadForm?.addEventListener('submit', async (event) => {
       internalNotes: String(form.get('internalNotes') || '') || null,
     });
     uploadForm.reset();
-    await load();
-  } catch (error) { status.textContent = error.message; }
-  finally { submit.disabled = false; }
+  });
 });
 
+setWorkspaceBusy(true);
 void init();
 async function init() {
   if (!id) { status.textContent = 'Request ID tidak valid.'; return; }
@@ -71,9 +71,48 @@ async function init() {
     const roles = Array.isArray(actor.roles) ? actor.roles : [actor.role];
     if (!roles.includes('cv_specialist') || roles.includes('super_admin')) { location.replace(roles.includes('super_admin') ? '/admin/' : '/app/'); return; }
     await load();
+    ready = true;
+    setWorkspaceBusy(false);
   } catch (error) {
-    if (error.status === 401) location.replace('/login/'); else status.textContent = error.message;
+    ready = false;
+    if (error.status === 401) location.replace('/login/'); else status.textContent = safeOperationError(error, 'Request belum dapat dimuat.');
   }
+}
+
+async function runMutation(work) {
+  if (mutationPending || !ready) return;
+  mutationPending = true;
+  setWorkspaceBusy(true);
+  try {
+    await work();
+    await load();
+  } catch (error) {
+    status.textContent = safeOperationError(error, 'Operasi belum dapat diselesaikan.');
+  } finally {
+    mutationPending = false;
+    setWorkspaceBusy(false);
+  }
+}
+
+function setWorkspaceBusy(busy) {
+  setBusy(uploadForm, busy);
+  for (const button of actionButtons) {
+    button.disabled = busy;
+    button.setAttribute('aria-busy', String(busy));
+  }
+}
+
+function validReason(value) {
+  const reason = String(value ?? '').trim();
+  if (reason.length < 10 || reason.length > 1000) {
+    status.textContent = 'Alasan wajib berisi 10-1000 karakter.';
+    return '';
+  }
+  return reason;
+}
+
+function safeOperationError(error, fallback) {
+  return apiErrorMessage(error, fallback);
 }
 
 async function load() {
@@ -127,7 +166,13 @@ function filePanel(title, items) {
     const link = document.createElement('a'); link.className = 'text-cyan-300 hover:underline';
     link.href = resumeService.fileDownloadUrl(id, value.publicId);
     link.textContent = `${value.role} · ${value.filename} · ${value.scanStatus}`;
-    item.append(link); list.append(item);
+    item.append(link);
+    if (value.scanStatus === 'CLEAN_SIGNATURE_ONLY') {
+      const warning = document.createElement('p');
+      warning.textContent = 'Perlu upload ulang dan pemindaian antivirus sebelum file dapat dianggap aman.';
+      item.append(warning);
+    }
+    list.append(item);
   }
   section.append(list); return section;
 }

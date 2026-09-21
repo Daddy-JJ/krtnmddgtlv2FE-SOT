@@ -10,5 +10,6 @@ export function billingStatusLabel(status) {
     expired: 'Kedaluwarsa',
     canceled: 'Dibatalkan',
     refunded: 'Dikembalikan',
+    refund_pending_review: 'Pengembalian menunggu peninjauan',
   })[status] ?? 'Tidak diketahui';
 }
