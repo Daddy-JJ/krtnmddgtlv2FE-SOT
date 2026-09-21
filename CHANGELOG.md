@@ -5,6 +5,9 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Memperbaiki logout Super Admin/member saat token CSRF browser stale dengan
+  sinkronisasi `/auth/csrf` eksplisit sebelum satu POST logout; tidak ada
+  retry mutation logout.
 - Menyelaraskan frontend dengan security hardening backend: reset password
   memprioritaskan fragment dan membersihkan token dari URL, refresh-once hanya
   berlaku untuk read request `AUTH_REQUIRED`, serta POST/timeout tidak

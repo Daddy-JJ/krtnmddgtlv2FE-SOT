@@ -17,7 +17,14 @@ export const authService = {
     return api.post('/auth/login', input, { csrfContext: null, skipRefresh: true });
   },
   async logout() {
-    const request = () => api.post('/auth/logout', null, { csrfContext: 'access', skipRefresh: true });
+    const request = async () => {
+      await api.synchronizeAccessCsrf();
+      return api.post('/auth/logout', null, {
+        csrfContext: 'access',
+        forceAccessCsrf: true,
+        skipRefresh: true,
+      });
+    };
     try {
       return await request();
     } catch (error) {
@@ -25,7 +32,11 @@ export const authService = {
       // session once, then retry the server-side revocation with the fresh
       // access/CSRF pair. CSRF failures are never bypassed or retried.
       if (error?.status !== 401 || error?.code !== 'AUTH_REQUIRED') throw error;
-      await api.post('/auth/refresh', null, { csrfContext: 'access', skipRefresh: true });
+      await api.post('/auth/refresh', null, {
+        csrfContext: 'access',
+        forceAccessCsrf: true,
+        skipRefresh: true,
+      });
       return request();
     }
   },

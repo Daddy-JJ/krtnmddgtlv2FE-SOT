@@ -25,6 +25,8 @@ test('logout refreshes and redirects only for AUTH_REQUIRED', async () => {
   assert.match(auth, /status !== 401 \|\| error\?\.code !== 'AUTH_REQUIRED'/);
   assert.match(shell, /status === 401 && error\?\.code === 'AUTH_REQUIRED'/);
   assert.match(admin, /status===401&&error\?\.code==='AUTH_REQUIRED'/);
+  assert.match(auth, /synchronizeAccessCsrf\(\)/);
+  assert.match(auth, /forceAccessCsrf: true/);
 });
 
 test('account keeps email mutation absent until a product caller exists', async () => {

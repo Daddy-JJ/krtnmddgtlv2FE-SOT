@@ -52,6 +52,10 @@ configured API base yang sama.
   direplay agar operasi non-idempotent tidak menjadi double-submit.
 - `429 RATE_LIMITED` dan `503 AUTH_BUSY` memiliki recovery copy tersendiri.
   Timeout client tetap aktif ketika caller juga memasok `AbortSignal`.
+- Logout melakukan satu sinkronisasi eksplisit melalui `GET /auth/csrf`
+  sebelum mengirim satu `POST /auth/logout` dengan token terbaru. Ini bukan
+  retry mutation; bila logout tetap ditolak `CSRF_INVALID`, UI menampilkan
+  error dan mempertahankan sesi.
 
 CSRF contexts:
 

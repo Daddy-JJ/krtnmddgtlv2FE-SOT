@@ -184,6 +184,33 @@ test('null payload is omitted for strict no-body POST endpoints', async () => {
   assert.equal(observed.headers.get('x-csrf-token'), 'access-csrf');
 });
 
+test('logout can explicitly synchronize access CSRF before a mutation', async () => {
+  const observed = [];
+  const client = new ApiClient({
+    baseUrl: 'https://api.example.test/api/v1',
+    cookieSource: () => 'csrf_token=stale-csrf',
+    fetchImpl: async (url, options) => {
+      const path = new URL(url).pathname;
+      observed.push({ path, csrf: options.headers.get('x-csrf-token') });
+      if (path.endsWith('/auth/csrf')) {
+        return jsonResponse({ success: true, data: { csrfToken: 'fresh-csrf' } });
+      }
+      return jsonResponse({ success: true, data: null });
+    },
+  });
+
+  await client.synchronizeAccessCsrf();
+  await client.post('/auth/logout', null, {
+    csrfContext: 'access',
+    forceAccessCsrf: true,
+    skipRefresh: true,
+  });
+  assert.deepEqual(observed, [
+    { path: '/api/v1/auth/csrf', csrf: null },
+    { path: '/api/v1/auth/logout', csrf: 'fresh-csrf' },
+  ]);
+});
+
 test('callers can opt into the complete success envelope for pagination metadata', async () => {
   const envelope = {
     success: true,

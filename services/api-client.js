@@ -39,6 +39,7 @@ export class ApiClient {
   put(path, body, options) { return this.request(path, { ...options, method: 'PUT', body }); }
   patch(path, body, options) { return this.request(path, { ...options, method: 'PATCH', body }); }
   delete(path, options) { return this.request(path, { ...options, method: 'DELETE' }); }
+  synchronizeAccessCsrf() { return this.#accessCsrf(true); }
   async request(path, options = {}) {
     const method = String(options.method ?? 'GET').toUpperCase();
     const requestOptions = { ...options, method };
