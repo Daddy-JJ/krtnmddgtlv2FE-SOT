@@ -5,7 +5,7 @@
   "outputDirectory": "dist",
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!preview/).*)",
       "headers": [
         {
           "key": "Strict-Transport-Security",
@@ -28,12 +28,41 @@
           "value": "camera=(), microphone=(), geolocation=(), payment=()"
         }
       ]
+    },
+    {
+      "source": "/preview/:slug",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'self' https://inovasia.co.id https://www.inovasia.co.id"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=()"
+        }
+      ]
     }
   ],
   "rewrites": [
     {
       "source": "/api/v1/:path*",
       "destination": "/api/v1/[...path]"
+    },
+    {
+      "source": "/preview/:slug",
+      "destination": "/public-card/index.html"
     },
     {
       "source": "/:slug",

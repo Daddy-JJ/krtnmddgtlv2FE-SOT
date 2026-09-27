@@ -319,6 +319,23 @@ test('CSRF_INVALID does not replay a non-idempotent POST', async () => {
   assert.equal(calls, 1);
 });
 
+test('forgot password POST exposes Retry-After without automatic replay', async () => {
+  let calls = 0;
+  const client = new ApiClient({
+    fetchImpl: async () => {
+      calls += 1;
+      return jsonResponse({ success: false, code: 'RATE_LIMITED', message: 'Too many requests.' }, 429, { 'retry-after': '17' });
+    },
+  });
+
+  await assert.rejects(client.post('/auth/forgot-password', { email: 'user@example.com' }, { csrfContext: null, skipRefresh: true }), error => {
+    assert.equal(error.code, 'RATE_LIMITED');
+    assert.equal(error.retryAfterSeconds, 17);
+    return true;
+  });
+  assert.equal(calls, 1);
+});
+
 test('request timeout remains active when a caller also supplies an abort signal', async () => {
   const external = new AbortController();
   const client = new ApiClient({

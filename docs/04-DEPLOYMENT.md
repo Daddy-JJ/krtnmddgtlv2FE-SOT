@@ -61,6 +61,11 @@ static-only fallback and does not provide slug routing or an API proxy.
 - Output directory: `dist`.
 - Baseline response headers: HSTS, `nosniff`, frame denial, strict-origin
   referrer policy, dan restrictive permissions policy untuk seluruh route.
+- The dedicated `/preview/{slug}` rewrite serves the public-card shell for
+  the Inovasia live iframe. It intentionally omits `X-Frame-Options` only on
+  that route and uses CSP `frame-ancestors` for
+  `https://inovasia.co.id` and `https://www.inovasia.co.id`; all other
+  routes keep frame denial.
 - `/api/v1/:path*` rewrite to the Vercel proxy Function.
 - One-segment public slug rewrite to `/public-card/index.html`.
 - Build-time Vercel Web Analytics injection for sitemap marketing pages only.

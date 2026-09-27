@@ -3,9 +3,13 @@ import test from 'node:test';
 import { publicAssetLinks, publicCardViewModel, publicSlugFromPath, safeWhatsAppUrl } from '../services/public-card-presenter.js';
 import { formatCardDisplayName, splitName } from '../utils/name-format.js';
 
-test('root public slug parser preserves Starter case and rejects nested or unsafe paths', () => {
+test('public slug parser supports only root slugs and the dedicated preview route', () => {
   assert.equal(publicSlugFromPath('/QaStart'), 'QaStart');
   assert.equal(publicSlugFromPath('/qa-basic/'), 'qa-basic');
+  assert.equal(publicSlugFromPath('/preview/QaStart'), 'QaStart');
+  assert.equal(publicSlugFromPath('/preview/qa-basic/'), 'qa-basic');
+  assert.equal(publicSlugFromPath('/preview'), null);
+  assert.equal(publicSlugFromPath('/preview/nested/QaStart'), null);
   assert.equal(publicSlugFromPath('/api/v1/public/cards/QaStart'), null);
   assert.equal(publicSlugFromPath('/ab'), null);
   assert.equal(publicSlugFromPath('/-invalid'), null);

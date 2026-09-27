@@ -70,7 +70,7 @@ test('Starter name length validation uses name text without website normalizatio
 });
 
 test('every deployed top-level runtime directory is reserved from custom slugs', () => {
-  for (const route of [...PUBLIC_DIRECTORIES, 'api']) {
+  for (const route of [...PUBLIC_DIRECTORIES, 'api', 'preview']) {
     assert.equal(validateSlug(route), 'Custom URL ini termasuk reserved word.', route);
   }
 });

@@ -112,6 +112,10 @@ test('runtime routing takes API configuration from deployment environment', asyn
       destination: '/api/v1/[...path]',
     },
     {
+      source: '/preview/:slug',
+      destination: '/public-card/index.html',
+    },
+    {
       source: '/:slug',
       destination: '/public-card/index.html',
     },

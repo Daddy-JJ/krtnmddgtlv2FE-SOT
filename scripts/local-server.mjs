@@ -8,6 +8,7 @@ const PROJECT_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const publicDirectories = new Set(PUBLIC_DIRECTORIES);
 const publicRootFiles = new Set(PUBLIC_ROOT_FILES);
 const publicSlugPattern = /^\/[A-Za-z0-9][A-Za-z0-9-]{1,98}[A-Za-z0-9]\/?$/;
+const publicPreviewPattern = /^\/preview\/[A-Za-z0-9][A-Za-z0-9-]{1,98}[A-Za-z0-9]\/?$/;
 const contentTypes = new Map([
   ['.css', 'text/css; charset=utf-8'],
   ['.html', 'text/html; charset=utf-8'],
@@ -86,7 +87,7 @@ async function resolvePublicFile(sourceRoot, pathname) {
     relativePath = firstSegment;
   } else if (publicDirectories.has(firstSegment)) {
     relativePath = segments.join('/');
-  } else if (publicSlugPattern.test(decodedPath)) {
+  } else if (publicPreviewPattern.test(decodedPath) || publicSlugPattern.test(decodedPath)) {
     relativePath = 'public-card/index.html';
   } else {
     return null;

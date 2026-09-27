@@ -1,11 +1,18 @@
 import { authService } from '../../services/auth-service.js';
-import { normalizeEmail, validateForgotPassword } from '../../validators/auth-validator.js';
-import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
+import { normalizeEmail } from '../../validators/auth-validator.js';
+import { bindForgotPasswordForm } from '../../components/forms/forgot-password-form.js';
+import { showStatus } from '../../components/forms/form-utils.js';
 import { apiErrorMessage } from '../../utils/api-error-message.js';
 
 const resetForm = document.querySelector('[data-account-reset-form]');
 const status = document.querySelector('[data-form-status]');
-const resetSubmit = document.querySelector('[data-account-reset-submit]');
+const resetController = bindForgotPasswordForm({
+  form: resetForm,
+  status,
+  submit: document.querySelector('[data-account-reset-submit]'),
+  cooldownNote: document.querySelector('[data-form-cooldown-note]'),
+  ready: false,
+});
 
 void loadAccount();
 
@@ -17,9 +24,11 @@ async function loadAccount() {
     if (!email) throw new Error('Email akun belum dapat dimuat.');
 
     if (resetForm?.elements.email) resetForm.elements.email.value = email;
-    if (resetSubmit) resetSubmit.disabled = false;
+    resetController.setReady(true);
 
-    showStatus(status, 'Reset password siap digunakan.', 'success');
+    if (!resetController.isCoolingDown()) {
+      showStatus(status, 'Reset password siap digunakan.', 'success');
+    }
   } catch (error) {
     if (error?.status === 401) {
       location.assign('/login/');
@@ -28,26 +37,3 @@ async function loadAccount() {
     showStatus(status, apiErrorMessage(error, 'Keamanan akun belum dapat dimuat.'), 'error');
   }
 }
-
-resetForm?.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const input = formValues(resetForm);
-  input.email = normalizeEmail(input.email);
-  const errors = validateForgotPassword(input);
-  if (Object.keys(errors).length) {
-    showFieldErrors(resetForm, errors);
-    return;
-  }
-  clearFieldErrors(resetForm);
-  setBusy(resetForm, true);
-  showStatus(status, 'Mengirim instruksi reset password...', 'info');
-  try {
-    await authService.forgotPassword(input);
-    showStatus(status, 'Jika email valid, instruksi reset akan dikirim.', 'success');
-  } catch (error) {
-    showFieldErrors(resetForm, mapApiFieldErrors(error.details));
-    showStatus(status, apiErrorMessage(error, 'Instruksi reset belum dapat dikirim.'), 'error');
-  } finally {
-    setBusy(resetForm, false);
-  }
-});

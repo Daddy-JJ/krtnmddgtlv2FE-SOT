@@ -5,8 +5,10 @@ const slugPattern = /^[A-Za-z0-9][A-Za-z0-9-]{1,98}[A-Za-z0-9]$/;
 
 export function publicSlugFromPath(pathname) {
   if (typeof pathname !== 'string') return null;
-  const match = pathname.match(/^\/([^/]+)\/?$/);
-  if (!match) return null;
+  const previewMatch = pathname.match(/^\/preview\/([^/]+)\/?$/);
+  const rootMatch = pathname.match(/^\/([^/]+)\/?$/);
+  const match = previewMatch ?? rootMatch;
+  if (!match || (!previewMatch && match[1].toLowerCase() === 'preview')) return null;
   try {
     const slug = decodeURIComponent(match[1]);
     return slugPattern.test(slug) ? slug : null;

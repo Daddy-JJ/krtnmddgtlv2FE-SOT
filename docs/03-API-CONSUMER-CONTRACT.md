@@ -100,6 +100,18 @@ SQL, storage path, token, atau internal exception.
 | GET | `/me` | Current user, verified-email state, and roles |
 | PUT | `/me` | Existing email-change caller only; no current account UI |
 
+Forgot-password UX uses the existing `POST /auth/forgot-password` response only;
+it does not require `emailSent`, `queued`, `jobId`, or `cooldownSeconds` fields.
+The frontend guards duplicate submits, starts a 360-second UX cooldown after
+HTTP 200, and stores only the absolute deadline timestamp in tab-scoped
+`sessionStorage` under `auth.forgotPassword.cooldownUntil`. The countdown never
+submits automatically and does not apply to `/reset-password/` token changes.
+For `429 RATE_LIMITED`, the client honors a valid `Retry-After` response header;
+without it, the frontend uses a six-minute UX pause without promising when the
+server limit ends. Network, timeout, and HTTP 5xx responses use a 60-second
+uncertain-status pause and never replay this POST. These controls do not replace
+backend rate limiting, worker locking, or reset-job deduplication.
+
 Token reset password baru dibaca dari fragment
 `/reset-password/#token=<token>` ke memori controller, lalu fragment segera
 dihapus melalui `history.replaceState`. Query `?token=` lama tetap dibaca
@@ -198,6 +210,12 @@ They require synchronized backend contract before implementation.
 
 Slug casing must be preserved. Public output URLs must use the configured API
 base builder rather than hard-coded origin/path construction.
+The live iframe integration uses the dedicated `/preview/{slug}` route, which
+renders the same public card shell without account/session controls. Only this
+route permits framing, and its response policy allows
+`https://inovasia.co.id` and `https://www.inovasia.co.id`; root public slugs
+and all private routes remain frame-denied. The preview route is presentation
+only: it does not create a second card API or expose management credentials.
 Starter slugs are exactly seven ASCII letters and immutable; Basic/Pro custom
 slugs follow the separate lowercase validation and authorization contract. QR
 PNG contains the backend canonical public URL, not raw contact data.

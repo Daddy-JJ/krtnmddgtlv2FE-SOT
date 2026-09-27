@@ -48,9 +48,13 @@ Main route groups:
 - Internal: `/admin/*` and `/specialist/*`.
 - Public card: a case-sensitive one-segment `/{slug}` rewrite to
   `/public-card/index.html`.
+- Embed preview: `/preview/{slug}` rewrites to the same public-card shell and
+  is the only route family allowed to be framed by the Inovasia origins. It
+  remains presentation-only and has no account/session controls.
 
 Vercel must resolve real static files/directories and `/api/v1` before the public
-slug fallback. Nested unknown routes are not public-card slugs.
+slug fallback. Nested unknown routes are not public-card slugs; only the
+explicit preview pattern accepts a nested path.
 
 ## Page shell conventions
 

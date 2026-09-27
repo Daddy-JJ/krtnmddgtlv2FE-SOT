@@ -11,6 +11,7 @@ test('Apache routes only missing one-segment slugs to the public shell', () => {
   assert.match(rewrite, /RewriteCond %\{REQUEST_FILENAME\} !-d/);
   assert.match(rewrite, /RewriteRule \^\[A-Za-z0-9\]/);
   assert.match(rewrite, /public-card\/index\.html \[L\]/);
+  assert.match(rewrite, /preview\/\[A-Za-z0-9\].*public-card\/index\.html \[L\]/);
 });
 
 test('public card shell exposes accessible loading, content, action, and error states', () => {
@@ -51,6 +52,8 @@ test('public page allowlists registry templates and renders remote data through 
   assert.match(page, /Ctrl\/Cmd\+D/);
   assert.match(page, /function fetchResource/);
   assert.match(page, /controller\.abort\('timeout'\)/);
+  assert.match(page, /isEmbedPreview/);
+  assert.match(page, /noindex, nofollow/);
   assert.match(page, /nodes\.retry\.hidden = false/);
   assert.doesNotMatch(page, /\.innerHTML\s*=|\.outerHTML\s*=/);
   assert.doesNotMatch(page, /localStorage|sessionStorage/);

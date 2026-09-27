@@ -1,16 +1,23 @@
 Options -Indexes
 
 <IfModule mod_headers.c>
+  SetEnvIf Request_URI "^/preview(?:/|$)" knd_preview_route=1
   Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
   Header always set X-Content-Type-Options "nosniff"
-  Header always set X-Frame-Options "DENY"
+  Header always set X-Frame-Options "DENY" env=!knd_preview_route
+  Header always set Content-Security-Policy "frame-ancestors 'self' https://inovasia.co.id https://www.inovasia.co.id" env=knd_preview_route
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
 </IfModule>
 
 RewriteEngine On
 
-# Preserve real frontend files/directories and route only one-segment public slugs.
+# Preserve real frontend files/directories and route public slugs plus the
+# explicitly embeddable preview route to the shared public-card shell.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^preview/[A-Za-z0-9][A-Za-z0-9-]{1,98}[A-Za-z0-9]/?$ public-card/index.html [L]
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^[A-Za-z0-9][A-Za-z0-9-]{1,98}[A-Za-z0-9]/?$ public-card/index.html [L]

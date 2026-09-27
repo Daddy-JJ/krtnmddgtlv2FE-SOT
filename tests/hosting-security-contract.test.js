@@ -8,8 +8,10 @@ test('Vercel and fallback Apache apply the same baseline browser security header
     readFile(new URL('../vercel.json', import.meta.url), 'utf8'),
   ]);
   const vercel = JSON.parse(vercelSource);
+  const defaultHeaders = vercel.headers?.find((entry) => entry.source === '/((?!preview/).*)');
+  const previewHeaders = vercel.headers?.find((entry) => entry.source === '/preview/:slug');
   const configuredHeaders = new Map(
-    vercel.headers?.find((entry) => entry.source === '/(.*)')?.headers
+    defaultHeaders?.headers
       ?.map(({ key, value }) => [key, value]) ?? [],
   );
   const expected = new Map([
@@ -21,6 +23,10 @@ test('Vercel and fallback Apache apply the same baseline browser security header
   ]);
 
   assert.deepEqual(configuredHeaders, expected);
+  const previewHeaderMap = new Map(previewHeaders?.headers?.map(({ key, value }) => [key, value]) ?? []);
+  assert.equal(previewHeaderMap.get('Content-Security-Policy'), "frame-ancestors 'self' https://inovasia.co.id https://www.inovasia.co.id");
+  assert.equal(previewHeaderMap.has('X-Frame-Options'), false);
+  assert.equal(defaultHeaders?.source, '/((?!preview/).*)');
   for (const header of expected.keys()) {
     assert.match(apache, new RegExp(`Header always set ${header}\\b`));
   }

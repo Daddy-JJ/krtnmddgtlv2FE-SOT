@@ -2,7 +2,7 @@ const reserved = new Set([
   'about', 'admin', 'api', 'app', 'assets', 'blog', 'components', 'config',
   'contact', 'cookies', 'create', 'faq', 'forgot-password', 'health',
   'locales', 'login', 'logout', 'manage', 'pages', 'pricing', 'privacy',
-  'public-card', 'refund', 'register', 'reset-password', 'services', 'specialist',
+  'preview', 'public-card', 'refund', 'register', 'reset-password', 'services', 'specialist',
   'starter', 'storage', 'terms', 'utils', 'validators', 'verify-email',
   'favicon.ico', 'robots.txt', 'sitemap.xml',
 ]);

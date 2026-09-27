@@ -32,6 +32,8 @@ const nodes = {
 };
 
 const slug = publicSlugFromPath(location.pathname);
+const isEmbedPreview = /^\/preview\/[^/]+\/?$/.test(location.pathname);
+if (isEmbedPreview) nodes.robots?.setAttribute('content', 'noindex, nofollow');
 nodes.retry?.addEventListener('click', () => loadCard());
 nodes.bookmark?.addEventListener('click', saveBookmark);
 init();

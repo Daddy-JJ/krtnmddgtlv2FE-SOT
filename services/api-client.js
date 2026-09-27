@@ -7,6 +7,19 @@ const csrfRecoverable = new Set(['PUT', 'PATCH', 'DELETE']);
 const sessionRefreshable = new Set(['GET', 'HEAD']);
 const requestId = () => globalThis.crypto?.randomUUID?.() ?? `web-${Date.now()}`;
 
+function retryAfterSeconds(value, now = Date.now()) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) {
+    const seconds = Number(raw);
+    return Number.isSafeInteger(seconds) ? seconds : null;
+  }
+  const timestamp = Date.parse(raw);
+  if (!Number.isFinite(timestamp)) return null;
+  const seconds = Math.ceil((timestamp - now) / 1000);
+  return Number.isSafeInteger(seconds) ? Math.max(0, seconds) : null;
+}
+
 export function buildApiUrl(path, baseUrl = appConfig.apiBaseUrl) {
   const normalizedBase = String(baseUrl ?? '').replace(/\/+$/, '');
   const relativePath = String(path ?? '');
@@ -113,6 +126,7 @@ export class ApiClient {
           message: payload?.message ?? proxyError?.message ?? 'Request failed.',
           details: payload?.errors ?? payload?.data ?? proxyError?.details ?? null,
           requestId: payload?.request_id ?? proxyError?.request_id ?? response.headers.get('x-request-id'),
+          retryAfterSeconds: retryAfterSeconds(response.headers.get('retry-after')),
         });
       }
       if (options.includeEnvelope) return payload;
