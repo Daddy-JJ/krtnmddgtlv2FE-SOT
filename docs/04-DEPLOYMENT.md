@@ -59,18 +59,30 @@ static-only fallback and does not provide slug routing or an API proxy.
 - Framework: Other (`null`).
 - Build command: `npm run build`.
 - Output directory: `dist`.
-- Baseline response headers: HSTS, `nosniff`, frame denial, strict-origin
-  referrer policy, dan restrictive permissions policy untuk seluruh route.
-- The dedicated `/preview/{slug}` rewrite serves the public-card shell for
-  the Inovasia live iframe. It intentionally omits `X-Frame-Options` only on
-  that route and uses CSP `frame-ancestors` for
-  `https://inovasia.co.id` and `https://www.inovasia.co.id`; all other
-  routes keep frame denial.
+- Baseline response headers: HSTS, `nosniff`, frame denial on routes other than
+  `/` and `/preview/*`, strict-origin referrer policy, and restrictive
+  permissions policy.
+- The existing Inovasia URL `/` omits `X-Frame-Options` and uses CSP
+  `frame-ancestors 'self' https://inovasia.co.id https://www.inovasia.co.id`.
+  Other sites cannot frame it in CSP-capable browsers. It stays indexable and
+  works normally for top-level visitors. When framed, it uses the light theme
+  without a first-visit chooser or analytics page view.
+- `/preview/` rewrites to the homepage shell; `/preview/{slug}` keeps the
+  public-card preview. They use the same frame-ancestors allowlist and return
+  `X-Robots-Tag: noindex, nofollow`; a top-level `/preview/` visit redirects to
+  `/`. All other routes keep `X-Frame-Options: DENY`.
 - `/api/v1/:path*` rewrite to the Vercel proxy Function.
 - One-segment public slug rewrite to `/public-card/index.html`.
 - Build-time Vercel Web Analytics injection for sitemap marketing pages only.
 
 The root project setting must not override these with output `.`.
+
+No Inovasia-side URL change is required. After deploying, verify `/` returns
+HTTP 200 with the Inovasia `frame-ancestors` policy and no `X-Frame-Options`;
+verify `/login/` and `/app/` still return `X-Frame-Options: DENY`. Test the
+actual Inovasia mini iframe in a browser. The root exception depends on CSP
+support: legacy browsers without CSP cannot enforce an origin-specific frame
+allowlist because `X-Frame-Options` has no interoperable allow-origin setting.
 
 ## Environment
 

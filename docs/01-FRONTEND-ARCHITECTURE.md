@@ -48,9 +48,13 @@ Main route groups:
 - Internal: `/admin/*` and `/specialist/*`.
 - Public card: a case-sensitive one-segment `/{slug}` rewrite to
   `/public-card/index.html`.
-- Embed preview: `/preview/{slug}` rewrites to the same public-card shell and
-  is the only route family allowed to be framed by the Inovasia origins. It
-  remains presentation-only and has no account/session controls.
+- Embed preview: the existing Inovasia project URL points to homepage `/`, so
+  only `/` and `/preview/*` allow framing by the Inovasia apex and www origins.
+  `/preview/` rewrites to the homepage shell and redirects top-level visitors
+  to `/`; `/preview/{slug}` serves the public-card shell. Preview routes are
+  noindex. A framed homepage uses the light theme without a first-visit chooser
+  or analytics page-view; top-level `/` remains indexable and unchanged.
+  Other routes remain frame-denied.
 
 Vercel must resolve real static files/directories and `/api/v1` before the public
 slug fallback. Nested unknown routes are not public-card slugs; only the
@@ -153,6 +157,7 @@ global toggle available for later changes.
 into the ten indexable marketing pages listed in `sitemap.xml`. Query strings
 and URL fragments are removed in `beforeSend`. Authentication, Starter form,
 member, internal admin/specialist, and dynamic public-card routes are excluded.
+Framed homepage and `/preview/` page views are discarded before sending.
 The integration is build-owned so source HTML does not duplicate the snippet.
 
 ## Opt-in visual-system adapter

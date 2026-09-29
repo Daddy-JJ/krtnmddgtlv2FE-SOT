@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
 
 const themeScript = await readFile(new URL('../assets/js/site-theme.js', import.meta.url), 'utf8');
 const themeStyles = await readFile(new URL('../assets/css/site-theme.css', import.meta.url), 'utf8');
@@ -52,6 +53,59 @@ test('theme controller requires an accessible first-visit choice and keeps one s
   assert.match(themeScript, /chooser\.remove\(\)/);
   assert.match(themeScript, /'#141414'/);
   assert.match(themeScript, /'#e4e3e0'/);
+});
+
+test('showcase preview uses a light theme without storage or first-visit chooser', () => {
+  const root = { dataset: {}, style: {}, classList: { toggle() {} } };
+  const window = {
+    location: { pathname: '/preview/' },
+    matchMedia: () => ({ matches: true }),
+    localStorage: { getItem() { throw new Error('Storage must not be read in the preview.'); } },
+  };
+  const document = {
+    documentElement: root,
+    querySelector: () => null,
+    addEventListener() { throw new Error('Theme chooser must not be mounted.'); },
+  };
+  runInNewContext(themeScript, { window, document, HTMLMetaElement: class {}, HTMLButtonElement: class {} });
+  assert.equal(root.dataset.siteTheme, 'light');
+});
+
+test('embedded homepage skips theme chooser without changing top-level first-visit behavior', () => {
+  const root = { dataset: {}, style: {}, classList: { toggle() {} } };
+  const embeddedWindow = {
+    location: { pathname: '/' },
+    self: {},
+    top: {},
+    matchMedia: () => ({ matches: true }),
+    localStorage: { getItem() { throw new Error('Storage must not be read in the iframe.'); } },
+  };
+  const embeddedDocument = {
+    documentElement: root,
+    querySelector: () => null,
+    addEventListener() { throw new Error('Theme chooser must not be mounted in the iframe.'); },
+  };
+  runInNewContext(themeScript, { window: embeddedWindow, document: embeddedDocument, HTMLMetaElement: class {}, HTMLButtonElement: class {} });
+  assert.equal(root.dataset.siteTheme, 'light');
+
+  let preferenceReads = 0;
+  let domReadyHandlers = 0;
+  const topWindow = {
+    location: { pathname: '/' },
+    matchMedia: () => ({ matches: false }),
+    localStorage: { getItem() { preferenceReads += 1; return null; } },
+  };
+  topWindow.self = topWindow;
+  topWindow.top = topWindow;
+  const topDocument = {
+    documentElement: { dataset: {}, style: {}, classList: { toggle() {} } },
+    readyState: 'loading',
+    querySelector: () => null,
+    addEventListener() { domReadyHandlers += 1; },
+  };
+  runInNewContext(themeScript, { window: topWindow, document: topDocument, HTMLMetaElement: class {}, HTMLButtonElement: class {} });
+  assert.equal(preferenceReads, 1);
+  assert.equal(domReadyHandlers, 1);
 });
 
 test('theme stylesheet covers light, dark, public, auth, user, and admin shells', () => {

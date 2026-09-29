@@ -401,6 +401,38 @@ data is not persisted in Web Storage, and generic rendering is denylisted
 against internal IDs, tokens, hashes, secrets, and private paths. Backend and
 database changes are outside this decision.
 
+## FE-D-032 - Homepage preview for the Inovasia showcase
+
+Date: 2026-09-29
+Status: Accepted
+
+The owner confirmed that the alumni showcase should embed the homepage, not an
+individual card. `/preview/` serves the existing homepage shell with a CSP
+allowlist for the Inovasia apex and `www` origins, noindex response policy, no
+first-visit theme chooser, and no analytics page-view event. A top-level visit
+to the same URL redirects to `/`, so Inovasia's shared iframe/Kunjungi URL can
+be changed to `/preview/` without sending visitors to a preview URL. The root
+homepage retains frame denial; `/preview/{slug}` remains available for public
+card previews. The Inovasia `deployment_url` update and frontend deployment are
+external release steps, not changes to backend or database contracts.
+
+## FE-D-033 - Allow the existing homepage URL in the Inovasia iframe
+
+Date: 2026-09-29
+Status: Accepted; supersedes the root-frame-denial and external-URL-change
+parts of FE-D-032.
+
+The owner cannot change the showcase's stored URL on Inovasia. Its iframe uses
+the existing homepage `/`, so that route now omits `X-Frame-Options` and allows
+only the Inovasia apex and www origins plus self through HTTP CSP
+`frame-ancestors`. All other non-preview routes retain frame denial. A framed
+homepage skips the first-visit theme chooser and analytics page view, while
+top-level visitors retain the normal theme choice and indexable canonical page.
+The `/preview/` and `/preview/{slug}` routes remain available but are not
+required for the current showcase. This is a frontend hosting exception, with
+no backend/database or Inovasia-side write. Deployment and live header/iframe
+verification remain pending.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

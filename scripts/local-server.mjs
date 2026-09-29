@@ -78,6 +78,7 @@ async function resolvePublicFile(sourceRoot, pathname) {
 
   if (decodedPath.includes('\\') || decodedPath.includes('\0')) return null;
   if (decodedPath === '/') return path.join(sourceRoot, 'index.html');
+  if (decodedPath === '/preview/') return path.join(sourceRoot, 'index.html');
 
   const segments = decodedPath.split('/').filter(Boolean);
   const firstSegment = segments[0];

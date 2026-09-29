@@ -1,3 +1,8 @@
+if (location.pathname === '/preview/') {
+  document.querySelector('meta[name="robots"]')?.setAttribute('content', 'noindex, nofollow');
+  if (window.self === window.top) location.replace('/');
+}
+
 const menuButton = document.querySelector('[data-mobile-menu-button]');
 const mobileMenu = document.querySelector('[data-mobile-menu]');
 

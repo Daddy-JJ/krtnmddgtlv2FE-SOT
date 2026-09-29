@@ -3,6 +3,7 @@ import { readFile, readdir, rm, mkdtemp } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
 import {
   ANALYTICS_HTML_FILES,
   buildStaticSite,
@@ -89,6 +90,20 @@ test('Vercel Analytics injection is idempotent and removes URL query and fragmen
   assert.match(injected, /url\.hash = ''/);
   assert.match(injected, /catch \{\s*return null;/);
   assert.ok(injected.indexOf('/_vercel/insights/script.js') < injected.indexOf('</head>'));
+});
+
+test('Vercel Analytics ignores the framed homepage preview', () => {
+  const html = injectVercelAnalytics('<html><head></head><body></body></html>');
+  const inline = html.split('<script data-knd-vercel-analytics>')[1]?.split('</script>')[0];
+  assert.ok(inline);
+  const window = { self: {}, top: {} };
+  runInNewContext(inline, { window, URL });
+  const beforeSend = window.vaq.find(([name]) => name === 'beforeSend')[1];
+  assert.equal(beforeSend({ url: 'https://kartunamadigital.id/preview/?source=inovasia' }), null);
+  assert.equal(beforeSend({ url: 'https://kartunamadigital.id/?source=inovasia#top' }), null);
+  window.self = window;
+  window.top = window;
+  assert.equal(beforeSend({ url: 'https://kartunamadigital.id/?source=inovasia#top' }).url, 'https://kartunamadigital.id/');
 });
 
 test('Vercel Analytics is limited to sitemap marketing pages', async () => {

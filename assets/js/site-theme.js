@@ -48,6 +48,11 @@
     return root.dataset.siteTheme === 'dark' ? 'dark' : 'light';
   }
 
+  if (window.location.pathname === '/preview/' || (window.location.pathname === '/' && window.self !== window.top)) {
+    applyTheme('light');
+    return;
+  }
+
   var savedPreference = readPreference();
   applyTheme(savedPreference || (systemQuery.matches ? 'dark' : 'light'));
 

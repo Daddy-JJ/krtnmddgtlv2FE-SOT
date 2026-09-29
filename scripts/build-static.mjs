@@ -79,6 +79,7 @@ const VERCEL_ANALYTICS_SNIPPET = `  <script ${VERCEL_ANALYTICS_MARKER}>
     window.va('beforeSend', function (event) {
       try {
         const url = new URL(event.url);
+        if (url.pathname === '/preview/' || (url.pathname === '/' && window.self !== window.top)) return null;
         url.search = '';
         url.hash = '';
         return Object.assign({}, event, { url: url.toString() });

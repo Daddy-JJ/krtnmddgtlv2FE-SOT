@@ -72,6 +72,12 @@ test('local stack serves frontend routes and proxies /api/v1 on one origin', asy
     assert.equal(previewCard.status, 200);
     assert.match(await previewCard.text(), /data-public-content/);
 
+    const previewHome = await fetch(`${origin}/preview/`);
+    assert.equal(previewHome.status, 200);
+    const previewHomeHtml = await previewHome.text();
+    assert.match(previewHomeHtml, /data-landing-content/);
+    assert.doesNotMatch(previewHomeHtml, /data-public-content/);
+
     assert.equal((await fetch(`${origin}/missing/nested/path`)).status, 404);
     assert.equal((await fetch(`${origin}/.htaccess`)).status, 404);
   } finally {

@@ -210,12 +210,12 @@ They require synchronized backend contract before implementation.
 
 Slug casing must be preserved. Public output URLs must use the configured API
 base builder rather than hard-coded origin/path construction.
-The live iframe integration uses the dedicated `/preview/{slug}` route, which
-renders the same public card shell without account/session controls. Only this
-route permits framing, and its response policy allows
-`https://inovasia.co.id` and `https://www.inovasia.co.id`; root public slugs
-and all private routes remain frame-denied. The preview route is presentation
-only: it does not create a second card API or expose management credentials.
+The Inovasia website showcase embeds the existing homepage URL `/`. That route
+and `/preview/*` allow framing only from `https://inovasia.co.id` and
+`https://www.inovasia.co.id` through response CSP. Root public slugs and private
+routes remain frame-denied. `/preview/` still serves the homepage shell (with a
+top-level redirect to `/`), and `/preview/{slug}` serves a public-card preview.
+These presentation routes create no second card API or management credential.
 Starter slugs are exactly seven ASCII letters and immutable; Basic/Pro custom
 slugs follow the separate lowercase validation and authorization contract. QR
 PNG contains the backend canonical public URL, not raw contact data.
