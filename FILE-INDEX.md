@@ -43,6 +43,7 @@ locally; planned frontend runtime files are not included in the inventory below.
 | `create/index.html` | Starter creation |
 | `login/`, `register/` | Authentication |
 | `app/` | Member workspace |
+| `app/billing/result/` | Owned Duitku result/status; shared billing controller |
 | `admin/` | Super Admin workspace |
 | `admin/feedback/` | Dedicated Super Admin Feedback Inbox |
 | `specialist/` | CV Specialist workspace |
@@ -58,6 +59,10 @@ locally; planned frontend runtime files are not included in the inventory below.
 | `components/` | Shared shell, form helper, live preview, dan card template |
 | `validators/` | Client-side validation, termasuk shared Resume DOCX rule |
 | `utils/` | Cookie, URL, dan auth-flow utilities |
+| `services/payment-flow.js` | Payment intent/retry, return lookup and reconcile orchestration |
+| `utils/payment-intent.js` | Minimal payment metadata and cross-tab session cleanup |
+| `assets/js/payment-return.js` | Early untrusted return-query scrubbing |
+| `scripts/qa-duitku-browser.mjs` | Isolated local mock browser QA |
 | `config/` | Runtime config dan theme registry |
 | `assets/` | Compiled CSS, global theme, opt-in Foundations adapter, image, icon, theme preview |
 | `locales/` | Locale resources; English saat ini deferred |
@@ -66,7 +71,7 @@ locally; planned frontend runtime files are not included in the inventory below.
 | `scripts/local-server.mjs` | Local route, asset, slug, and API proxy server |
 | `scripts/dev-server.mjs` | npm run dev entry point on 127.0.0.1:8080 |
 
-Current inventory: 62 route shells, 28 page controllers, dan 10 card theme
+Current inventory: 63 route shells, 28 page controllers, dan 10 card theme
 templates. Angka ini bersifat turunan dan harus mengikuti repository.
 
 Super Admin operations use `services/admin-operations-service.js` as the

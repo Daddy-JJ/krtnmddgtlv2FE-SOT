@@ -14,8 +14,11 @@ function retryAfterSeconds(value, now = Date.now()) {
     const seconds = Number(raw);
     return Number.isSafeInteger(seconds) ? seconds : null;
   }
+  // Date.parse alone also accepts negative numbers and non-HTTP date strings.
+  if (!/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(raw)) return null;
   const timestamp = Date.parse(raw);
   if (!Number.isFinite(timestamp)) return null;
+  if (new Date(timestamp).toUTCString() !== raw) return null;
   const seconds = Math.ceil((timestamp - now) / 1000);
   return Number.isSafeInteger(seconds) ? Math.max(0, seconds) : null;
 }
@@ -127,6 +130,7 @@ export class ApiClient {
           details: payload?.errors ?? payload?.data ?? proxyError?.details ?? null,
           requestId: payload?.request_id ?? proxyError?.request_id ?? response.headers.get('x-request-id'),
           retryAfterSeconds: retryAfterSeconds(response.headers.get('retry-after')),
+          retryAfter: response.headers.get('retry-after'),
         });
       }
       if (options.includeEnvelope) return payload;

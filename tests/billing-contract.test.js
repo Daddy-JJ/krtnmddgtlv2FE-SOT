@@ -11,7 +11,7 @@ test('billing reads omit CSRF while checkout and reconcile use access CSRF', asy
     cookieSource: () => 'csrf_token=access-csrf; starter_csrf_token=starter-csrf',
     fetchImpl: async (url, options) => {
       requests.push({ url, method: options.method, csrf: options.headers.get('x-csrf-token'), body: options.body ? JSON.parse(options.body) : null });
-      const data = url.endsWith('/payments/checkout') ? { publicId: 'payment-1', snapToken: 'snap-token', redirectUrl: 'https://pay.example' } : [];
+      const data = url.endsWith('/payments/checkout') ? { publicId: '8c7e9857-7fbb-4c1f-8e6c-42bdcf9fe60a', provider: 'duitku', status: 'pending' } : [];
       return new Response(JSON.stringify({ success: true, data }), { status: url.endsWith('/payments/checkout') ? 201 : 200 });
     },
   });
@@ -52,6 +52,7 @@ test('billing UI keeps annual plans visible but locks checkout while payment is 
   assert.match(html,/billing-plan__badge" data-status-badge/);
   assert.match(html,/billing-plan__cta primary-cta/);
   assert.match(html,/365 hari/g);
+  assert.match(source,/PAYMENT_CHECKOUT_RELEASED/);
   assert.doesNotMatch(source,/paymentService\.checkout|function checkout|toggleCheckout/);
   assert.match(source, /Peningkatan membership masih Under development\./);
   assert.match(source, /clearStatus\(status\)/);

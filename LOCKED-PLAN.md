@@ -69,8 +69,9 @@ dari backend. Browser tidak boleh mengaktifkan membership.
 
 ## Membership checkout pause
 
-- Checkout dan aktivasi payment baru tetap paused sampai product owner
-  menyatakan integrasi Midtrans API siap.
+- Gateway baru menggunakan Duitku POP browser redirect (FE-D-034).
+- Checkout dan aktivasi payment baru tetap paused sampai keputusan owner
+  terpisah setelah sandbox/UAT terkoordinasi; compatibility bukan aktivasi.
 - UI boleh menampilkan benefit dan harga informatif.
 - Tombol checkout tidak boleh aktif.
 - Note paused wajib menggunakan teks `Under development`.

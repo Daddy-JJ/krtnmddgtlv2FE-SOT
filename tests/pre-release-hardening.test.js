@@ -75,7 +75,7 @@ test('API-provided navigation and image targets are normalized before DOM assign
   assert.match(settings, /safeImageUrl\(card\.qrImageUrl\)/);
   assert.match(settings, /safeHttpUrl\(card\.canonicalUrl\)/);
   assert.doesNotMatch(settings, /\.href = card\.canonicalUrl|\.src = card\.qrImageUrl/);
-  assert.match(billing, /safeHttpUrl\(payment\.redirectUrl\)/);
+  assert.match(billing, /paymentRedirectUrl\(payment\)/);
   assert.doesNotMatch(billing, /pay\.href = payment\.redirectUrl/);
 });
 

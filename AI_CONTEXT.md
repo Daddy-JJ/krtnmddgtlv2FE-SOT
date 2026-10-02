@@ -20,8 +20,8 @@ Tier terkunci: Starter, Basic, Pro.
 
 - Starter dibuat anonim, tetapi edit hanya setelah Login/Signup dan claim kartu.
 - Resume source wajib DOCX maksimal 10 MB.
-- Checkout membership paused sampai product owner menyatakan integrasi Midtrans
-  API siap; gunakan note `Under development`.
+- Duitku POP redirect adalah gateway baru; checkout tetap paused sampai aktivasi
+  terpisah disetujui owner setelah sandbox/UAT. Gunakan note `Under development`.
 - First-visit Light/Dark chooser wajib.
 - Frontend di-host di Vercel.
 - Backend berada di repository terpisah dan shared hosting, terhubung melalui API.
@@ -50,6 +50,11 @@ Auth memakai Secure HttpOnly cookies dari backend dan CSRF header untuk request
 unsafe. Satu-satunya preferensi yang diizinkan di `localStorage` adalah
 `knd.theme.preference`. `sessionStorage` hanya boleh menyimpan konteks navigasi
 non-secret yang diizinkan secara eksplisit; tidak pernah credential.
+
+Payment intent menyimpan hanya user publicId, planCode, UUID idempotency dan
+payment publicId dalam sessionStorage. Metadata yang sama dibagikan lewat
+IndexedDB di bawah Web Lock untuk mencegah UUID berbeda antartab setelah timeout.
+Metadata dibersihkan saat logout/perubahan user; bukan token autentikasi.
 
 Payment, entitlement, plan access, role, slug availability, file authorization,
 dan hasil validasi final tetap authoritative di backend.

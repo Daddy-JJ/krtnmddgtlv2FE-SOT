@@ -189,6 +189,7 @@ async function navigate(destination, pushHistory, discardConfirmed = false) {
       .filter((source) => !source.endsWith('/components/app-shell.js'));
 
     const update = () => {
+      document.dispatchEvent(new Event('app:page-leave'));
       document.querySelector('main#main')?.replaceWith(nextMain);
       document.title = page.title;
       if (pushHistory) history.pushState({}, '', destination);

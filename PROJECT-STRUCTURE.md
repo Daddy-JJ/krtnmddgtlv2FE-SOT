@@ -46,10 +46,10 @@ editor and are intentional when tested.
 
 ## Current inventory
 
-- 62 route `index.html` shells.
+- 63 route `index.html` shells.
 - 28 page-controller modules under `pages/`.
 - 10 allowlisted card-theme templates.
-- Static build baseline: 164 runtime files in `dist/`.
+- Static build baseline: 172 runtime files in `dist/` (Duitku compatibility).
 
 Counts describe the verified Phase 10 repository and must be refreshed when the
 runtime inventory changes.
@@ -64,6 +64,12 @@ Direct `fetch()` is reserved for static resources or specialized download
 handling documented in the architecture/API contract.
 
 Shared responsibility owners include:
+
+- `services/payment-service.js` for Duitku consumer endpoints.
+- `services/payment-flow.js` for owned status/intent/reconciliation orchestration.
+- `utils/payment-intent.js` for minimal session/IndexedDB intent metadata.
+- `assets/js/payment-return.js` for early return query removal.
+- `/app/billing/` and `/app/billing/result/` share `pages/app/billing.js`.
 
 - `components/card-live-preview.js` for isolated member theme previews.
 - `services/auth-service.js` for current-user `GET /me` access.

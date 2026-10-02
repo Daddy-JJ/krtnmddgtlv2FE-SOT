@@ -102,8 +102,8 @@ normalized field contract yang sama.
 ## Billing and upgrade
 
 Membership Basic/Pro tetap didefinisikan sebagai annual 365-day product, tetapi
-checkout baru sedang paused sampai product owner menyatakan integrasi Midtrans
-API siap.
+checkout baru menggunakan Duitku POP redirect dan tetap paused sampai keputusan
+aktivasi terpisah dari owner setelah sandbox/UAT (FE-D-034).
 
 Selama pause:
 

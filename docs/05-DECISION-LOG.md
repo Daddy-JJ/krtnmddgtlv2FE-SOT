@@ -433,6 +433,39 @@ required for the current showcase. This is a frontend hosting exception, with
 no backend/database or Inovasia-side write. Deployment and live header/iframe
 verification remain pending.
 
+## FE-D-034 - Duitku POP compatibility with checkout still paused
+
+Date: 2026-10-02
+Status: Accepted for frontend compatibility; checkout activation NOT approved.
+
+Owner handover selects Duitku POP browser redirect as the sole new checkout
+provider, superseding FE-D-016's Midtrans readiness dependency only. Annual tier
+rules, server price/entitlement authority and the checkout pause remain.
+Implement capabilities, strict redirect checks, minimal user-scoped intent
+metadata, owned result lookup and bounded manual reconciliation. SessionStorage
+mirrors the intent; the same non-secret fields in IndexedDB under Web Locks
+coordinate tabs through ambiguous outcomes. Logout/user changes clear metadata;
+same-user re-authentication preserves the intent and invalidates old controllers.
+Historical provider labels remain intact; no legacy fallback or replacement order.
+No gateway SDK, merchant credentials, new CSP provider allowance or callback is
+introduced. Existing API client remains transport owner without POST replay.
+Backend deployment/migration/sandbox/UAT are separate release responsibilities.
+Both backend capability and a separate frontend release decision are required;
+the frontend release constant remains false in this implementation.
+
+## FE-D-035 - Remove unused Midtrans frontend compatibility
+
+Date: 2026-10-02
+Status: Accepted; supersedes historical-provider UI preservation in FE-D-034.
+
+Owner confirms there have been no Midtrans transactions and approves removing
+its frontend-specific labels, fixtures and error handling. This is owner-provided
+context, not a production database audit. Duitku history and backend refund states
+remain supported. Unknown providers still fail closed; HTTP 410 uses generic
+support guidance without creating a replacement order. Accepted historical
+decisions remain in this log. No backend/database change or checkout activation
+is authorized by this cleanup.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

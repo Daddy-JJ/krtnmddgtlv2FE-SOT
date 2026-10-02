@@ -1,12 +1,77 @@
 # Frontend Repository Status
 
-Updated: 2026-09-21
+Updated: 2026-10-02
 
 Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
 and live local health/authorization guards verified. The approved session,
 data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
+
+## 2026-10-02 - Duitku POP frontend compatibility (checkout disabled)
+
+The frontend consumes the backend handover through the existing API client.
+Source includes capabilities, strict redirect validation, an owned result page,
+UUID intent persistence, Web Locks/IndexedDB cross-tab coordination, manual
+reconciliation cooldown and fresh entitlement reads. Auth transitions preserve
+same-user ambiguous intents and clear metadata on logout/user changes. Owner
+confirms there have been no Midtrans transactions; provider-specific compatibility
+is removed per FE-D-035. Duitku history and refund states remain available. No gateway SDK or merchant secret
+is included. `PAYMENT_CHECKOUT_RELEASED=false` keeps every checkout CTA closed
+even when mock capabilities say enabled. No backend/database changes, real
+email, production transaction, commit, push or deployment occurred.
+
+Verification on local Node 22.23.2, with API mocks only:
+
+- Focused: `node --test tests/duitku-payment.test.js tests/billing-contract.test.js
+  tests/pre-release-hardening.test.js tests/security-hardening-alignment.test.js`
+  passed 56/56, failed 0, skipped 0.
+- `npm.cmd test` (through `npm.cmd run qa`): 247 passed, 0 failed/skipped.
+- `npm.cmd run qa`: static allowlist + Tailwind build and full test suite.
+  Build inventory is 172 public runtime files; no provider SDK/secrets detected
+  by the payment regression scan. Existing auth/OTP/Starter/admin/CSRF tests pass.
+- `npm.cmd run qa:payments:browser`: Edge/Chromium headless with isolated mock
+  API: 25 passed, 0 failed/skipped. Covers 390x844 mobile, 768x1024 tablet,
+  1440x900 desktop, keyboard Tab,
+  loading/empty/error/retry, disabled/failed/malformed capabilities, 202,
+  forged return, paid entitlement refetch, 429, unsupported-provider blocking, real Web
+  Locks/IndexedDB multi-tab, ambiguous key reuse, same-user re-auth, user switch,
+  logout and cross-origin Retry-After/request ID exposure, numeric/HTTP-date
+  parsing, absent headers and cooldown click prevention. First restricted browser
+  attempt stalled and was terminated; the permission-approved rerun passed.
+  This is not real-device or
+  merchant sandbox/UAT evidence.
+- `git diff --check` is clean (Windows LF/CRLF notices are not test failures).
+
+Files: `services/api-client.js`, `services/api-error.js`,
+`services/payment-service.js`, `services/payment-flow.js`,
+`services/auth-service.js`, `validators/payment-validator.js`,
+`utils/payment-intent.js`, `pages/app/billing.js`, `components/app-shell.js`,
+`app/billing/index.html`, `app/billing/result/index.html`,
+`assets/js/payment-return.js`, `tests/duitku-payment.test.js`,
+`tests/billing-contract.test.js`, `tests/pre-release-hardening.test.js`,
+`tests/helpers/cdp-browser.mjs`, `scripts/qa-duitku-browser.mjs`, `package.json`,
+and canonical contract/decision/architecture/product docs, inventories,
+`AI_CONTEXT.md`, `LOCKED-PLAN.md`, `README.md`, `CHANGELOG.md`, and this status.
+
+Follow-up alignment: backend source now exposes Retry-After and X-Request-ID
+only to allowlisted origins, retaining credentials, Idempotency-Key and Vary.
+Owner reports this backend patch is local only, not committed/pushed/deployed.
+Frontend retains raw/normalized Retry-After and request ID on API errors,
+rejects malformed/negative/non-HTTP date headers, and uses capabilities fallback
+for checkout/reconcile with a minimum 30 seconds. Countdown and double clicks
+never replay a POST automatically. Safe historical provider metadata remains
+read-only; no retired SDK or provider processing was reintroduced.
+Real backend probe: curl to 127.0.0.1:3000 failed to connect. Live allowed-origin
+browser 429/header checks remain pending; mock browser evidence is separate.
+No backend file was patched here.
+
+Release sequence: compatible backend + checkout disabled -> compatible frontend
++ checkout disabled -> owner merchant sandbox config and aligned return URL
+`/app/billing/result/` -> sandbox/browser/UAT -> separate owner activation.
+Hosting migration 013, production/source deployment, actual gateway redirect,
+timeouts/callback delivery, cookies/CORS on hosting, and Safari/Firefox/real
+mobile behavior remain unverified. No production-ready claim is made.
 
 ## Baseline
 
@@ -16,11 +81,11 @@ production still requires frontend deploy and authenticated workflow UAT.**
 | Stack | Static HTML, Vanilla JS modules, Tailwind CSS 4 |
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
-| Static build | 166 allowlisted runtime files in `dist/` |
-| Automated tests | 199 passing; no known test failure |
+| Static build | 172 allowlisted runtime files in `dist/` |
+| Automated tests | 247 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
-| Checkout | Paused pending explicit Midtrans API readiness decision |
+| Checkout | Duitku POP compatible; paused pending owner sandbox/UAT activation |
 | Production readiness | Not yet approved |
 
 External hosting update (owner-reported, pending post-migration health/UAT):

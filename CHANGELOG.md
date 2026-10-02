@@ -5,6 +5,20 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Menyelaraskan error API dan cooldown Duitku: status, Retry-After mentah/
+  ter-normalisasi, dan X-Request-ID dipertahankan; header negatif/malformed
+  ditolak, HTTP-date lampau menjadi nol, fallback memakai capabilities dengan
+  minimum 30 detik. Checkout tetap disabled dan countdown tidak mengirim ulang.
+  CORS backend terbaru hanya terverifikasi di source read-only, belum hosting.
+
+- Menambahkan kompatibilitas Duitku POP redirect dengan checkout tetap paused:
+  capabilities fail-closed, UUID intent lintas tab, validasi redirect ketat,
+  halaman hasil `/app/billing/result/`, reconcile manual/cooldown, dan refresh
+  entitlement dari API. Compatibility Midtrans dihapus setelah owner memastikan
+  belum ada transaksi; riwayat Duitku dan status refund tetap tersedia. Tidak ada SDK
+  gateway atau merchant secret dalam frontend. Regression dan QA browser lokal
+  mock ditambahkan; sandbox/UAT dan aktivasi tetap tahap terpisah.
+
 - Memperbaiki logout Super Admin/member saat token CSRF browser stale dengan
   sinkronisasi `/auth/csrf` eksplisit sebelum satu POST logout; tidak ada
   retry mutation logout.

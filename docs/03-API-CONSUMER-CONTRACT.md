@@ -82,6 +82,13 @@ Backend may provide `code`, `message`, `errors`/`data`, and `request_id`. UI har
 menampilkan pesan aman serta request ID bila tersedia, tanpa membocorkan stack,
 SQL, storage path, token, atau internal exception.
 
+API errors also retain the response HTTP `status`, raw `retryAfter` header,
+normalized `retryAfterSeconds` (null when absent/invalid), and `requestId` from
+the envelope or X-Request-ID header. Retry-After accepts nonnegative integer
+seconds or a valid IMF-fixdate HTTP-date; past dates normalize to zero. Negative,
+malformed and non-HTTP dates are rejected. Headers remain memory-only, without
+logging cookie/token/signature/payment URLs or queries. Never use `no-cors`.
+
 ## Consumed endpoint families
 
 ### Authentication and account
@@ -226,7 +233,9 @@ PNG contains the backend canonical public URL, not raw contact data.
 |---|---|---|
 | GET | `/subscriptions/current` | Current entitlement summary |
 | GET | `/payments` | Payment history |
-| POST | `/payments/checkout` | Dormant adapter; UI invocation paused |
+| GET | `/payments/capabilities` | Fail-closed provider/release capabilities |
+| GET | `/payments/{publicId}` | Owned payment detail |
+| POST | `/payments/checkout` | Duitku POP compatibility; release paused |
 | POST | `/payments/{publicId}/reconcile` | Authorized status refresh |
 | POST | `/feedback` | Authenticated improvement message |
 
@@ -234,6 +243,89 @@ Checkout must not be invoked while the product decision remains paused.
 Status payment `refunded` dan `refund_pending_review` harus dirender berbeda.
 Setelah reconciliation, subscription, payment history, dan cards dimuat ulang
 dari backend; tier/benefit tidak ditentukan dari cache frontend.
+
+#### Duitku POP compatibility (2026-10-02, FE-D-034)
+
+Canonical backend references, read-only: `docs/DUITKU-PAYMENTS.md`,
+`docs/PAYMENTS.openapi.yaml`, and backend `STATUS.md`. Source compatibility does
+not establish live deployment or sandbox readiness.
+
+- GET capabilities after successful login and on entering billing. Require
+  `success:true`, provider `duitku`, sandbox/production environment, boolean
+  `checkoutEnabled`, `idempotencyKeyRequired:true`, integer cooldown >=30 seconds.
+  Failed/malformed/unavailable capabilities close checkout. Capabilities do not
+  prove per-user eligibility. `PAYMENT_CHECKOUT_RELEASED=false` is a separate
+  frontend release gate, not overridden by runtime config/server flags.
+- Checkout body ONLY `{planCode:'basic'|'pro'}` plus UUID `Idempotency-Key`.
+  Existing client owns credentials/include, JSON, CSRF and transport. Checkout
+  and reconcile explicitly synchronize access CSRF and use that fresh token.
+  Neither POST is automatically replayed after auth, CSRF, timeout or 5xx.
+  Read requests preserve existing AUTH_REQUIRED refresh-once behavior.
+- 201/202 mean checkout retrieved/pending, never automatic payment success.
+  Payment status and invoiceState (`creating/ready/unknown/verified/legacy`)
+  are separate. Nullable redirectUrl/environment/expiresAt remain nullable.
+  Missing URL shows `Pembayaran sedang diverifikasi. Jangan membuat pembayaran
+  baru.` Deadline expiry never mutates payment status or entitlement locally.
+- Persist only user publicId, planCode, UUID and payment publicId. SessionStorage
+  is a navigation mirror; IndexedDB contains the same minimal metadata for
+  durable coordination under a Web Lock across tabs. No email, authentication
+  token, provider reference, URL, price or provider payload is stored. Failed
+  shared persistence or missing Web Locks closes creation; history/return still
+  work. Existing owned pending payments are read before an explicit retry. An
+  ambiguous attempt preserves its key until a terminal server state is known.
+  Logout/user changes clear metadata and auth transitions invalidate old
+  controllers. Re-authentication of the same user preserves an ambiguous intent.
+- A redirect requires provider duitku, pending status and strict URL parsing:
+  HTTPS exact host `app-sandbox.duitku.com` or `app-prod.duitku.com` according to
+  payment environment, exact `/redirect_checkout`, no userinfo/nondefault port/
+  fragment, exactly one nonempty `reference` parameter and no extra query keys.
+  No Snap/Duitku SDK, merchant API call or new provider CSP permission is needed.
+- `/app/billing/result/` is noindex and no-referrer. Its early script captures
+  only a bounded merchantOrderId lookup hint in memory and removes query/hash
+  before other application scripts. resultCode/reference are never trusted.
+  Resolve saved payment publicId through owned GET detail, otherwise match
+  merchantOrderId inside owned GET history only. Unknown match shows history;
+  inaccessible detail shows a safe error. No frontend payment callback exists.
+- Manual reconcile returns outcome `{result,paymentPublicId,paymentStatus}`;
+  reread payment detail afterward. Apply an absolute >=30-second cooldown and
+  honor valid Retry-After on 429 (also checkout). No polling or automatic POST
+  when countdown expires. Paid triggers fresh subscription/cards; entitlement
+  remains server-authoritative. Billing timers/listeners stop on SPA page leave.
+- Validation errors are rendered with fixed safe guidance for arbitrary errors
+  shapes. Distinguish AUTH_REQUIRED, CSRF_INVALID, CHECKOUT_NOT_ALLOWED, 404,
+  IDEMPOTENCY_CONFLICT, CHECKOUT_PENDING_EXISTS (owned data.publicId), 429 and 503.
+  Provider mismatch/invalid redirect/ambiguous outcomes stop for history/support.
+  Only Duitku is supported for processing (FE-D-035); unknown providers are
+  blocked from redirect/reconcile. HTTP 410 gives generic support guidance,
+  without a replacement order. Refund/refund
+  pending review labels remain distinct; no frontend refund operation is added.
+  Historical provider names use bounded safe plain text only, without restoring
+  any provider-specific checkout/SDK integration.
+
+Release order: compatible backend with checkout disabled, compatible frontend
+with checkout disabled, owner merchant sandbox configuration + browser/UAT,
+then separate owner activation. Return URL must match `/app/billing/result/`
+on the approved test/production origin. Migration 013/local backend QA are not
+proof of hosting migration/deployment. Credentials belong only to backend.
+
+Backend CORS source rechecked read-only (2026-10-02): configured exact origins
+now receive `Access-Control-Expose-Headers: Retry-After, X-Request-ID`, credentials,
+Idempotency-Key preflight allowance and `Vary: Origin`. These backend changes
+are local and not assumed committed/deployed. An exposed header can still be
+absent on an endpoint response. Frontend uses the capabilities cooldown fallback
+(safe default 30 seconds), with reconcile always >=30 seconds and a longer valid
+Retry-After honored. Checkout follows the same fallback without changing its
+disabled release gate. Absolute deadlines never schedule retries automatically.
+Browser mock covers missing/exposed headers and HTTP-date; this is not live CORS
+evidence. Port 3000 was unavailable during this frontend pass; real backend
+browser verification and deployed allowed-origin 429 checks remain pending.
+
+Merchant callback is POST
+`https://api.kartunamadigital.id/api/v1/payments/duitku/callback`, backend/provider
+only. It is NOT the user return URL `/app/billing/result/`. No frontend callback
+request or merchant credential is introduced. Historical provider metadata may
+be read safely without a provider SDK or processing action; 410 (including
+PAYMENT_PROVIDER_RETIRED) routes to manual support, never a replacement invoice.
 
 ### Resume Enhancement
 

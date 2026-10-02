@@ -36,7 +36,7 @@ feature service.
 
 ## Route model
 
-Source contains 62 route shells plus ten card-theme HTML templates.
+Source contains 63 route shells plus ten card-theme HTML templates.
 
 Main route groups:
 
@@ -45,6 +45,7 @@ Main route groups:
   `/starter/manage/`.
 - Member: `/app/`, `/app/card/*`, `/app/billing/`, `/app/account/`,
   `/app/resume-enhancement/*`, `/app/feedback/`.
+  `/app/billing/result/` shares the billing controller and server-owned status.
 - Internal: `/admin/*` and `/specialist/*`.
 - Public card: a case-sensitive one-segment `/{slug}` rewrite to
   `/public-card/index.html`.
@@ -215,6 +216,14 @@ Adding a new public route or runtime directory therefore requires:
 4. Route/SEO/security tests appropriate to the page.
 
 ## Dependency rules
+
+Duitku operations remain in `services/payment-service.js` through the existing
+API client. `services/payment-flow.js` orchestrates intent/retry, owned return
+lookup, manual reconciliation and entitlement refetch. `utils/payment-intent.js`
+owns minimal session/IndexedDB metadata and auth cleanup; no parallel subscription
+system exists. The early `assets/js/payment-return.js` owns return query scrubbing.
+The app shell emits `app:page-leave` before replacing content so billing timers
+and listeners are disposed. Provider APIs and SDKs never enter the runtime graph.
 
 - HTML shells do not contain business authority.
 - Page controllers do not construct backend origins.

@@ -46,6 +46,13 @@ autentikasi end-to-end memerlukan `/api/v1` yang diteruskan ke backend kompatibe
 Test local-stack otomatis memakai helper yang berada di repository ini; lihat
 status baseline terbaru di `STATUS.md`.
 
+Duitku POP compatibility tersedia dengan checkout tetap disabled. Kontrak dan
+urutan release tercatat di `docs/03-API-CONSUMER-CONTRACT.md` (FE-D-034).
+Jalankan `npm.cmd run qa:payments:browser` untuk QA Edge/Chromium headless dengan
+API mock localhost terisolasi; tidak perlu backend atau credential merchant.
+Gunakan `KND_QA_BROWSER` untuk path browser lain bila Edge/Chrome tidak ditemukan.
+Ini bukan pengujian sandbox Duitku nyata atau bukti production-ready.
+
 Untuk development lokal, gunakan server Node bawaan repository. Server ini
 mempertahankan route aplikasi, melayani aset, meneruskan /api/v1 ke backend
 lokal, dan me-route slug publik seperti /YAjXHrF ke public-card/index.html
