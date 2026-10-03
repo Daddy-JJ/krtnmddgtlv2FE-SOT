@@ -285,7 +285,7 @@ test('strict redirect rejects hostile URLs, extra queries, mismatched environmen
   assert.equal(paymentRedirectUrl({ ...payment, status: 'paid' }), '');
   assert.equal(paymentRedirectUrl({ ...payment, environment: null }), '');
 });
-for (const [status, code] of [[401, 'AUTH_REQUIRED'], [403, 'CSRF_INVALID'], [422, 'VALIDATION_ERROR'], [429, 'RATE_LIMITED'], [503, 'PAYMENT_CHECKOUT_DISABLED'], [500, 'HTTP_ERROR']]) {
+for (const [status, code] of [[401, 'AUTH_REQUIRED'], [403, 'CSRF_INVALID'], [403, 'PAYMENT_SANDBOX_FORBIDDEN'], [422, 'VALIDATION_ERROR'], [429, 'RATE_LIMITED'], [503, 'PAYMENT_CHECKOUT_DISABLED'], [503, 'PAYMENT_GATEWAY_UNAVAILABLE'], [500, 'HTTP_ERROR']]) {
   test(`checkout ${status} ${code} never retries POST and retains safe error data`, async () => {
     let posts = 0;
     const client = new ApiClient({ baseUrl: 'https://test.invalid/api/v1', cookieSource: () => '', fetchImpl: async (url, options) => {
@@ -315,6 +315,53 @@ test('API refresh-once for capabilities retains key/body for the subsequent sing
   await createPaymentService(client, { released: true }).checkout('pro', KEY);
   assert.equal(reads, 2); assert.equal(posts.length, 2);
   assert.deepEqual(posts[1].slice(1), [KEY, JSON.stringify({ planCode: 'pro' })]);
+});
+
+test('capabilities are reread for each user and checkout attempt, never cached across accounts', async () => {
+  let allowed = true;
+  let reads = 0;
+  let posts = 0;
+  const service = createPaymentService({
+    get: async () => { reads += 1; return { success: true, data: { ...capabilities, checkoutEnabled: allowed } }; },
+    synchronizeAccessCsrf: async () => 'fresh',
+    post: async () => { posts += 1; return { success: true, data: payment }; },
+  }, { released: true });
+  assert.equal((await service.capabilities()).checkoutEnabled, true);
+  allowed = false;
+  assert.equal((await service.capabilities()).checkoutEnabled, false);
+  await assert.rejects(service.checkout('basic', KEY), { code: 'PAYMENT_CHECKOUT_DISABLED' });
+  assert.equal(reads, 3); assert.equal(posts, 0);
+});
+
+test('sandbox denial is distinct from CSRF and auth, without refresh or automatic retry', async () => {
+  const paths = [];
+  const client = new ApiClient({ baseUrl: 'https://test.invalid/api/v1', cookieSource: () => '', fetchImpl: async url => {
+    paths.push(url);
+    if (url.endsWith('/capabilities')) return Response.json({ success: true, data: capabilities });
+    if (url.endsWith('/csrf')) return Response.json({ success: true, data: { csrfToken: 'fresh' } });
+    return Response.json({ success: false, code: 'PAYMENT_SANDBOX_FORBIDDEN' }, { status: 403 });
+  } });
+  await assert.rejects(createPaymentService(client, { released: true }).checkout('basic', KEY), { status: 403, code: 'PAYMENT_SANDBOX_FORBIDDEN' });
+  assert.equal(paths.filter(path => path.endsWith('/checkout')).length, 1);
+  assert.equal(paths.filter(path => path.endsWith('/csrf')).length, 1);
+  assert.equal(paths.some(path => path.endsWith('/refresh')), false);
+  assert.equal(paymentErrorMessage({ status: 403, code: 'PAYMENT_SANDBOX_FORBIDDEN' }), 'Pembayaran uji hanya tersedia untuk akun pengujian yang disetujui');
+});
+
+test('billing sandbox denial invalidates checkout capability and displays the exact safe message', async () => {
+  const source = await readFile(new URL('../pages/app/billing.js', import.meta.url), 'utf8');
+  const handler = source.match(/function errorState\(error\) \{[\s\S]*?\n\}/)[0];
+  const state = { capabilities: { ...capabilities } };
+  let message;
+  let renders = 0;
+  runInNewContext(`${handler}; errorState({status:403,code:'PAYMENT_SANDBOX_FORBIDDEN'})`, {
+    state, active: () => true, status: {}, showStatus: (_node, text) => { message = text; },
+    paymentErrorMessage, renderUpgradeOptions: () => { renders += 1; },
+    location: { assign: () => assert.fail('sandbox rejection is not an auth redirect') },
+  });
+  assert.equal(state.capabilities, null);
+  assert.equal(message, 'Pembayaran uji hanya tersedia untuk akun pengujian yang disetujui');
+  assert.equal(renders, 1);
 });
 
 test('checkout 429 uses absolute Retry-After and retains the intent for manual retry', async () => {

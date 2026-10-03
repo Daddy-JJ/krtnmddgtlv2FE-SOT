@@ -222,6 +222,12 @@ API client. `services/payment-flow.js` orchestrates intent/retry, owned return
 lookup, manual reconciliation and entitlement refetch. `utils/payment-intent.js`
 owns minimal session/IndexedDB metadata and auth cleanup; no parallel subscription
 system exists. The early `assets/js/payment-return.js` owns return query scrubbing.
+The existing payment session-version owner also emits `payment:session-changed`
+for local auth and BroadcastChannel transitions. Billing clears its memory-only
+capabilities/data/flow, stops the timer, and rejects delayed responses from an
+older version. Capabilities are never stored. Manual reload rereads the current
+account. AdminOperationsService owns safe report presentation mapping without
+deriving revenue or mixing currencies; the admin controller owns safe DOM.
 The app shell emits `app:page-leave` before replacing content so billing timers
 and listeners are disposed. Provider APIs and SDKs never enter the runtime graph.
 

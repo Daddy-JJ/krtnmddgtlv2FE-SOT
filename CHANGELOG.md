@@ -5,6 +5,12 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Menyelaraskan restricted Duitku sandbox: capabilities per akun dan late-response
+  guard; label sandbox/shared-database warning; penolakan sandbox tanpa replay.
+  Reports memisahkan pendapatan bruto production dari total per lingkungan/
+  provider/status/mata uang; detail pembayaran admin menampilkan environment.
+  Feature flag checkout tetap false; QA hanya mock, bukan live gateway evidence.
+
 - Menampilkan harga IDR dan benefit Starter/Basic/Pro di homepage, termasuk
   upgrade Basic ke Pro Rp55.000. Memublikasikan kontak CS dan alamat usaha
   yang disetujui owner di homepage dan Kontak. Checkout tetap disabled;

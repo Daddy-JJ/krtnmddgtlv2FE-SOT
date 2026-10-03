@@ -2,8 +2,8 @@ import { paymentService } from '../../services/payment-service.js';
 import { cardService } from '../../services/card-service.js';
 import { authService } from '../../services/auth-service.js';
 import { createPaymentFlow } from '../../services/payment-flow.js';
-import { paymentIntents } from '../../utils/payment-intent.js';
-import { billingStatusLabel, paymentRedirectUrl, paymentErrorMessage, PAYMENT_CHECKOUT_RELEASED } from '../../validators/payment-validator.js';
+import { paymentIntents, paymentSessionVersion } from '../../utils/payment-intent.js';
+import { billingStatusLabel, paymentEnvironmentLabel, paymentRedirectUrl, paymentErrorMessage, PAYMENT_CHECKOUT_RELEASED } from '../../validators/payment-validator.js';
 import { clearStatus, showStatus } from '../../components/forms/form-utils.js';
 import { safeMembershipIntent } from '../../utils/auth-flow.js';
 
@@ -24,6 +24,7 @@ const requestedIntent = safeMembershipIntent(new URLSearchParams(location.search
 const state = { payments: [], subscription: null, cards: [], capabilities: null };
 const unavailablePayments = new Set();
 let flow;
+let flowUserPublicId;
 let loading = false;
 let submitting = false;
 let disposed = false;
@@ -37,9 +38,23 @@ main?.querySelector('[data-billing-retry]')?.addEventListener('click', () => voi
 notifyForm?.addEventListener('submit', openNotifyEmail, { signal: listeners.signal });
 document.addEventListener('app:page-leave', dispose, { once: true, signal: listeners.signal });
 addEventListener('pagehide', dispose, { once: true, signal: listeners.signal });
+addEventListener('payment:session-changed', invalidateSession, { signal: listeners.signal });
 void load();
 
 function dispose() { disposed = true; clearInterval(timer); listeners.abort(); }
+function invalidateSession() {
+  clearInterval(timer); timer = undefined;
+  flow = undefined;
+  flowUserPublicId = undefined;
+  Object.assign(state, { payments: [], subscription: null, cards: [], capabilities: null });
+  unavailablePayments.clear();
+  if (active()) {
+    render(); showStatus(status, 'Sesi akun berubah. Muat ulang billing untuk memeriksa akun saat ini.', 'info');
+    const retry = main.querySelector('[data-billing-retry]');
+    if (retry) retry.hidden = false;
+  }
+}
+const currentSession = version => active() && version === paymentSessionVersion();
 function node(tag, text, className = '') {
   const element = document.createElement(tag);
   element.textContent = text;
@@ -52,30 +67,36 @@ function errorState(error) {
     location.assign('/login/?returnTo=%2Fapp%2Fbilling%2F');
     return;
   }
-  if (error?.code === 'PAYMENT_CHECKOUT_DISABLED') state.capabilities = null;
+  if (['PAYMENT_CHECKOUT_DISABLED', 'PAYMENT_SANDBOX_FORBIDDEN', 'PAYMENT_GATEWAY_UNAVAILABLE'].includes(error?.code)) state.capabilities = null;
   showStatus(status, paymentErrorMessage(error), 'error');
   renderUpgradeOptions();
 }
 async function load() {
   if (loading || !active()) return;
   loading = true;
+  const version = paymentSessionVersion();
+  state.capabilities = null;
+  renderUpgradeOptions();
   historyList?.setAttribute('aria-busy', 'true');
   showStatus(status, 'Memuat billing...', 'info');
   try {
     const account = await authService.current();
     const userPublicId = account?.user?.publicId;
     if (!userPublicId) throw { code: 'AUTH_REQUIRED', status: 401 };
+    if (!currentSession(version)) return;
+    if (flowUserPublicId && flowUserPublicId !== userPublicId) invalidateSession();
     const [sub, payments, cards, capabilities] = await Promise.all([
       paymentService.currentSubscription().catch(error => error.status === 404 ? null : Promise.reject(error)),
       paymentService.listPayments(), cardService.list(),
       paymentService.capabilities().catch(() => null),
     ]);
-    if (!active()) return;
+    if (!currentSession(version)) return;
     if (!Array.isArray(payments) || !Array.isArray(cards)) throw { code: 'PAYMENT_RESPONSE_INVALID' };
     Object.assign(state, { subscription: sub, payments, cards, capabilities });
     if (!flow) flow = createPaymentFlow({ service: paymentService, intents: paymentIntents, userPublicId,
       currentUser: async () => (await authService.current())?.user?.publicId,
       cards: () => cardService.list(), cooldownSeconds: capabilities?.reconcileCooldownSeconds ?? 30 });
+    flowUserPublicId = userPublicId;
     flow.setCooldown(capabilities?.reconcileCooldownSeconds ?? 30);
     let resultMessage = '';
     let resultError;
@@ -85,7 +106,9 @@ async function load() {
         if (payment) {
           state.payments = [payment];
           if (payment.status === 'paid') {
-            [state.subscription, state.cards] = await Promise.all([paymentService.currentSubscription(), cardService.list()]);
+            const [freshSubscription, freshCards] = await Promise.all([paymentService.currentSubscription(), cardService.list()]);
+            if (!currentSession(version)) return;
+            [state.subscription, state.cards] = [freshSubscription, freshCards];
           }
           resultMessage = payment.status === 'pending'
             ? 'Pembayaran sedang diverifikasi. Jangan membuat pembayaran baru.'
@@ -93,7 +116,7 @@ async function load() {
         } else resultMessage = 'Transaksi belum dapat dicocokkan. Periksa riwayat pembayaran akun Anda di bawah.';
       } catch (error) { resultError = error; }
     }
-    if (!active()) return;
+    if (!currentSession(version)) return;
     render();
     if (!timer) timer = setInterval(() => { updateActions(); renderUpgradeOptions(); }, 1000);
     const retry = main.querySelector('[data-billing-retry]');
@@ -103,6 +126,7 @@ async function load() {
     else if (requestedIntent) showStatus(status, 'Peningkatan membership masih Under development.', 'info');
     else clearStatus(status);
   } catch (error) {
+    if (!currentSession(version)) return;
     errorState(error);
     if (active()) {
       const retry = main.querySelector('[data-billing-retry]');
@@ -121,12 +145,14 @@ async function reconcile(event) {
   const button = event.target.closest('[data-reconcile-payment]');
   if (!button || button.disabled || submitting || loading || !flow) return;
   submitting = true;
+  const version = paymentSessionVersion();
   updateActions();
   showStatus(status, 'Memeriksa status pembayaran...', 'info');
   try {
     const payment = await flow.reconcile(button.dataset.reconcilePayment);
-    if (payment && active()) await load();
+    if (payment && currentSession(version)) await load();
   } catch (error) {
+    if (!currentSession(version)) return;
     if (error?.status === 410) unavailablePayments.add(button.dataset.reconcilePayment);
     errorState(error);
   } finally { submitting = false; if (active()) updateActions(); }
@@ -136,22 +162,23 @@ async function requestCheckout(event) {
   if (!button || button.disabled || submitting || loading || !flow
     || !PAYMENT_CHECKOUT_RELEASED || !state.capabilities?.checkoutEnabled) return;
   submitting = true;
+  const version = paymentSessionVersion();
   renderUpgradeOptions();
   showStatus(status, 'Menyiapkan pembayaran...', 'info');
   try {
     const payment = await flow.purchase(button.dataset.checkoutPlan);
-    if (!payment || !active()) return;
+    if (!payment || !currentSession(version)) return;
     const url = paymentRedirectUrl(payment);
     if (payment.provider === 'duitku' && payment.status === 'pending' && url) location.assign(url);
     else if (payment.redirectUrl && payment.status === 'pending') {
-      await load(); errorState({ code: 'PAYMENT_RESPONSE_INVALID' });
+      await load(); if (currentSession(version)) errorState({ code: 'PAYMENT_RESPONSE_INVALID' });
     }
     else {
       await load();
-      if (active()) showStatus(status, payment.status === 'pending'
+      if (currentSession(version)) showStatus(status, payment.status === 'pending'
         ? 'Pembayaran sedang diverifikasi. Jangan membuat pembayaran baru.' : 'Status transaksi telah diperiksa.', 'info');
     }
-  } catch (error) { errorState(error); }
+  } catch (error) { if (currentSession(version)) errorState(error); }
   finally { submitting = false; if (active()) renderUpgradeOptions(); }
 }
 function render() { renderSubscription(); renderUpgradeOptions(); renderHistory(); }
@@ -177,6 +204,8 @@ function renderUpgradeOptions() {
   if (proUpgradePrice) proUpgradePrice.textContent = currentPlan === 'basic' ? 'Rp55.000' : 'Rp97.000';
   if (proUpgradePath) proUpgradePath.textContent = currentPlan === 'basic' ? 'Basic ke Pro' : 'Starter ke Pro';
   if (upgradeNote) upgradeNote.textContent = enabled ? 'Harga akhir dan kelayakan diperiksa saat pembayaran.' : 'Under development — Pembayaran online belum tersedia.';
+  if (upgradeNote && state.capabilities?.environment === 'sandbox') upgradeNote.textContent +=
+    ' Pembayaran uji — Sandbox. Hanya akun pengujian yang disetujui. Pembayaran uji yang dikonfirmasi dapat mengubah paket dan kartu akun dummy pada database yang sama, bukan manfaat yang terisolasi.';
 }
 function openNotifyEmail(event) {
   event.preventDefault();
@@ -203,6 +232,7 @@ function renderHistory() {
     const historicalProvider = typeof payment.provider === 'string' && /^[a-zA-Z0-9_-]{1,32}$/.test(payment.provider) ? payment.provider : '';
     row.append(node('p', payment.provider === 'duitku' ? 'Duitku'
       : `Provider pembayaran tidak didukung.${historicalProvider ? ` Provider historis: ${historicalProvider}.` : ''}`, 'mt-1 text-sm'));
+    row.append(node('p', paymentEnvironmentLabel(payment.environment), 'mt-1 text-sm'));
     if (payment.expiresAt) row.append(node('p', `Batas waktu invoice: ${formatDate(payment.expiresAt)}. Status diperiksa melalui server.`, 'mt-1 text-sm'));
     const actions = node('div', '', 'mt-3 flex flex-wrap gap-2');
     const redirectUrl = paymentRedirectUrl(payment);

@@ -246,6 +246,23 @@ dari backend; tier/benefit tidak ditentukan dari cache frontend.
 
 #### Duitku POP compatibility (2026-10-02, FE-D-034)
 
+Restricted sandbox alignment (2026-10-04, backend source `2f24a89`):
+capabilities.checkoutEnabled is scoped to the authenticated user, including
+backend sandbox membership. No frontend allowlist or admin-role bypass exists.
+Read capabilities after login and on each billing load/explicit checkout; do not
+cache across accounts. Logout/auth transitions and cross-tab notification clear
+billing data/capabilities, and late old-session responses are discarded. The
+separate frontend release constant remains false even if capabilities is true.
+
+`403 PAYMENT_SANDBOX_FORBIDDEN` closes checkout and displays
+`Pembayaran uji hanya tersedia untuk akun pengujian yang disetujui` without
+CSRF recovery, auth refresh, or replay. Preserve checkout-disabled/gateway-
+unavailable errors, 202, Retry-After and X-Request-ID. Sandbox payment rows and
+billing notes show `Pembayaran uji — Sandbox`. Sandbox shares the production
+database by owner decision; paid can change dummy subscription/card benefits.
+This is NOT entitlement isolation. Unknown/null environments remain unknown.
+No credential/list is exposed and no sandbox transaction is authorized here.
+
 Canonical backend references, read-only: `docs/DUITKU-PAYMENTS.md`,
 `docs/PAYMENTS.openapi.yaml`, and backend `STATUS.md`. Source compatibility does
 not establish live deployment or sandbox readiness.
@@ -378,6 +395,19 @@ Operational read contracts:
 - Existing users, subscriptions, usage, interventions, settings, mail outbox,
   CV specialists, landing content, email templates, and Resume Services routes
   remain unchanged.
+
+Restricted-sandbox Reports extension (backend `2f24a89`): `paymentTotals` rows
+contain provider, environment, currency, status, count and amount. Render each
+combination separately. `productionRevenue` rows contain currency, amount and
+count and are the ONLY gross-revenue source: currently paid Duitku production
+payments by paid_at within the selected period. Never derive production revenue
+from paymentTotals, sandbox, unknown/null environment or legacy providers.
+`revenueBasis` is explanatory plain text, not accounting authority. Decimal
+string amounts are formatted without float conversion/cross-currency summing;
+invalid amounts display unavailable, not zero. Missing/empty arrays in old
+responses show empty panels. This is not net accounting/profit. Subscription
+and operational metrics may include dummy accounts. User-detail payments allow
+provider/environment when present; no secret/private fields are added.
 
 Feedback status mutation uses
 `PATCH /admin/feedback/{publicId}/status` with

@@ -68,6 +68,7 @@ Shared responsibility owners include:
 - `services/payment-service.js` for Duitku consumer endpoints.
 - `services/payment-flow.js` for owned status/intent/reconciliation orchestration.
 - `utils/payment-intent.js` for minimal session/IndexedDB intent metadata.
+  It also owns payment session-version invalidation and the billing cleanup event.
 - `assets/js/payment-return.js` for early return query removal.
 - `/app/billing/` and `/app/billing/result/` share `pages/app/billing.js`.
 

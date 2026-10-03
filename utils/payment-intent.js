@@ -107,8 +107,12 @@ export function createBrowserIntentStore({ session = createIntentStore(), databa
 export const paymentIntents = createBrowserIntentStore();
 let sessionVersion = 0;
 export const paymentSessionVersion = () => sessionVersion;
-export async function paymentSessionChanged(userPublicId) {
+function invalidatePaymentSession() {
   sessionVersion += 1;
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('payment:session-changed'));
+}
+export async function paymentSessionChanged(userPublicId) {
+  invalidatePaymentSession();
   // Re-authentication of the SAME user must not rotate an ambiguous purchase key.
   const sameIntent = isPaymentId(userPublicId) ? await paymentIntents.read(userPublicId) : null;
   if (!sameIntent) await paymentIntents.clear();
@@ -122,7 +126,7 @@ if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
   // The sender already cleared shared storage; a delayed notification must not
   // delete a newly created intent from the current session.
   channel.onmessage = event => {
-    sessionVersion += 1;
+    invalidatePaymentSession();
     if (isPaymentId(event.data?.userPublicId)) paymentIntents.bindLocal(event.data.userPublicId);
     else paymentIntents.clearLocal();
   };

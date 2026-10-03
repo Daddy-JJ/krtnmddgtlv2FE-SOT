@@ -52,6 +52,11 @@ Jalankan `npm.cmd run qa:payments:browser` untuk QA Edge/Chromium headless denga
 API mock localhost terisolasi; tidak perlu backend atau credential merchant.
 Gunakan `KND_QA_BROWSER` untuk path browser lain bila Edge/Chrome tidak ditemukan.
 Ini bukan pengujian sandbox Duitku nyata atau bukti production-ready.
+Restricted sandbox memakai allowlist akun dummy hanya di backend. Capabilities
+per akun tidak mengaktifkan feature flag frontend yang masih false. Database
+sandbox tidak terisolasi: sandbox paid dapat mengubah subscription/kartu dummy.
+Reports memisahkan total sandbox/unknown/legacy dari pendapatan bruto production.
+Backend `2f24a89` tersedia dalam source; hosting dan UAT tetap perlu diverifikasi.
 
 Untuk development lokal, gunakan server Node bawaan repository. Server ini
 mempertahankan route aplikasi, melayani aset, meneruskan /api/v1 ke backend

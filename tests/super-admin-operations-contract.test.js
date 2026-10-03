@@ -2,10 +2,47 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { AdminOperationsService } from '../services/admin-operations-service.js';
+import { AdminOperationsService, paymentReportSeries } from '../services/admin-operations-service.js';
+import { paymentEnvironmentLabel } from '../validators/payment-validator.js';
 
 const root = resolve(import.meta.dirname, '..');
 const source = path => readFile(resolve(root, path), 'utf8');
+
+test('production revenue comes only from the backend revenue aggregate, never mixed payment totals', () => {
+  const report = paymentReportSeries({ productionRevenue: [{ currency: 'IDR', amount: '55000.00', count: 1 }, { currency: 'USD', amount: '2.50', count: '2' }],
+    paymentTotals: [
+      { provider: 'duitku', environment: 'sandbox', status: 'paid', currency: 'IDR', amount: '97000', count: 1 },
+      { provider: 'duitku', environment: null, status: 'paid', currency: 'IDR', amount: 55000, count: 1 },
+      { provider: 'legacy', environment: 'production', status: 'paid', currency: 'USD', amount: '500', count: 1 },
+    ], revenueBasis: 'Backend paid_at gross basis' });
+  assert.deepEqual(report.production.map(row => row.label), ['IDR', 'USD']);
+  assert.match(report.production[0].value, /55\.000,00/);
+  assert.match(report.production[1].value, /USD 2,50/);
+  assert.equal(report.production.some(row => /97\.000|500,00/.test(row.value)), false);
+  assert.match(report.totals[0].label, /Pembayaran uji — Sandbox/);
+  assert.match(report.totals[1].label, /Lingkungan tidak diketahui/);
+  assert.match(report.totals[2].label, /legacy · Production/);
+  assert.equal(report.basis, 'Backend paid_at gross basis');
+});
+
+test('empty/old reports never infer revenue; malformed amounts and large decimal strings are safe', () => {
+  for (const data of [undefined, null, {}, { paymentTotals: [{ amount: '97000', currency: 'IDR' }] }]) assert.deepEqual(paymentReportSeries(data).production, []);
+  const report = paymentReportSeries({ productionRevenue: [null, { currency: 'IDR', amount: '9007199254740993.01', count: '1' }, { currency: 'USD', amount: '1e9' }, { currency: 'not-currency', amount: '100' }, { currency: 'IDR', amount: -1 }, { currency: 'IDR', amount: Number.MAX_SAFE_INTEGER + 1 }] });
+  assert.match(report.production[0].value, /9\.007\.199\.254\.740\.993,01/);
+  for (const row of report.production.slice(1)) assert.match(row.value, /Nominal tidak tersedia/);
+  assert.equal(paymentEnvironmentLabel(null), 'Lingkungan tidak diketahui');
+  assert.equal(paymentEnvironmentLabel('unknown'), 'Lingkungan tidak diketahui');
+});
+
+test('Reports and admin payment details render approved environment fields with safe DOM', async () => {
+  const workspace = await source('pages/admin/super-admin-workspace.js');
+  assert.match(workspace, /payments:new Set\(\[[^\]]*'provider','environment'/);
+  assert.match(workspace, /paymentReportSeries\(data\)/);
+  assert.match(workspace, /payments\.production,\['label','value'\]/);
+  assert.match(workspace, /payments\.totals,\['label','value'\]/);
+  assert.match(workspace, /note\.textContent=.*productionRevenue/);
+  assert.doesNotMatch(workspace, /innerHTML/);
+});
 
 test('Feedback menu and noindex route use the shared Super Admin controller', async () => {
   const [workspace, html] = await Promise.all([

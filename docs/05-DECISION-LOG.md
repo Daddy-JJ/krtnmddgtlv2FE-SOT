@@ -481,6 +481,23 @@ prices without changing backend amounts, billing rules or entitlement authority.
 Registration is not checkout. FE-D-004/FE-D-034 checkout pause remains intact;
 no sandbox/production activation, backend/database change or deployment is approved.
 
+## FE-D-037 - Restricted shared-database sandbox alignment
+
+Date: 2026-10-04
+Status: Accepted for frontend alignment only; checkout activation NOT approved.
+
+Owner handover records backend `2f24a89` restricting sandbox checkout to approved
+dummy-user UUIDs while using the production database. Membership/credentials
+stay backend-only. Frontend capabilities are account-scoped, fail closed and
+remain subordinate to PAYMENT_CHECKOUT_RELEASED=false. Show sandbox labels and
+shared-database benefit risk, clear billing on auth/user changes, and distinguish
+PAYMENT_SANDBOX_FORBIDDEN from CSRF/auth failure without mutation replay.
+Admin Reports uses only backend productionRevenue for gross revenue, while
+provider/environment/status/currency totals remain separate. No frontend list,
+admin-role exemption, production checkout, real transaction, backend/database
+mutation, deployment or commit/push is authorized. Sandbox/UAT and activation
+remain separate owner decisions; this does not supersede FE-D-034's pause.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

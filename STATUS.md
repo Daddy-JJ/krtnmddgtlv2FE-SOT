@@ -1,12 +1,39 @@
 # Frontend Repository Status
 
-Updated: 2026-10-03
+Updated: 2026-10-04
 
 Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
 and live local health/authorization guards verified. The approved session,
 data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
+
+## 2026-10-04 - Restricted Duitku sandbox frontend alignment
+
+Frontend audited against read-only backend `2f24a89` and its integration/payment
+references. Capabilities remain uncached/user-scoped and feature gate remains
+false. Auth/user changes invalidate billing memory and discard stale responses.
+Sandbox-forbidden closes checkout with distinct safe copy and no retry/refresh.
+Sandbox labels warn that the shared database permits dummy benefit changes.
+Reports uses backend productionRevenue only, with provider/environment/status/
+currency totals separate, safe decimal strings and old/empty response support.
+Admin user payment detail permits provider/environment, not private fields.
+
+QA: focused payment/billing/admin tests 61 passed, 0 failed/skipped;
+npm.cmd run qa (static/Tailwind build,
+258 native tests passed, 0 failed/skipped, 172 runtime files); local Edge/Chromium
+mock browser QA 31 passed, 0 failed/skipped. Browser coverage includes 390x844,
+768x1024, 1440x900, keyboard, disabled capabilities/release gate, real local
+Web Locks/IndexedDB multi-tab, session race, sandbox denial, forged return,
+reconcile/paid refetch, CORS mock headers and separate Reports revenue.
+Initial browser attempt found an incorrect test expectation that disabled
+capabilities could not still report sandbox; corrected and rerun passed.
+
+No commit/push/deploy, backend/database change, real payment/email. Backend
+hosting deployment, live allowed-origin auth/CORS/capabilities, actual approved
+dummy accounts, sandbox callback/return/UAT remain UNVERIFIED. Backend source
+availability is not deployment proof. Sandbox activation requires separate owner
+approval; never grant customer accounts/resources access to shared-database UAT.
 
 ## 2026-10-03 - Public merchant prices and contact information
 

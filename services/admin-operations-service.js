@@ -1,4 +1,5 @@
 import { api } from './api-client.js';
+import { paymentEnvironmentLabel } from '../validators/payment-validator.js';
 
 const adminRoot = '/admin';
 const publicPath = value => encodeURIComponent(String(value ?? ''));
@@ -61,3 +62,25 @@ export class AdminOperationsService {
 }
 
 export const adminOperationsService = new AdminOperationsService();
+
+// Presentation only: revenue authority is the dedicated backend aggregate.
+// Decimal strings are formatted without float conversion or cross-currency sums.
+export function paymentReportSeries(data = {}) {
+  const code = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(value) ? value : 'Tidak diketahui';
+  const currency = value => typeof value === 'string' && /^[A-Z]{3}$/.test(value) ? value : null;
+  const count = value => /^(?:0|[1-9]\d{0,14})$/.test(String(value)) ? String(value) : 'Tidak diketahui';
+  const amount = (value, unit) => {
+    const raw = typeof value === 'string' ? value : typeof value === 'number' && Number.isFinite(value) && Number.isSafeInteger(Math.trunc(value)) ? String(value) : '';
+    if (!unit || !/^\d{1,30}(?:\.\d{1,2})?$/.test(raw)) return 'Nominal tidak tersedia';
+    const [whole, fraction = ''] = raw.split('.');
+    return `${unit} ${new Intl.NumberFormat('id-ID').format(BigInt(whole))},${fraction.padEnd(2, '0')}`;
+  };
+  const rows = value => Array.isArray(value) ? value.filter(row => row && typeof row === 'object' && !Array.isArray(row)) : [];
+  return {
+    production: rows(data?.productionRevenue).map(row => ({ label: currency(row.currency) ?? 'Mata uang tidak diketahui',
+      value: `${amount(row.amount, currency(row.currency))} · ${count(row.count)} pembayaran` })),
+    totals: rows(data?.paymentTotals).map(row => ({ label: `${code(row.provider)} · ${paymentEnvironmentLabel(row.environment)} · ${code(row.status)} · ${currency(row.currency) ?? 'Mata uang tidak diketahui'}`,
+      value: `${amount(row.amount, currency(row.currency))} · ${count(row.count)} pembayaran` })),
+    basis: typeof data?.revenueBasis === 'string' ? data.revenueBasis.slice(0, 500) : '',
+  };
+}

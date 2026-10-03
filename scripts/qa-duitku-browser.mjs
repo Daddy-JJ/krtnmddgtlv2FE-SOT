@@ -11,7 +11,7 @@ const fixture = { publicId: ID, merchantOrderId: 'KND_local_mock', provider: 'du
   redirectUrl: null, createdAt: '2026-10-02T11:00:00.000Z' };
 const requests = [];
 let frontendOrigin;
-const state = { user: USER, list: [], payment: { ...fixture }, capabilities: 'enabled', failList: false, reconcile: 'paid', checkout: 'ready', expose: false, delay: 0, retryAfter: '90', requestId: 'local-support-429' };
+const state = { user: USER, list: [], payment: { ...fixture }, capabilities: 'enabled', failList: false, reconcile: 'paid', checkout: 'ready', expose: false, delay: 0, retryAfter: '90', requestId: 'local-support-429', reports: {} };
 const api = createServer(async (request, response) => {
   const pathname = new URL(request.url, 'http://local.test').pathname;
   if (request.headers.origin === frontendOrigin) {
@@ -29,7 +29,9 @@ const api = createServer(async (request, response) => {
     response.writeHead(status, { 'content-type': 'application/json', ...(status === 429 && state.retryAfter !== null ? { 'retry-after': state.retryAfter } : {}), ...(state.requestId ? { 'x-request-id': state.requestId } : {}) });
     response.end(JSON.stringify(status < 400 ? { success: true, data } : { success: false, code, message: 'Unsafe provider/private diagnostic' }));
   };
-  if (pathname === '/api/v1/me') return state.user ? reply({ user: { publicId: state.user, email: 'fixture@example.test' } }) : reply(null, 401, 'AUTH_REQUIRED');
+  if (pathname === '/api/v1/me') return state.user ? reply({ user: { publicId: state.user, email: 'fixture@example.test', roles: ['super_admin'] } }) : reply(null, 401, 'AUTH_REQUIRED');
+  if (pathname === '/api/v1/admin/statistics') return reply({ newFeedback: 0 });
+  if (pathname === '/api/v1/admin/reports') return reply(state.reports);
   if (pathname === '/api/v1/auth/csrf') return reply({ csrfToken: 'local-mock-csrf' });
   if (pathname === '/api/v1/auth/login') { state.user = USER; return reply({ user: { publicId: USER } }); }
   if (pathname === '/api/v1/auth/logout') { state.user = null; return reply(null); }
@@ -40,8 +42,9 @@ const api = createServer(async (request, response) => {
     return reply({ checkoutEnabled: state.capabilities === 'enabled', provider: 'duitku', environment: 'sandbox', idempotencyKeyRequired: true, reconcileCooldownSeconds: 30 });
   }
   if (pathname === '/api/v1/payments' && request.method === 'GET') {
+    const payments = state.list;
     if (state.delay) await new Promise(resolve => setTimeout(resolve, state.delay));
-    return state.failList ? reply(null, 500, 'HTTP_ERROR') : reply(state.list);
+    return state.failList ? reply(null, 500, 'HTTP_ERROR') : reply(payments);
   }
   if (pathname === `/api/v1/payments/${ID}`) return reply(state.payment);
   if (pathname === `/api/v1/payments/${ID}/reconcile`) {
@@ -52,6 +55,7 @@ const api = createServer(async (request, response) => {
   if (pathname === '/api/v1/payments/checkout') {
     assert.deepEqual(JSON.parse(body), { planCode: 'basic' });
     assert.ok(request.headers['idempotency-key']); assert.equal(request.headers['x-csrf-token'], 'local-mock-csrf');
+    if (state.checkout === 'forbidden') return reply(null, 403, 'PAYMENT_SANDBOX_FORBIDDEN');
     if (state.checkout === 'ambiguous') return reply(null, 503, 'PAYMENT_PROVIDER_UNAVAILABLE');
     state.list = [{ ...state.payment }]; return reply(state.payment, 202);
   }
@@ -205,6 +209,57 @@ try {
   await corsTab.evaluate("document.querySelector('[data-reconcile-payment]').click();document.querySelector('[data-reconcile-payment]').click()");
   assert.equal(requests.filter(request => request.method === 'POST' && request.pathname.endsWith('/reconcile')).length, beforeCooldown);
   pass('missing headers fall back safely; cooldown clicks never submit');
+
+  state.capabilities = 'enabled'; state.list = [{ ...fixture }];
+  await page();
+  assert.match(await tab.evaluate("document.querySelector('[data-upgrade-note]').textContent"), /Pembayaran uji — Sandbox.*database yang sama/);
+  assert.match(await tab.evaluate("document.querySelector('[data-payment-history]').textContent"), /Pembayaran uji — Sandbox/);
+  pass('sandbox label and shared-database benefit warning are visible while checkout stays disabled');
+
+  state.delay = 1000;
+  await tab.navigate(origin + '/app/billing/');
+  await waitFor(async () => await tab.evaluate("document.querySelector('[data-payment-history]')?.getAttribute('aria-busy') === 'true'"), 'delayed billing');
+  state.user = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'; state.capabilities = 'disabled'; state.list = [];
+  await tab.evaluate("(async()=>{const {paymentSessionChanged}=await import('/utils/payment-intent.js');await paymentSessionChanged('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')})()");
+  await waitFor(async () => await tab.evaluate("document.querySelector('[data-payment-history]')?.getAttribute('aria-busy') !== 'true'"), 'stale billing settled');
+  assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-upgrade-note]').textContent"), /Sandbox/);
+  assert.match(await tab.evaluate("document.querySelector('[data-payment-history]').textContent"), /Belum ada/);
+  assert.match(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /Sesi akun berubah/);
+  const capabilitiesReads = requests.filter(request => request.pathname.endsWith('/capabilities')).length;
+  state.delay = 0; await page();
+  assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-checkout-plan]')].every(button=>button.disabled)"), true);
+  assert.ok(requests.filter(request => request.pathname.endsWith('/capabilities')).length > capabilitiesReads);
+  assert.match(await tab.evaluate("document.querySelector('[data-payment-history]').textContent"), /Belum ada/);
+  pass('user switch clears capabilities and discards late previous-account responses');
+
+  state.user = USER; state.capabilities = 'enabled'; state.checkout = 'forbidden';
+  await page(); await tab.evaluate(setup); await tab.evaluate('qaIntents.clear()');
+  const beforeForbidden = requests.length;
+  assert.equal(await tab.evaluate("qaFlow.purchase('basic').catch(error=>error.code)"), 'PAYMENT_SANDBOX_FORBIDDEN');
+  const denied = requests.slice(beforeForbidden);
+  assert.equal(denied.filter(request => request.pathname.endsWith('/checkout')).length, 1);
+  assert.equal(denied.some(request => request.pathname.endsWith('/refresh')), false);
+  assert.equal(denied.filter(request => request.pathname.endsWith('/csrf')).length, 1);
+  assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-checkout-plan]')].every(button=>button.disabled)"), true);
+  pass('sandbox forbidden uses one mock POST with no refresh or CSRF replay');
+
+  state.reports = { productionRevenue: [{ currency: 'IDR', amount: '55000.00', count: 1 }, { currency: 'USD', amount: '2.50', count: 1 }],
+    paymentTotals: [{ provider: 'duitku', environment: 'sandbox', status: 'paid', currency: 'IDR', amount: '97000', count: 1 },
+      { provider: 'legacy', environment: null, status: 'paid', currency: 'IDR', amount: '12345', count: 1 }], revenueBasis: '<script>unsafe</script>' };
+  await tab.navigate(origin + '/admin/reports/');
+  await waitFor(async () => /Pendapatan bruto/.test(await tab.evaluate("document.querySelector('[data-admin-root]').textContent")), 'reports rendered');
+  const productionText = await tab.evaluate("[...document.querySelectorAll('.admin-series-panel')].find(panel=>panel.textContent.startsWith('Pendapatan bruto')).textContent");
+  assert.match(productionText, /IDR 55\.000,00/); assert.match(productionText, /USD 2,50/);
+  assert.doesNotMatch(productionText, /97\.000|12\.345/);
+  assert.match(await tab.evaluate("document.querySelector('[data-admin-root]').textContent"), /Lingkungan tidak diketahui/);
+  assert.equal(await tab.evaluate("document.querySelector('[data-admin-root] script') === null"), true);
+  pass('Reports render separate currencies and sandbox/unknown totals, never infer production revenue');
+  for (const reports of [{}, { productionRevenue: [], paymentTotals: [] }]) {
+    state.reports = reports; await tab.navigate(origin + '/admin/reports/');
+    await waitFor(async () => /Pendapatan bruto/.test(await tab.evaluate("document.querySelector('[data-admin-root]').textContent")), 'old/empty reports');
+    assert.match(await tab.evaluate("document.querySelector('[data-admin-root]').textContent"), /Belum ada data pada periode ini/);
+    pass('Reports tolerate legacy or empty payment aggregates');
+  }
   assert.deepEqual(corsTab.errors, []);
   assert.deepEqual(tab.errors, []); assert.deepEqual(second.errors, []);
   console.log(`Browser QA: ${passed} passed, 0 failed, 0 skipped; Chromium/Edge headless, LOCAL API MOCK only.`);

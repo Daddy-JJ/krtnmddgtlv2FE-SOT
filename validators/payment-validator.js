@@ -49,9 +49,16 @@ export function paymentErrorMessage(error) {
     CHECKOUT_PENDING_EXISTS: 'Masih ada transaksi menunggu. Periksa transaksi tersebut.',
     RATE_LIMITED: 'Terlalu banyak pemeriksaan. Tunggu sebelum mencoba lagi.',
     PAYMENT_CHECKOUT_DISABLED: 'Pembayaran online belum tersedia.',
+    PAYMENT_SANDBOX_FORBIDDEN: 'Pembayaran uji hanya tersedia untuk akun pengujian yang disetujui',
+    PAYMENT_GATEWAY_UNAVAILABLE: 'Layanan pembayaran sementara belum tersedia. Periksa riwayat sebelum mencoba kembali.',
     PAYMENT_COORDINATION_UNAVAILABLE: 'Browser belum dapat menyimpan permintaan pembayaran dengan aman. Hubungi bantuan.',
     PAYMENT_RESPONSE_INVALID: 'Respons pembayaran tidak dapat diverifikasi. Periksa riwayat atau hubungi bantuan.',
   })[error?.code] ?? (error?.status === 503
     ? 'Layanan pembayaran sementara belum tersedia. Periksa riwayat sebelum mencoba kembali.'
     : 'Status pembayaran belum dapat dipastikan. Periksa riwayat sebelum mencoba lagi; hubungi bantuan jika berlanjut.');
+}
+
+export function paymentEnvironmentLabel(environment) {
+  return environment === 'sandbox' ? 'Pembayaran uji — Sandbox'
+    : environment === 'production' ? 'Production' : 'Lingkungan tidak diketahui';
 }

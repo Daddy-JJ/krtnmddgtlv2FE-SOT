@@ -121,6 +121,14 @@ They are owner-provided, not independently verified legal-registration evidence.
 
 ### Checkout remains paused
 
+Restricted sandbox (FE-D-037) uses backend-only dummy account membership.
+Capabilities is user-scoped and never overrides the paused frontend release
+gate. `Pembayaran uji — Sandbox` is a gateway label, NOT data/benefit isolation:
+owner approved sharing the production database, so confirmed sandbox paid can
+change dummy subscriptions/cards. Never allow customer accounts/resources into
+UAT. Sandbox/unknown/legacy totals are separate from backend production gross
+revenue; other operational metrics may include dummy accounts.
+
 Membership Basic/Pro tetap didefinisikan sebagai annual 365-day product, tetapi
 checkout baru menggunakan Duitku POP redirect dan tetap paused sampai keputusan
 aktivasi terpisah dari owner setelah sandbox/UAT (FE-D-034).

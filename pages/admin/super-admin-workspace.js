@@ -1,4 +1,5 @@
-import { adminOperationsService as admin } from '../../services/admin-operations-service.js';
+import { adminOperationsService as admin, paymentReportSeries } from '../../services/admin-operations-service.js';
+import { paymentEnvironmentLabel } from '../../validators/payment-validator.js';
 import { authService } from '../../services/auth-service.js';
 import { renderEmailTemplateManager } from './email-templates.js';
 import { apiErrorMessage } from '../../utils/api-error-message.js';
@@ -161,7 +162,7 @@ function objectPanel(label,data,context){
 
 function rowsPanel(label,rows,context=label){
   const panel=document.createElement('section'),heading=document.createElement('h2'),list=document.createElement('ul');panel.className='rounded-2xl border border-white/10 p-5';heading.className='text-xl font-black';heading.textContent=label;
-  for(const row of rows){const item=document.createElement('li');item.className='mt-3 border-t border-white/10 pt-3 text-sm break-words';item.textContent=Object.entries(row).filter(([key])=>isSafeAdminField(key,context)).map(([key,value])=>`${key}: ${format(value)}`).join(' · ');list.append(item);}if(!rows.length){const empty=document.createElement('li');empty.className='mt-3';empty.textContent='Belum ada data.';list.append(empty);}panel.append(heading,list);return panel;
+  for(const row of rows){const item=document.createElement('li');item.className='mt-3 border-t border-white/10 pt-3 text-sm break-words';item.textContent=Object.entries(row).filter(([key])=>isSafeAdminField(key,context)).map(([key,value])=>`${key}: ${context==='payments'&&key==='environment'?paymentEnvironmentLabel(value):format(value)}`).join(' · ');list.append(item);}if(!rows.length){const empty=document.createElement('li');empty.className='mt-3';empty.textContent='Belum ada data.';list.append(empty);}panel.append(heading,list);return panel;
 }
 
 function format(value){
@@ -182,7 +183,7 @@ const adminFieldAllowlists={
   owner:new Set(['publicId','email','fullName','status','emailVerified','planCode','createdAt','updatedAt']),
   identity:new Set(['publicId','email','fullName','name','status','roles','emailVerified','isSuspended','createdAt','updatedAt']),
   subscriptionsDetail:new Set(['publicId','planCode','tier','status','startsAt','endsAt','createdAt','updatedAt']),
-  payments:new Set(['publicId','status','amount','currency','provider','createdAt','paidAt']),
+  payments:new Set(['publicId','status','amount','currency','provider','environment','createdAt','paidAt']),
   usageDetail:new Set(['featureCode','metric','used','limit','remaining','periodStart','periodEnd','updatedAt']),
   resume:new Set(['publicId','status','revisionCount','createdAt','updatedAt']),
   securityDetail:new Set(['lastLoginAt','activeSessions','revokedSessions24Hours','emailVerified','isSuspended']),
@@ -318,13 +319,15 @@ async function renderReports(){
   for(const value of allowed){const option=document.createElement('option');option.value=String(value);option.textContent=`${value} hari`;option.selected=value===days;select.append(option);}
   submit.type='submit';submit.className='dashboard-action';submit.textContent='Tampilkan';label.append(caption,select);form.append(label,submit);content.replaceChildren(form,results);setLoading(results,'Memuat reports...');
   form.addEventListener('submit',event=>{event.preventDefault();location.assign(`${location.pathname}?days=${encodeURIComponent(select.value)}`);});
-  try{const data=await admin.reports(days);results.replaceChildren(
+  try{const data=await admin.reports(days),payments=paymentReportSeries(data);results.replaceChildren(
+    seriesPanel('Pendapatan bruto Duitku production — paid',payments.production,['label','value']),
+    seriesPanel('Total pembayaran menurut provider, lingkungan, status dan mata uang',payments.totals,['label','value']),
     seriesPanel('Registrasi user',data.userRegistrations,['date','count']),
     seriesPanel('Feedback per status',data.feedbackByStatus,['status','count']),
     seriesPanel('Subscription per tier',data.subscriptionsByTier,['tier','count']),
     seriesPanel('Mail per status',data.mailByStatus,['status','count']),
     seriesPanel('Resume per status',data.resumeByStatus,['status','count']),
-  );status.textContent=`Laporan agregat ${days} hari.`;}catch(error){results.replaceChildren(errorState(error));handleError(error,{render:false,announce:false});}
+  );const note=document.createElement('p');note.textContent=`Pendapatan bruto berasal hanya dari productionRevenue backend, bukan laba atau net accounting. Sandbox, lingkungan tidak diketahui, dan provider lama tidak dihitung sebagai pendapatan production. Metrik subscription dan operasional dapat mencakup akun dummy.${payments.basis?` Dasar perhitungan: ${payments.basis}`:''}`;results.prepend(note);status.textContent=`Laporan agregat ${days} hari.`;}catch(error){results.replaceChildren(errorState(error));handleError(error,{render:false,announce:false});}
 }
 
 function seriesPanel(label,rows,keys){
