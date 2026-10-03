@@ -195,11 +195,30 @@
           <p data-landing-content="plansBody">Mulai sederhana, lalu gunakan kemampuan yang lebih lengkap ketika kebutuhan Anda berkembang.</p>
         </div>
         <div class="mono-plans">
-          <article><p class="mono-plan-label">Starter</p><h3>Mulai tanpa login</h3><ul><li>Halaman publik</li><li>QR Code</li><li>Kontak dasar</li></ul><a class="mono-button mono-button--outline" href="/create/">Mulai Gratis</a></article>
-          <article><p class="mono-plan-label">Basic</p><h3>Kelola identitas Anda</h3><ul><li>Login dan pengelolaan akun</li><li>Custom URL</li><li>Tema dan fitur tambahan</li></ul><a class="mono-button mono-button--outline" href="/register/?intent=basic">Pilih Basic</a></article>
-            <article class="mono-plan--featured"><p class="mono-plan-label">Pro</p><h3>Untuk kebutuhan profesional lengkap</h3><ul><li>Logo, sosial, katalog, dan WhatsApp</li><li>Tema premium</li><li>Resume Enhancement sesuai masa subscription Pro</li></ul><a class="mono-button mono-button--outline" href="/register/?intent=pro">Pilih Pro</a></article>
+          <article data-public-plan="starter">
+            <p class="mono-plan-label">Starter</p><h3>Mulai tanpa login</h3>
+            <p class="mono-plan-price">Gratis <span>(Rp0)</span></p>
+            <p>Kartu nama digital untuk membagikan identitas dan kontak melalui satu link.</p>
+            <ul><li>URL publik dengan kode unik dan 1 desain</li><li>Kontak dasar, QR Code, dan vCard</li><li>Tombol WhatsApp dari nomor mobile yang valid</li><li>Edit setelah membuat akun terverifikasi dan claim kartu</li></ul>
+            <a class="mono-button mono-button--outline" href="/create/">Mulai Gratis</a>
+          </article>
+          <article data-public-plan="basic">
+            <p class="mono-plan-label">Basic</p><h3>Kelola identitas Anda</h3>
+            <p class="mono-plan-price">Rp55.000 <span>/ 365 hari</span></p>
+            <p>Membership kartu nama digital dengan URL pilihan dan fitur profil tambahan.</p>
+            <ul><li>Semua fitur kontak Starter, QR Code, vCard, dan WhatsApp</li><li>Custom URL dan 3 desain</li><li>Link Google Maps</li><li>Maksimal 2 link media sosial dan 2 item katalog</li></ul>
+            <a class="mono-button mono-button--outline" href="/register/?intent=basic">Daftar untuk Basic</a>
+          </article>
+          <article class="mono-plan--featured" data-public-plan="pro">
+            <p class="mono-plan-label">Pro</p><h3>Untuk kebutuhan profesional lengkap</h3>
+            <p class="mono-plan-price">Rp97.000 <span>/ 365 hari</span></p>
+            <p>Membership dengan fitur Basic, branding logo, dan layanan perbaikan resume oleh tim.</p>
+            <ul><li>Semua fitur Basic dan 10 desain</li><li>Logo pada kartu nama</li><li>Maksimal 5 link media sosial dan 10 item katalog</li><li>Resume Enhancement: 1 penerima manfaat per periode Pro, maksimal 3 revisi</li></ul>
+            <a class="mono-button mono-button--outline" href="/register/?intent=pro">Daftar untuk Pro</a>
+          </article>
         </div>
-        <p class="mono-plan-note">Basic dan Pro menggunakan subscription tahunan selama 365 hari.</p>
+        <p class="mono-plan-note">Harga dalam Rupiah (IDR). Basic dan Pro berlaku 365 hari. Upgrade Basic → Pro: Rp55.000. Nominal akhir dan kelayakan upgrade akan diperiksa saat checkout tersedia.</p>
+        <p class="mono-plan-note">Under development — Pembayaran online belum tersedia. Pendaftaran akun bukan pembelian atau aktivasi paket berbayar.</p>
       </div>
     </section>
 
@@ -232,7 +251,16 @@
 
   <footer class="mono-footer">
     <div class="mono-container mono-footer__grid">
-      <div><a class="mono-brand" href="/"><span class="mono-brand__mark" aria-hidden="true">ID</span><span>KARTUNAMA<br><small>DIGITAL.ID</small></span></a><p>Dibuat di Indonesia untuk membantu profesional terhubung lebih mudah.</p></div>
+      <div>
+        <a class="mono-brand" href="/"><span class="mono-brand__mark" aria-hidden="true">ID</span><span>KARTUNAMA<br><small>DIGITAL.ID</small></span></a>
+        <p>Dibuat di Indonesia untuk membantu profesional terhubung lebih mudah.</p>
+        <address class="merchant-contact" aria-label="Layanan pelanggan resmi">
+          <strong>Layanan Pelanggan Resmi</strong>
+          <span>Email Support: <a href="mailto:support@kartunamadigital.id">support@kartunamadigital.id</a></span>
+          <span>WhatsApp / Telepon CS: <a href="tel:+6281328219697">0813 2821 9697</a> · <a href="https://wa.me/6281328219697">Chat WhatsApp CS</a></span>
+          <span>Alamat Usaha: Apt. Sentra Timur Residence O19 12B, Jl. Sentra Primer Timur, Cakung, Jakarta Timur. 13950, Indonesia</span>
+        </address>
+      </div>
       <nav aria-label="Tautan perusahaan"><strong>Perusahaan</strong><a href="/about/">Tentang</a><a href="/contact/">Kontak</a><a href="/blog/satu-link-untuk-identitas-profesional/">Blog</a><a href="/blog/cv-resume-builder/">Perbaikan CV Resume</a></nav>
       <nav aria-label="Tautan bantuan"><strong>Bantuan</strong><a href="/faq/">FAQ</a><a href="/privacy/">Privasi</a><a href="/cookies/">Cookies</a><a href="/terms/">Ketentuan</a></nav>
     </div>

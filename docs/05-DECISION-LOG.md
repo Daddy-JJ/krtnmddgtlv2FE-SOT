@@ -466,6 +466,21 @@ support guidance without creating a replacement order. Accepted historical
 decisions remain in this log. No backend/database change or checkout activation
 is authorized by this cleanup.
 
+## FE-D-036 - Public merchant prices and support information
+
+Date: 2026-10-03
+Status: Accepted for frontend publication only; sandbox activation NOT approved.
+
+Owner approves public homepage product descriptions and IDR prices: Starter
+free, Basic Rp55.000/365 days, Pro Rp97.000/365 days, and Basic to Pro Rp55.000.
+Display support@kartunamadigital.id, 0813 2821 9697, and the owner-provided
+Sentra Timur Residence business address on homepage/Contact. Keep tier benefits
+aligned with the product matrix, including WhatsApp for all tiers. Static HTML
+owns these facts, not optional landing CMS wording. This confirms informational
+prices without changing backend amounts, billing rules or entitlement authority.
+Registration is not checkout. FE-D-004/FE-D-034 checkout pause remains intact;
+no sandbox/production activation, backend/database change or deployment is approved.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

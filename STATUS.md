@@ -1,12 +1,36 @@
 # Frontend Repository Status
 
-Updated: 2026-10-02
+Updated: 2026-10-03
 
 Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
 and live local health/authorization guards verified. The approved session,
 data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
+
+## 2026-10-03 - Public merchant prices and contact information
+
+Owner-approved frontend publication (FE-D-036): homepage contains static product
+descriptions and prices in IDR: Starter free, Basic Rp55.000/365 days, Pro
+Rp97.000/365 days and Basic to Pro Rp55.000. Official email, CS telephone/WhatsApp
+and business address are visible in the homepage footer and Contact page without
+JavaScript/API. Paid-package links remain registration, not payment. Checkout
+release remains false; no backend/database/payment configuration was changed.
+
+Files: index.html, contact/index.html, assets/css/foundations-primitives.css,
+tests/landing-content-contract.test.js, sitemap.xml, docs/02-PRODUCT-AND-MEMBERSHIP.md,
+docs/05-DECISION-LOG.md, CHANGELOG.md and STATUS.md. No new runtime abstraction.
+
+QA: focused landing/SEO/billing tests 22/22; npm.cmd run qa builds 172 allowlisted
+files and passes 250/250 tests, 0 failed/skipped. Initial restricted build failed
+EPERM on generated dist; permission-approved rerun passed. Ad-hoc local Edge
+headless checks passed 12/12: homepage/Contact at 320, 768 and 1440px in light/dark,
+no horizontal overflow, visible prices/contacts and semantic landmarks, with an
+isolated unavailable-API mock. These are local layout assertions, not merchant
+sandbox or real-device evidence. Git diff --check is clean.
+
+No commit/push/deploy, production transaction or real email. Website publication,
+Duitku review and separate sandbox credentials/UAT/activation remain pending.
 
 ## 2026-10-02 - Duitku POP frontend compatibility (checkout disabled)
 
@@ -82,7 +106,7 @@ mobile behavior remain unverified. No production-ready claim is made.
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
 | Static build | 172 allowlisted runtime files in `dist/` |
-| Automated tests | 247 passing; no known test failure |
+| Automated tests | 250 passing; no known test failure |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
 | Checkout | Duitku POP compatible; paused pending owner sandbox/UAT activation |

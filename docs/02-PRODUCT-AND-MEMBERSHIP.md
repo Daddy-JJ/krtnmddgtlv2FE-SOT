@@ -101,6 +101,26 @@ normalized field contract yang sama.
 
 ## Billing and upgrade
 
+Owner-confirmed public informational prices (2026-10-03): Starter is free (Rp0),
+Starter to Basic Rp55.000, Starter to Pro Rp97.000, and Basic to Pro Rp55.000.
+Basic/Pro term remains 365 days. Homepage prices do not calculate invoices or
+activate entitlement; backend remains authoritative. Paid-package links lead to
+account registration only, with an explicit checkout-unavailable notice.
+
+### Official merchant contact
+
+Owner approved publishing these details on the homepage footer and Contact page:
+
+- Email: support@kartunamadigital.id.
+- WhatsApp / telephone: 0813 2821 9697 (+6281328219697).
+- Address: Apt. Sentra Timur Residence O19 12B, Jl. Sentra Primer Timur,
+  Cakung, Jakarta Timur. 13950, Indonesia.
+
+These public merchant details are static HTML and remain visible without API/JS.
+They are owner-provided, not independently verified legal-registration evidence.
+
+### Checkout remains paused
+
 Membership Basic/Pro tetap didefinisikan sebagai annual 365-day product, tetapi
 checkout baru menggunakan Duitku POP redirect dan tetap paused sampai keputusan
 aktivasi terpisah dari owner setelah sandbox/UAT (FE-D-034).

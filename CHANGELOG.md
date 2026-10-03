@@ -5,6 +5,11 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Menampilkan harga IDR dan benefit Starter/Basic/Pro di homepage, termasuk
+  upgrade Basic ke Pro Rp55.000. Memublikasikan kontak CS dan alamat usaha
+  yang disetujui owner di homepage dan Kontak. Checkout tetap disabled;
+  pendaftaran akun bukan pembelian. Regression test dan sitemap diperbarui.
+
 - Menyelaraskan error API dan cooldown Duitku: status, Retry-After mentah/
   ter-normalisasi, dan X-Request-ID dipertahankan; header negatif/malformed
   ditolak, HTTP-date lampau menjadi nol, fallback memakai capabilities dengan
