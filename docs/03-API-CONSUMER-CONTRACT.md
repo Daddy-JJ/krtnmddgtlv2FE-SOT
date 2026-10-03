@@ -174,6 +174,23 @@ sent as `websiteUrl: ""`; non-empty websites still require HTTP(S).
 
 ### Cards and design
 
+First-card save hardening (2026-10-04): the member editor requires GET /cards to
+be an actual array of valid publicId entries before choosing empty/create mode.
+An existing card must have matching publicId and contact detail; malformed load
+locks save rather than falling back to create. POST /cards remains the legitimate
+first-card operation; existing-card edits use PUT /cards/{publicId}.
+
+CardService create/update synchronize GET /auth/csrf through the existing client
+before mutation, then force the synchronized access token rather than a stale
+readable cookie. Credentials stay include. Failed synchronization prevents save.
+POST has no auth/CSRF/timeout replay; existing bounded PUT CSRF recovery remains.
+The editor sets an in-flight guard before awaiting CSRF/save and disables controls.
+CSRF rejection preserves input for explicit retry. Ambiguous first-card POST
+(timeout/network/5xx/invalid successful response) blocks further creation until
+reload rereads owned cards; no automatic resend or guessed success.
+Registration intent=basic/pro never grants paid entitlement or bypasses backend
+creation eligibility. Checkout remains paused.
+
 | Method | Path | Use |
 |---|---|---|
 | GET/POST | `/cards` | List/create account cards |

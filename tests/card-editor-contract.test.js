@@ -2,6 +2,132 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ApiClient } from '../services/api-client.js';
 import { buildCardInput, validateCardInput } from '../validators/card-validator.js';
+import { readFile } from 'node:fs/promises';
+import { runInNewContext } from 'node:vm';
+import { apiErrorMessage } from '../utils/api-error-message.js';
+
+const serviceSource = await readFile(new URL('../services/card-service.js', import.meta.url), 'utf8');
+const editorSource = await readFile(new URL('../pages/app/card-editor.js', import.meta.url), 'utf8');
+const savedCard = { publicId: 'owned-card', contact: { fullName: 'Nama User' } };
+
+function serviceFor(client) {
+  return runInNewContext(serviceSource.replace(/^import .*;\r?$/gm, '').replace('export const cardService', 'const cardService') + '\ncardService;', { api: client });
+}
+
+for (const action of ['create', 'update']) {
+  test(`card ${action} uses freshly synchronized CSRF instead of stale readable cookie`, async () => {
+    const calls = [];
+    const client = new ApiClient({ baseUrl: 'https://example.test/api/v1', cookieSource: () => 'csrf_token=stale', fetchImpl: async (url, options) => {
+      calls.push({ path: new URL(url).pathname, method: options.method, token: options.headers.get('x-csrf-token'), credentials: options.credentials });
+      return Response.json({ success: true, data: url.endsWith('/auth/csrf') ? { csrfToken: 'fresh' } : savedCard });
+    } });
+    const service = serviceFor(client);
+    await (action === 'create' ? service.create({ contact: {} }) : service.update('owned-card', { contact: {} }));
+    assert.deepEqual(calls, [
+      { path: '/api/v1/auth/csrf', method: 'GET', token: null, credentials: 'include' },
+      { path: action === 'create' ? '/api/v1/cards' : '/api/v1/cards/owned-card', method: action === 'create' ? 'POST' : 'PUT', token: 'fresh', credentials: 'include' },
+    ]);
+  });
+}
+
+test('CSRF synchronization failure prevents card mutation entirely', async () => {
+  const calls = [];
+  const client = new ApiClient({ baseUrl: 'https://example.test/api/v1', fetchImpl: async url => {
+    calls.push(url); return Response.json({ success: false, code: 'AUTH_REQUIRED' }, { status: 401 });
+  } });
+  await assert.rejects(serviceFor(client).create({ contact: {} }));
+  assert.equal(calls.some(url => url.endsWith('/cards')), false);
+});
+
+for (const failure of ['CSRF_INVALID', 'REQUEST_TIMEOUT', 'NETWORK_ERROR', 'HTTP_ERROR']) {
+  test(`first-card ${failure} never replays POST or refreshes the session`, async () => {
+    const calls = [];
+    const client = new ApiClient({ baseUrl: 'https://example.test/api/v1', timeoutMs: 20, fetchImpl: async (url, options) => {
+      calls.push([url, options.method]);
+      if (url.endsWith('/auth/csrf')) return Response.json({ success: true, data: { csrfToken: 'fresh' } });
+      if (failure === 'NETWORK_ERROR') throw new TypeError('offline');
+      if (failure === 'REQUEST_TIMEOUT') return new Promise((_resolve, reject) => {
+        options.signal.addEventListener('abort', () => reject(new Error('aborted mock request')), { once: true });
+      });
+      return Response.json({ success: false, code: failure }, { status: failure === 'CSRF_INVALID' ? 403 : 500 });
+    } });
+    await assert.rejects(serviceFor(client).create({ contact: {} }), { code: failure });
+    assert.equal(calls.filter(([url]) => url.endsWith('/cards')).length, 1);
+    assert.equal(calls.some(([url]) => url.endsWith('/auth/refresh')), false);
+  });
+}
+
+async function editorHarness(overrides = {}) {
+  const messages = [], calls = [];
+  const fields = new Map();
+  const submit = { disabled: false };
+  const form = { dataset: {}, elements: new Proxy({}, { get: (_target, field) => {
+    if (!fields.has(field)) fields.set(field, { value: '' }); return fields.get(field);
+  } }), addEventListener() {}, setAttribute() {}, removeAttribute() {}, querySelectorAll: () => [submit] };
+  const service = { list: async () => [], get: async () => savedCard,
+    create: async () => { calls.push('create'); return savedCard; },
+    update: async () => { calls.push('update'); return savedCard; }, ...overrides };
+  const context = { cardService: service, apiErrorMessage, formValues: () => ({ firstName: 'Nama User' }),
+    buildCardInput: values => ({ contact: { fullName: values.firstName } }), validateCardInput: () => ({}),
+    clearFieldErrors() {}, showFieldErrors() {}, mapApiFieldErrors: () => ({}), bindWebsiteUrlInput() {},
+    splitName: () => ({ firstName: 'Nama', lastName: 'User' }),
+    setBusy: (_form, value) => { submit.disabled = value; }, showStatus: (_node, message) => messages.push(message),
+    document: { querySelector: selector => selector === '[data-card-editor-form]' ? form : selector === '[data-form-status]' ? {} : null,
+      documentElement: { lang: 'id' }, dispatchEvent() {} },
+    location: { assign() {}, origin: 'https://example.test' }, CustomEvent: class {},
+  };
+  const controller = runInNewContext(editorSource.replace(/^import .*;\r?$/gm, '') + '\n({save, state});', context);
+  await new Promise(resolve => setImmediate(resolve));
+  return { controller, calls, messages, submit, service, event: { preventDefault() {} } };
+}
+
+test('first-card concurrent submit/Enter uses one create, then later save uses update', async () => {
+  let resolveCreate;
+  let creates = 0;
+  const h = await editorHarness({ create: () => { creates += 1; return new Promise(resolve => { resolveCreate = resolve; }); } });
+  const first = h.controller.save(h.event);
+  assert.equal(h.submit.disabled, true);
+  await h.controller.save(h.event); await h.controller.save(h.event);
+  assert.equal(creates, 1);
+  resolveCreate(savedCard); await first;
+  assert.equal(h.submit.disabled, false);
+  await h.controller.save(h.event);
+  assert.deepEqual(h.calls, ['update']);
+});
+
+for (const list of [null, {}, { items: [] }, [null], [{}], [{ publicId: '' }]]) {
+  test(`malformed card list cannot enter create mode: ${JSON.stringify(list)}`, async () => {
+    const h = await editorHarness({ list: async () => list });
+    assert.equal(h.controller.state.mode, 'load_failed');
+    assert.equal(h.submit.disabled, true);
+    await h.controller.save(h.event); assert.deepEqual(h.calls, []);
+  });
+}
+
+test('invalid owned detail does not fall back to creation', async () => {
+  const h = await editorHarness({ list: async () => [{ publicId: 'owned-card' }], get: async () => null });
+  assert.equal(h.controller.state.mode, 'load_failed');
+  await h.controller.save(h.event); assert.deepEqual(h.calls, []);
+});
+
+test('CSRF error keeps user input and releases in-flight guard for an explicit later attempt', async () => {
+  const h = await editorHarness({ create: async () => { throw { status: 403, code: 'CSRF_INVALID' }; } });
+  await h.controller.save(h.event);
+  assert.equal(h.controller.state.mode, 'empty');
+  assert.equal(h.controller.state.submitting, false);
+  assert.equal(h.submit.disabled, false);
+  assert.match(h.messages.at(-1), /Sesi keamanan/);
+});
+
+for (const failure of [{ code: 'REQUEST_TIMEOUT' }, { code: 'NETWORK_ERROR' }, { status: 500 }, { malformed: true }]) {
+  test(`ambiguous first-card save requires reload before another create: ${JSON.stringify(failure)}`, async () => {
+    let creates = 0;
+    const h = await editorHarness({ create: async () => { creates += 1; if (failure.malformed) return null; throw failure; } });
+    await h.controller.save(h.event); await h.controller.save(h.event);
+    assert.equal(creates, 1); assert.equal(h.controller.state.mode, 'save_unknown');
+    assert.equal(h.controller.state.submitting, false); assert.equal(h.submit.disabled, true);
+  });
+}
 
 test('card update uses access CSRF and preserves a complete contact payload', async () => {
   let observed;

@@ -4,14 +4,16 @@ export const cardService = {
   list() {
     return api.get('/cards');
   },
-  create(input) {
-    return api.post('/cards', input, { csrfContext: 'access' });
+  async create(input) {
+    await api.synchronizeAccessCsrf();
+    return api.post('/cards', input, { csrfContext: 'access', forceAccessCsrf: true, skipRefresh: true });
   },
   get(publicId) {
     return api.get(`/cards/${encodeURIComponent(publicId)}`);
   },
-  update(publicId, input) {
-    return api.put(`/cards/${encodeURIComponent(publicId)}`, input, { csrfContext: 'access' });
+  async update(publicId, input) {
+    await api.synchronizeAccessCsrf();
+    return api.put(`/cards/${encodeURIComponent(publicId)}`, input, { csrfContext: 'access', forceAccessCsrf: true, skipRefresh: true });
   },
   publish(publicId) {
     return api.post(`/cards/${encodeURIComponent(publicId)}/publish`, null, { csrfContext: 'access' });

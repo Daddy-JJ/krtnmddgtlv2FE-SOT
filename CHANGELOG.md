@@ -5,6 +5,11 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Memperbaiki save kartu pertama: sinkronisasi CSRF sebelum create/update,
+  guard submit ganda, validasi load agar respons rusak tidak menjadi create,
+  serta blokir create ulang setelah hasil ambigu sampai kartu diperiksa lewat
+  reload. Input dipertahankan saat CSRF ditolak; POST tidak diretry otomatis.
+
 - Menyelaraskan restricted Duitku sandbox: capabilities per akun dan late-response
   guard; label sandbox/shared-database warning; penolakan sandbox tanpa replay.
   Reports memisahkan pendapatan bruto production dari total per lingkungan/

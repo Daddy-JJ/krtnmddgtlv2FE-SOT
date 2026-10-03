@@ -8,6 +8,28 @@ data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
 
+## 2026-10-04 - First-card save CSRF and duplicate-submit hardening
+
+Owner confirmed the failing POST /cards was a first-card attempt after
+register/?intent=basic, not an existing-card update. Frontend now synchronizes
+access CSRF before card create/update and forces that fresh token. Malformed
+list/detail responses lock the editor; only an actual empty list permits create.
+An in-flight guard blocks rapid duplicate submission, and ambiguous first-card
+results require reload/owned-card read before another create. CSRF failure keeps
+input; no POST replay or entitlement grant is introduced.
+
+QA: focused card editor/API/audit tests 51 passed, 0 failed/skipped;
+npm.cmd run qa static/Tailwind build + full native tests 278 passed,
+0 failed/skipped (172 runtime files). Ad-hoc Edge/Chromium headless smoke
+against a localhost mock API: 5 passed, 0 failed, for fresh CSRF/double-submit,
+subsequent PUT, malformed load lock, CSRF input preservation, and ambiguous
+POST followed by owned-card reload. The first smoke attempt stopped on a test
+console lexical-variable redeclaration; the corrected test rerun passed.
+
+Production CSRF rejection is confirmed by owner screenshots, but its underlying
+cookie/session/hosting cause is not proven. Mock tests are not live session proof.
+No backend/database edit, real card/email/payment, deploy, commit or push.
+
 ## 2026-10-04 - Restricted Duitku sandbox frontend alignment
 
 Frontend audited against read-only backend `2f24a89` and its integration/payment

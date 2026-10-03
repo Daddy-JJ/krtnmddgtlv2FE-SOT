@@ -4,6 +4,7 @@ import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErro
 import { mountCardLivePreview } from '../../components/card-live-preview.js';
 import { bindWebsiteUrlInput } from '../../utils/website-url.js';
 import { splitName } from '../../utils/name-format.js';
+import { apiErrorMessage } from '../../utils/api-error-message.js';
 
 const form = document.querySelector('[data-card-editor-form]');
 const status = document.querySelector('[data-form-status]');
@@ -17,7 +18,7 @@ const editableFields = [
   'addressStreet', 'addressCity', 'addressProvince', 'addressPostalCode', 'addressCountry',
   'mapsUrl',
 ];
-const state = { card: null, preview: null, mode: 'loading' };
+const state = { card: null, preview: null, mode: 'loading', submitting: false };
 
 init();
 bindWebsiteUrlInput(form?.elements.websiteUrl);
@@ -35,14 +36,21 @@ async function load() {
   showStatus(status, 'Memuat data kartu...', 'info');
   try {
     const cards = await cardService.list();
-    const first = Array.isArray(cards) ? cards[0] : null;
+    if (!Array.isArray(cards) || cards.some(card => !card || typeof card.publicId !== 'string' || !card.publicId.trim())) {
+      throw new Error('Respons daftar kartu tidak valid. Muat ulang halaman sebelum menyimpan.');
+    }
+    const first = cards[0];
     if (!first) {
       state.mode = 'empty';
       await loadLivePreview();
-      showStatus(status, 'Belum ada kartu aktif. Isi form ini untuk membuat kartu Basic/Pro.', 'info');
+      showStatus(status, 'Belum ada kartu di akun ini. Isi form untuk membuat kartu pertama; akses paket tetap ditentukan oleh akun Anda.', 'info');
       return;
     }
     state.card = await cardService.get(first.publicId);
+    if (!validCard(state.card) || state.card.publicId !== first.publicId) {
+      state.card = null;
+      throw new Error('Respons detail kartu tidak valid. Muat ulang halaman sebelum menyimpan.');
+    }
     state.mode = 'ready';
     fillForm(state.card);
     await loadLivePreview();
@@ -62,6 +70,7 @@ async function load() {
 
 async function save(event) {
   event.preventDefault();
+  if (state.submitting) return;
   if (!['empty', 'ready'].includes(state.mode)) {
     showStatus(status, 'Data kartu belum siap. Muat ulang halaman sebelum menyimpan.', 'error');
     return;
@@ -84,13 +93,18 @@ async function save(event) {
     return;
   }
   clearFieldErrors(form);
+  state.submitting = true; // Guard before the first async operation, including CSRF synchronization.
   setBusy(form, true);
   showStatus(status, 'Menyimpan perubahan...', 'info');
   const creating = !state.card;
   try {
-    state.card = state.card
+    const saved = state.card
       ? await cardService.update(state.card.publicId, input)
       : await cardService.create(input);
+    if (!validCard(saved) || (!creating && saved.publicId !== state.card.publicId)) {
+      throw Object.assign(new Error('Respons penyimpanan tidak valid.'), { code: 'CARD_RESPONSE_INVALID' });
+    }
+    state.card = saved;
     state.mode = 'ready';
     fillForm(state.card);
     if (state.preview) state.preview.update(previewData());
@@ -99,10 +113,23 @@ async function save(event) {
     showStatus(status, creating ? 'Kartu berhasil dibuat.' : 'Perubahan tersimpan.', 'success');
   } catch (error) {
     showFieldErrors(form, mapApiFieldErrors(error.details));
-    showStatus(status, error.message, 'error');
+    // A first-card POST may have persisted despite a lost/invalid response.
+    // Require a new owned-card read before allowing another creation attempt.
+    const ambiguous = creating && (['REQUEST_TIMEOUT', 'NETWORK_ERROR', 'CARD_RESPONSE_INVALID'].includes(error.code) || error.status >= 500);
+    if (ambiguous) {
+      state.mode = 'save_unknown';
+      showStatus(status, 'Status penyimpanan belum dapat dipastikan. Salin perubahan form, lalu muat ulang halaman untuk memeriksa kartu sebelum mencoba lagi.', 'error');
+    } else showStatus(status, apiErrorMessage(error, 'Perubahan belum dapat disimpan. Periksa data atau muat ulang halaman.'), 'error');
   } finally {
+    state.submitting = false;
     setBusy(form, false);
+    if (state.mode === 'save_unknown') form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = true; });
   }
+}
+
+function validCard(card) {
+  return card && typeof card.publicId === 'string' && Boolean(card.publicId.trim())
+    && card.contact && typeof card.contact === 'object' && !Array.isArray(card.contact);
 }
 
 function fillForm(card) {
