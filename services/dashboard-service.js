@@ -9,6 +9,7 @@ export const dashboardService = {
         throw error;
       }),
     ]);
-    return { cards: Array.isArray(cards) ? cards : [], subscription };
+    if (!Array.isArray(cards)) throw Object.assign(new Error('Data kartu belum dapat diverifikasi. Muat ulang dashboard.'), { code: 'CARD_RESPONSE_INVALID' });
+    return { cards, subscription };
   },
 };

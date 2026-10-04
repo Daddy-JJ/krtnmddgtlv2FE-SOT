@@ -59,6 +59,17 @@ memakai data inti yang sama; mengganti theme tidak membuat salinan contact data.
 
 Anonymous edit tidak diizinkan. Public slug bukan credential.
 
+### Verified-email recovery (FE-D-039)
+
+If the management handoff is lost, the empty member dashboard may list unowned
+Starter candidates matched by the backend to the current verified account email.
+The user selects a card and explicitly confirms linking; registration, OTP,
+login and listing never claim automatically. Multiple candidates are not
+auto-selected. Email/ownership eligibility remains backend-authoritative.
+No candidates are cached in storage or reused across accounts. The existing
+email management link remains an alternative, including when recovery is not
+deployed or unavailable. After confirmed claim, reload owned cards/subscription.
+
 ### Account-first without paid entitlement (FE-D-038)
 
 Registering with intent=basic/pro does not grant entitlement. When GET /cards

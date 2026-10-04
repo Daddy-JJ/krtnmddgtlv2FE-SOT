@@ -5,6 +5,12 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Menambahkan recovery kartu Starter berdasarkan email akun terverifikasi pada
+  dashboard kosong: daftar kandidat, pagination, konfirmasi eksplisit, CSRF sesi,
+  guard submit ganda dan late-response lintas akun. Claim sukses membaca ulang
+  dashboard; error tidak membuat kartu baru atau mengklaim otomatis. Link Kelola
+  kartu dari email tetap menjadi alternatif saat endpoint belum tersedia.
+
 - Menambahkan CTA `Mulai dengan Starter` untuk akun tanpa kartu dan tanpa Basic/Pro
   aktif, dengan pembacaan subscription backend dan paid-card save disabled.
   PAID_ENTITLEMENT_REQUIRED menampilkan arahan jelas tanpa redirect otomatis

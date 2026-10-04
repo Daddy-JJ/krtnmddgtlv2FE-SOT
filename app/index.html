@@ -49,6 +49,20 @@
         </div>
       </div>
 
+      <section class="dashboard-panel p-6" data-starter-recovery hidden aria-labelledby="starterRecoveryTitle">
+        <h2 class="text-xl font-black" id="starterRecoveryTitle">Sudah membuat kartu? Hubungkan ke akun Anda</h2>
+        <p class="mt-2">Kami mencari kartu Starter yang belum terhubung berdasarkan email akun terverifikasi. Pilih kartu Anda dan konfirmasikan. Tidak ada kartu yang dihubungkan otomatis.</p>
+        <p class="mt-3" role="status" aria-live="polite" data-recovery-status></p>
+        <div class="mt-4 grid gap-3" data-recovery-list></div>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <button type="button" class="fdn-button--secondary" data-recovery-retry>Periksa kartu lagi</button>
+          <button type="button" class="fdn-button--secondary" data-recovery-prev hidden>Sebelumnya</button>
+          <button type="button" class="fdn-button--secondary" data-recovery-next hidden>Berikutnya</button>
+          <a href="/verify-email/?returnTo=%2Fapp%2F" class="fdn-button--secondary" data-recovery-verify hidden>Verifikasi email akun</a>
+        </div>
+        <p class="mt-4 text-sm">Alternatif: buka link Kelola kartu dari email pembuatan Starter. Jangan membuat kartu baru untuk menggantikan kartu yang belum terhubung. Jika link kedaluwarsa, hubungi <a href="/contact/">support</a>.</p>
+      </section>
+
       <section class="grid gap-4 lg:grid-cols-3" aria-label="Ringkasan akun">
         <article class="dashboard-panel p-6 lg:col-span-2">
           <div class="flex items-center justify-between gap-3">

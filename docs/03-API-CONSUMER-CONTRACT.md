@@ -91,6 +91,32 @@ logging cookie/token/signature/payment URLs or queries. Never use `no-cors`.
 
 ## Consumed endpoint families
 
+### Starter verified-email recovery (FE-D-039)
+
+- GET /starter/claim-candidates?limit=20&offset=0: authenticated, verified
+  account. Offset 0..1000 in pages of 20. No email/userId request fields.
+  Envelope data: {items:[{publicId,displayName,slug,createdAt}],limit,offset,hasMore}.
+- POST /starter/claim-candidates/{publicId}/claim: explicit confirmation only,
+  body {confirm:true}, normal access CSRF (NOT starter CSRF), cookie credentials.
+  Fresh session CSRF is synchronized first; POST is never automatically retried.
+  Envelope data: {card:{publicId,displayName,slug,createdAt},alreadyOwned:boolean}.
+  Both false and true mean successful server-confirmed ownership outcome.
+- Both responses no-store; frontend validates envelope and projects approved
+  fields only. Candidates stay in page memory, cleared on session/page change;
+  pending reads are aborted/late responses discarded. No publicId proves ownership.
+- On success clear pending management navigation and reread GET /cards and
+  /subscriptions/current. No local ownership assignment. On 409 or
+  STARTER_NOT_ELIGIBLE reread dashboard/candidates without replaying POST.
+- Distinct errors: 401 AUTH_REQUIRED -> login; 403 EMAIL_VERIFICATION_REQUIRED
+  -> verification; CSRF_INVALID -> reload; 404 STARTER_NOT_ELIGIBLE -> refreshed
+  availability; 409 STARTER_ALREADY_OWNED/PLAN_LIMIT_REACHED -> safe ownership/
+  account-limit explanation; 422 VALIDATION_ERROR -> validation; 429 RATE_LIMITED
+  -> honor Retry-After with 30s fallback, manual retry only. Network/timeout/5xx
+  -> uncertainty, never claim success. Generic 404 means service unavailable,
+  not proof that the user's card does not exist. Retain email/support alternative.
+- Authority: read-only backend docs/STARTER-RECOVERY.md and
+  STARTER-RECOVERY.openapi.json. Local contract is not hosting deployment proof.
+
 ### Authentication and account
 
 | Method | Path | Use |

@@ -513,6 +513,17 @@ available without subscription. Failed entitlement reads fail closed, and paid
 creation stays backend-controlled. No data transfer, backend/database edit,
 payment activation, deployment, commit or push is authorized.
 
+## FE-D-039 - Confirmed Starter recovery by verified account email
+
+Date: 2026-10-04. Status: Accepted by owner; frontend consumes local backend
+recovery contract. Owner approved verified-email candidate lookup and explicit
+claim confirmation after the empty-dashboard investigation. Backend owns
+matching, eligibility, locking, one-card limits, revocation and audit. Frontend
+shows only minimal candidate metadata and never auto-claims on OTP/login/list.
+Existing management-token claim remains unchanged; cross-device recovery does
+not depend on browser-stored management credentials. Hosting/UAT must be
+verified separately, backend first. Checkout remains paused.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

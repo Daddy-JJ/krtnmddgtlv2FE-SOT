@@ -8,6 +8,33 @@ data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
 
+## 2026-10-04 - Confirmed Starter recovery (FE-D-039)
+
+Consumed the read-only local backend STARTER-RECOVERY.md/OpenAPI contract.
+The empty member dashboard lists minimal verified-email matched candidates,
+with pagination and explicit native confirmation. No POST on login/OTP/list.
+Service validates/project responses, synchronizes normal account CSRF, sends
+only confirm:true, and never replays the mutation. Same-owner success is accepted.
+Success clears stale management context and rereads cards/subscription; conflict
+refreshes current data. Distinct safe errors, verification/email/support fallback,
+Retry-After and disabled controls are provided. No candidates in Web Storage.
+Session/page changes abort requests, clear candidates and reject late responses.
+Malformed card-list reads now fail instead of rendering a false empty dashboard.
+
+QA: focused recovery/Starter/dashboard tests 42 passed, 0 failed/skipped;
+npm.cmd run qa static/Tailwind build and full native suite 311 passed,
+0 failed/skipped. Local Edge/Chromium API-MOCK browser smoke 12 passed, 0 failed:
+native confirm/cancel, duplicate click, safe text, keyboard focus, 390/1440px,
+owned/empty/unverified/unavailable/error states, pagination and session cleanup.
+Existing npm.cmd run qa:payments:browser regression also passed 31/31 with
+0 failures/skips (LOCAL MOCK, including logout and cross-account cleanup).
+Initial unit rerun exposed a session-change panel visibility race; fixed and
+all suites rerun successfully. These results do NOT prove production ownership.
+Backend recovery endpoints are reported local only, not deployed. Deploy backend
+first, then compatible frontend, then owner-approved real-account UAT. No new
+migration, backend/database edit, real card/email, commit/push or deploy here.
+Checkout remains disabled.
+
 ## 2026-10-04 - First-card Starter CTA (FE-D-038)
 
 Completed the owner-approved CTA after the usage-limit interruption. Empty
