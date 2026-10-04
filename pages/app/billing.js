@@ -3,7 +3,7 @@ import { cardService } from '../../services/card-service.js';
 import { authService } from '../../services/auth-service.js';
 import { createPaymentFlow } from '../../services/payment-flow.js';
 import { paymentIntents, paymentSessionVersion } from '../../utils/payment-intent.js';
-import { billingStatusLabel, paymentEnvironmentLabel, paymentRedirectUrl, paymentErrorMessage, PAYMENT_CHECKOUT_RELEASED } from '../../validators/payment-validator.js';
+import { billingStatusLabel, paymentEnvironmentLabel, paymentRedirectUrl, paymentErrorMessage, paymentCheckoutAllowed } from '../../validators/payment-validator.js';
 import { clearStatus, showStatus } from '../../components/forms/form-utils.js';
 import { safeMembershipIntent } from '../../utils/auth-flow.js';
 
@@ -160,7 +160,7 @@ async function reconcile(event) {
 async function requestCheckout(event) {
   const button = event.target.closest('[data-checkout-plan]');
   if (!button || button.disabled || submitting || loading || !flow
-    || !PAYMENT_CHECKOUT_RELEASED || !state.capabilities?.checkoutEnabled) return;
+    || !paymentCheckoutAllowed(state.capabilities)) return;
   submitting = true;
   const version = paymentSessionVersion();
   renderUpgradeOptions();
@@ -169,7 +169,8 @@ async function requestCheckout(event) {
     const payment = await flow.purchase(button.dataset.checkoutPlan);
     if (!payment || !currentSession(version)) return;
     const url = paymentRedirectUrl(payment);
-    if (payment.provider === 'duitku' && payment.status === 'pending' && url) location.assign(url);
+    if (paymentCheckoutAllowed(state.capabilities) && payment.environment === state.capabilities.environment
+      && payment.provider === 'duitku' && payment.status === 'pending' && url) location.assign(url);
     else if (payment.redirectUrl && payment.status === 'pending') {
       await load(); if (currentSession(version)) errorState({ code: 'PAYMENT_RESPONSE_INVALID' });
     }
@@ -191,14 +192,14 @@ function renderSubscription() {
 }
 function renderUpgradeOptions() {
   const currentPlan = state.subscription?.planCode ?? 'starter';
-  const enabled = PAYMENT_CHECKOUT_RELEASED && state.capabilities?.checkoutEnabled === true && Boolean(flow);
+  const enabled = paymentCheckoutAllowed(state.capabilities) && Boolean(flow);
   const wait = flow?.remaining('checkout') || 0;
   upgradeCards.forEach(card => {
     card.hidden = currentPlan === 'pro' || (currentPlan === 'basic' && card.dataset.upgradeCard === 'basic');
     card.querySelectorAll('button').forEach(button => {
       button.disabled = !enabled || submitting || loading || wait > 0;
       button.setAttribute('aria-disabled', String(button.disabled));
-      button.textContent = submitting ? 'Memproses permintaan...' : enabled && wait ? `Coba lagi dalam ${wait} detik` : enabled ? 'Bayar melalui Duitku' : 'Under development';
+      button.textContent = submitting ? 'Memproses permintaan...' : enabled && wait ? `Coba lagi dalam ${wait} detik` : enabled ? 'Uji pembayaran — Sandbox' : 'Under development';
     });
   });
   if (proUpgradePrice) proUpgradePrice.textContent = currentPlan === 'basic' ? 'Rp55.000' : 'Rp97.000';
@@ -236,7 +237,7 @@ function renderHistory() {
     if (payment.expiresAt) row.append(node('p', `Batas waktu invoice: ${formatDate(payment.expiresAt)}. Status diperiksa melalui server.`, 'mt-1 text-sm'));
     const actions = node('div', '', 'mt-3 flex flex-wrap gap-2');
     const redirectUrl = paymentRedirectUrl(payment);
-    if (PAYMENT_CHECKOUT_RELEASED && state.capabilities?.checkoutEnabled && redirectUrl) {
+    if (paymentCheckoutAllowed(state.capabilities) && payment.environment === state.capabilities.environment && redirectUrl) {
       const pay = node('a', 'Lanjut bayar', 'fdn-button--primary');
       pay.href = redirectUrl;
       pay.referrerPolicy = 'no-referrer';

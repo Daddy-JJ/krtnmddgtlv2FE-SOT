@@ -6,13 +6,36 @@ import { ApiClient } from '../services/api-client.js';
 import { createPaymentService, paymentService } from '../services/payment-service.js';
 import { createPaymentFlow } from '../services/payment-flow.js';
 import { createIntentStore, createBrowserIntentStore, PAYMENT_INTENT_KEY } from '../utils/payment-intent.js';
-import { PAYMENT_CHECKOUT_RELEASED, paymentRedirectUrl, paymentErrorMessage, validCapabilities } from '../validators/payment-validator.js';
+import { PAYMENT_CHECKOUT_RELEASED, PAYMENT_SANDBOX_RELEASED, paymentCheckoutAllowed, paymentRedirectUrl, paymentErrorMessage, validCapabilities } from '../validators/payment-validator.js';
 
 const USER = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const OTHER = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const ID = '8c7e9857-7fbb-4c1f-8e6c-42bdcf9fe60a';
 const KEY = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const capabilities = { checkoutEnabled: true, provider: 'duitku', environment: 'sandbox', idempotencyKeyRequired: true, reconcileCooldownSeconds: 30 };
+
+test('owner gate permits valid enabled sandbox only; production and malformed capabilities fail closed', () => {
+  assert.equal(PAYMENT_CHECKOUT_RELEASED, false); assert.equal(PAYMENT_SANDBOX_RELEASED, true);
+  assert.equal(paymentCheckoutAllowed(capabilities), true);
+  for (const data of [null, {}, { ...capabilities, environment: 'production' }, { ...capabilities, environment: null },
+    { ...capabilities, checkoutEnabled: false }, { ...capabilities, provider: 'other' }, { ...capabilities, idempotencyKeyRequired: false }]) {
+    assert.equal(paymentCheckoutAllowed(data), false);
+  }
+  assert.equal(paymentCheckoutAllowed(capabilities, { released: false, sandboxReleased: false }), false);
+});
+
+test('sandbox-only service rejects enabled production capabilities before CSRF or POST', async () => {
+  const service = createPaymentService({ get: async () => ({ success: true, data: { ...capabilities, environment: 'production' } }),
+    synchronizeAccessCsrf: () => assert.fail('production CSRF preparation'), post: () => assert.fail('production POST') }, { released: false, sandboxReleased: true });
+  await assert.rejects(service.checkout('basic', KEY), { code: 'PAYMENT_CHECKOUT_DISABLED' });
+});
+
+test('sandbox-only checkout uses confirmable server payment environment, not a mismatched response', async () => {
+  let calls = 0;
+  const service = createPaymentService({ get: async () => ({ success: true, data: capabilities }), synchronizeAccessCsrf: async () => {},
+    post: async () => { calls++; return { success: true, data: { publicId: ID, provider: 'duitku', environment: 'production' } }; } }, { sandboxReleased: true });
+  await assert.rejects(service.checkout('basic', KEY), { code: 'PAYMENT_RESPONSE_INVALID' }); assert.equal(calls, 1);
+});
 const payment = { publicId: ID, merchantOrderId: 'KND_order', provider: 'duitku', environment: 'sandbox', status: 'pending', invoiceState: 'ready', redirectUrl: 'https://app-sandbox.duitku.com/redirect_checkout?reference=example' };
 function memoryStorage() {
   const data = new Map();
@@ -42,12 +65,15 @@ function harness(overrides = {}) {
 
 test('release gate blocks the production singleton even if backend would enable checkout', async () => {
   assert.equal(PAYMENT_CHECKOUT_RELEASED, false);
-  await assert.rejects(paymentService.checkout('basic', KEY), { code: 'PAYMENT_CHECKOUT_DISABLED' });
+  const original = paymentService.capabilities;
+  paymentService.capabilities = async () => ({ ...capabilities, environment: 'production' });
+  try { await assert.rejects(paymentService.checkout('basic', KEY), { code: 'PAYMENT_CHECKOUT_DISABLED' }); }
+  finally { paymentService.capabilities = original; }
 });
 for (const data of [null, {}, { ...capabilities, provider: 'unsupported-provider' }, { ...capabilities, environment: null }, { ...capabilities, checkoutEnabled: 'true' }, { ...capabilities, reconcileCooldownSeconds: 0 }, { ...capabilities, idempotencyKeyRequired: false }]) {
   test(`capabilities fail closed for ${JSON.stringify(data)}`, async () => {
     assert.equal(validCapabilities(data), false);
-    const service = createPaymentService({ get: async () => ({ success: true, data }) }, { released: true });
+    const service = createPaymentService({ get: async () => ({ success: true, data }) }, { sandboxReleased: true });
     await assert.rejects(service.capabilities(), { code: 'PAYMENT_RESPONSE_INVALID' });
     await assert.rejects(service.checkout('basic', KEY), { code: 'PAYMENT_RESPONSE_INVALID' });
   });
@@ -55,7 +81,7 @@ for (const data of [null, {}, { ...capabilities, provider: 'unsupported-provider
 test('disabled/failing capabilities never create a payment', async () => {
   let posts = 0;
   for (const get of [async () => ({ success: true, data: { ...capabilities, checkoutEnabled: false } }), async () => { throw new Error('offline'); }]) {
-    const service = createPaymentService({ get, post: () => { posts += 1; } }, { released: true });
+    const service = createPaymentService({ get, post: () => { posts += 1; } }, { sandboxReleased: true });
     await assert.rejects(service.checkout('basic', KEY));
   }
   assert.equal(posts, 0);
@@ -68,7 +94,7 @@ for (const status of [201, 202]) {
       const data = url.endsWith('/capabilities') ? capabilities : url.endsWith('/csrf') ? { csrfToken: 'fresh-csrf' } : { ...payment, redirectUrl: status === 202 ? null : payment.redirectUrl };
       return new Response(JSON.stringify({ success: true, data }), { status: url.endsWith('/checkout') ? status : 200 });
     } });
-    const result = await createPaymentService(client, { released: true }).checkout('basic', KEY);
+    const result = await createPaymentService(client, { sandboxReleased: true }).checkout('basic', KEY);
     assert.equal(result.status, 'pending');
     assert.equal(result.redirectUrl, status === 202 ? null : payment.redirectUrl);
     const { options } = calls.find(call => call.url.endsWith('/checkout'));
@@ -79,7 +105,7 @@ for (const status of [201, 202]) {
   });
 }
 test('invalid plans/UUIDs are rejected before transport', async () => {
-  const service = createPaymentService({ get: () => { throw new Error('must not call'); } }, { released: true });
+  const service = createPaymentService({ get: () => { throw new Error('must not call'); } }, { sandboxReleased: true });
   await assert.rejects(service.checkout('starter', KEY), { code: 'PAYMENT_RESPONSE_INVALID' });
   await assert.rejects(service.checkout('pro', 'not-uuid'), { code: 'PAYMENT_RESPONSE_INVALID' });
 });
@@ -294,7 +320,7 @@ for (const [status, code] of [[401, 'AUTH_REQUIRED'], [403, 'CSRF_INVALID'], [40
       posts += 1;
       return Response.json({ success: false, code, message: 'unsafe internal provider path', errors: ['safe'] }, { status });
     } });
-    await assert.rejects(createPaymentService(client, { released: true }).checkout('basic', KEY), { status, code });
+    await assert.rejects(createPaymentService(client, { sandboxReleased: true }).checkout('basic', KEY), { status, code });
     assert.equal(posts, 1);
     assert.doesNotMatch(paymentErrorMessage({ status, code }), /unsafe internal/);
   });
@@ -312,7 +338,7 @@ test('API refresh-once for capabilities retains key/body for the subsequent sing
     posts.push([url, options.headers.get('Idempotency-Key'), options.body]);
     return Response.json({ success: true, data: payment });
   } });
-  await createPaymentService(client, { released: true }).checkout('pro', KEY);
+  await createPaymentService(client, { sandboxReleased: true }).checkout('pro', KEY);
   assert.equal(reads, 2); assert.equal(posts.length, 2);
   assert.deepEqual(posts[1].slice(1), [KEY, JSON.stringify({ planCode: 'pro' })]);
 });
@@ -325,7 +351,7 @@ test('capabilities are reread for each user and checkout attempt, never cached a
     get: async () => { reads += 1; return { success: true, data: { ...capabilities, checkoutEnabled: allowed } }; },
     synchronizeAccessCsrf: async () => 'fresh',
     post: async () => { posts += 1; return { success: true, data: payment }; },
-  }, { released: true });
+  }, { sandboxReleased: true });
   assert.equal((await service.capabilities()).checkoutEnabled, true);
   allowed = false;
   assert.equal((await service.capabilities()).checkoutEnabled, false);
@@ -341,7 +367,7 @@ test('sandbox denial is distinct from CSRF and auth, without refresh or automati
     if (url.endsWith('/csrf')) return Response.json({ success: true, data: { csrfToken: 'fresh' } });
     return Response.json({ success: false, code: 'PAYMENT_SANDBOX_FORBIDDEN' }, { status: 403 });
   } });
-  await assert.rejects(createPaymentService(client, { released: true }).checkout('basic', KEY), { status: 403, code: 'PAYMENT_SANDBOX_FORBIDDEN' });
+  await assert.rejects(createPaymentService(client, { sandboxReleased: true }).checkout('basic', KEY), { status: 403, code: 'PAYMENT_SANDBOX_FORBIDDEN' });
   assert.equal(paths.filter(path => path.endsWith('/checkout')).length, 1);
   assert.equal(paths.filter(path => path.endsWith('/csrf')).length, 1);
   assert.equal(paths.some(path => path.endsWith('/refresh')), false);
@@ -374,7 +400,7 @@ test('checkout 429 uses absolute Retry-After and retains the intent for manual r
 });
 test('successful HTTP response with success false/malformed checkout remains ambiguous', async () => {
   for (const result of [{ success: false, data: payment }, { success: true, data: {} }]) {
-    const service = createPaymentService({ get: async () => ({ success: true, data: capabilities }), synchronizeAccessCsrf: async () => {}, post: async () => result }, { released: true });
+    const service = createPaymentService({ get: async () => ({ success: true, data: capabilities }), synchronizeAccessCsrf: async () => {}, post: async () => result }, { sandboxReleased: true });
     await assert.rejects(service.checkout('basic', KEY), { code: 'PAYMENT_RESPONSE_INVALID' });
   }
 });

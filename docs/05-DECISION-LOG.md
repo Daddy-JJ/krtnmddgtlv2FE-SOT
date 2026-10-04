@@ -524,6 +524,19 @@ Existing management-token claim remains unchanged; cross-device recovery does
 not depend on browser-stored management credentials. Hosting/UAT must be
 verified separately, backend first. Checkout remains paused.
 
+## FE-D-040 - Restricted sandbox-only frontend activation
+
+Date: 2026-10-04. Status: Accepted by owner. Supersedes the sandbox-only pause
+in FE-D-034/FE-D-037; production remains paused. Owner confirms the designated
+verifier account is verified, has a claimed card and is backend-allowlisted.
+Frontend has no account email/UUID allowlist, role override, keys or merchant API.
+Permit only valid enabled Duitku sandbox capabilities using a shared gate in
+UI/service. Reject enabled production capabilities and mismatched checkout or
+history redirect environments. Shared-database benefit warning remains visible.
+No invoice, payment simulation, backend write, commit/push or deploy in this task;
+real sandbox UAT requires separate authority and evidence. Source approval alone
+does not prove backend flags, credentials or provider connectivity on hosting.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

@@ -288,11 +288,12 @@ PNG contains the backend canonical public URL, not raw contact data.
 | GET | `/payments` | Payment history |
 | GET | `/payments/capabilities` | Fail-closed provider/release capabilities |
 | GET | `/payments/{publicId}` | Owned payment detail |
-| POST | `/payments/checkout` | Duitku POP compatibility; release paused |
+| POST | `/payments/checkout` | Restricted sandbox FE-D-040; production paused |
 | POST | `/payments/{publicId}/reconcile` | Authorized status refresh |
 | POST | `/feedback` | Authenticated improvement message |
 
-Checkout must not be invoked while the product decision remains paused.
+Production checkout must not be invoked while its product decision remains paused.
+Restricted sandbox follows FE-D-040 only; executing real UAT is separately authorized.
 Status payment `refunded` dan `refund_pending_review` harus dirender berbeda.
 Setelah reconciliation, subscription, payment history, dan cards dimuat ulang
 dari backend; tier/benefit tidak ditentukan dari cache frontend.
@@ -305,7 +306,13 @@ backend sandbox membership. No frontend allowlist or admin-role bypass exists.
 Read capabilities after login and on each billing load/explicit checkout; do not
 cache across accounts. Logout/auth transitions and cross-tab notification clear
 billing data/capabilities, and late old-session responses are discarded. The
-separate frontend release constant remains false even if capabilities is true.
+production release constant remains false even if capabilities is true. FE-D-040
+adds a separate sandbox release flag: paymentCheckoutAllowed requires valid
+capabilities, checkoutEnabled:true, provider:duitku and environment:sandbox.
+UI submit, history payment links and service checkout share this gate. Service
+rereads capabilities before POST; checkout response provider/environment must
+match capabilities. History redirects require the same environment too. No
+frontend allowlist or production activation is introduced.
 
 `403 PAYMENT_SANDBOX_FORBIDDEN` closes checkout and displays
 `Pembayaran uji hanya tersedia untuk akun pengujian yang disetujui` without

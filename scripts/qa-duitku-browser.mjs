@@ -39,7 +39,7 @@ const api = createServer(async (request, response) => {
   if (pathname === '/api/v1/payments/capabilities') {
     if (state.capabilities === 'error') return reply(null, 503, 'HTTP_ERROR');
     if (state.capabilities === 'malformed') return reply({ checkoutEnabled: true });
-    return reply({ checkoutEnabled: state.capabilities === 'enabled', provider: 'duitku', environment: 'sandbox', idempotencyKeyRequired: true, reconcileCooldownSeconds: 30 });
+    return reply({ checkoutEnabled: ['enabled', 'production'].includes(state.capabilities), provider: 'duitku', environment: state.capabilities === 'production' ? 'production' : 'sandbox', idempotencyKeyRequired: true, reconcileCooldownSeconds: 30 });
   }
   if (pathname === '/api/v1/payments' && request.method === 'GET') {
     const payments = state.list;
@@ -83,12 +83,12 @@ try {
     }, 'billing loaded');
     await waitFor(async () => !(await tab.evaluate("document.querySelector('[data-payment-history]')?.getAttribute('aria-busy') === 'true'")), 'billing settled');
   }
-  for (const capabilities of ['disabled', 'enabled', 'malformed', 'error']) {
+  for (const capabilities of ['disabled', 'enabled', 'production', 'malformed', 'error']) {
     state.capabilities = capabilities;
     await page();
-    assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-checkout-plan]')].every(button=>button.disabled)"), true);
+    assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-checkout-plan]')].every(button=>button.disabled)"), capabilities !== 'enabled');
     assert.equal(requests.filter(request => request.pathname.endsWith('/checkout')).length, 0);
-    pass(`capabilities ${capabilities}: checkout remains paused`);
+    pass(`capabilities ${capabilities}: sandbox-only gate, no automatic checkout`);
   }
   state.capabilities = 'enabled';
   state.delay = 1000;
@@ -148,7 +148,7 @@ try {
   pass('unsupported provider cannot redirect or reconcile');
   state.list = []; state.payment = { ...fixture }; state.reconcile = 'paid';
   await page();
-  const setup = `(async()=>{const {api}=await import('/services/api-client.js');const {createPaymentService}=await import('/services/payment-service.js');const {createPaymentFlow}=await import('/services/payment-flow.js');const {paymentIntents}=await import('/utils/payment-intent.js');globalThis.qaIntents=paymentIntents;globalThis.qaFlow=createPaymentFlow({service:createPaymentService(api,{released:true}),intents:paymentIntents,userPublicId:'${USER}',currentUser:async()=> (await api.get('/me')).user.publicId,cards:async()=>[]});return true})()`;
+  const setup = `(async()=>{const {api}=await import('/services/api-client.js');const {createPaymentService}=await import('/services/payment-service.js');const {createPaymentFlow}=await import('/services/payment-flow.js');const {paymentIntents}=await import('/utils/payment-intent.js');globalThis.qaIntents=paymentIntents;globalThis.qaFlow=createPaymentFlow({service:createPaymentService(api,{sandboxReleased:true}),intents:paymentIntents,userPublicId:'${USER}',currentUser:async()=> (await api.get('/me')).user.publicId,cards:async()=>[]});return true})()`;
   await tab.evaluate(setup); await tab.evaluate('qaIntents.clear()');
   const second = await browser.tab(); await second.navigate(origin + '/app/billing/');
   await waitFor(async () => (await second.evaluate("document.querySelector('[data-payment-history]')?.textContent || ''")).includes('Belum ada'), 'second tab');
@@ -214,7 +214,7 @@ try {
   await page();
   assert.match(await tab.evaluate("document.querySelector('[data-upgrade-note]').textContent"), /Pembayaran uji — Sandbox.*database yang sama/);
   assert.match(await tab.evaluate("document.querySelector('[data-payment-history]').textContent"), /Pembayaran uji — Sandbox/);
-  pass('sandbox label and shared-database benefit warning are visible while checkout stays disabled');
+  pass('sandbox label and shared-database benefit warning are visible');
 
   state.delay = 1000;
   await tab.navigate(origin + '/app/billing/');
@@ -240,8 +240,24 @@ try {
   assert.equal(denied.filter(request => request.pathname.endsWith('/checkout')).length, 1);
   assert.equal(denied.some(request => request.pathname.endsWith('/refresh')), false);
   assert.equal(denied.filter(request => request.pathname.endsWith('/csrf')).length, 1);
+  // Test the actual page event/error owner, not only the injected service flow.
+  await tab.evaluate('qaIntents.clear()');
+  await tab.evaluate("document.querySelector('[data-checkout-plan]').click();document.querySelector('[data-checkout-plan]').click()");
+  await waitFor(async () => /akun pengujian/.test(await tab.evaluate("document.querySelector('[data-form-status]').textContent")), 'sandbox denial UI');
   assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-checkout-plan]')].every(button=>button.disabled)"), true);
-  pass('sandbox forbidden uses one mock POST with no refresh or CSRF replay');
+  pass('sandbox forbidden closes real UI after explicit click without retry');
+
+  state.checkout = 'ready'; state.list = []; state.payment = { ...fixture };
+  await tab.evaluate('qaIntents.clear()'); await page();
+  const beforePageCheckout = requests.filter(request => request.pathname.endsWith('/checkout')).length;
+  await tab.evaluate("document.querySelector('[data-checkout-plan]').click();document.querySelector('[data-checkout-plan]').click()");
+  await waitFor(async () => /sedang diverifikasi/.test(await tab.evaluate("document.querySelector('[data-form-status]').textContent")), 'explicit sandbox pending');
+  const pageCheckouts = requests.filter(request => request.pathname.endsWith('/checkout'));
+  assert.equal(pageCheckouts.length, beforePageCheckout + 1);
+  assert.deepEqual(JSON.parse(pageCheckouts.at(-1).body), { planCode: 'basic' });
+  assert.ok(pageCheckouts.at(-1).key); assert.equal(pageCheckouts.at(-1).csrf, 'local-mock-csrf');
+  assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-subscription-summary]').textContent"), /BASIC/);
+  pass('actual sandbox button double-click sends one mock checkout; 202 never grants entitlement');
 
   state.reports = { productionRevenue: [{ currency: 'IDR', amount: '55000.00', count: 1 }, { currency: 'USD', amount: '2.50', count: 1 }],
     paymentTotals: [{ provider: 'duitku', environment: 'sandbox', status: 'paid', currency: 'IDR', amount: '97000', count: 1 },

@@ -4,6 +4,13 @@ export function validatePlanCode(value) {
 
 // Backend capability is not an owner authorization to release checkout.
 export const PAYMENT_CHECKOUT_RELEASED = false;
+// Owner-approved restricted sandbox only; account allowlist remains backend-owned.
+export const PAYMENT_SANDBOX_RELEASED = true;
+
+export function paymentCheckoutAllowed(capabilities, { released = PAYMENT_CHECKOUT_RELEASED, sandboxReleased = PAYMENT_SANDBOX_RELEASED } = {}) {
+  if (!validCapabilities(capabilities) || capabilities.checkoutEnabled !== true) return false;
+  return capabilities.environment === 'sandbox' ? sandboxReleased === true : released === true;
+}
 export const isPaymentId = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 export function validCapabilities(data) {

@@ -52,7 +52,7 @@ test('billing UI keeps annual plans visible but locks checkout while payment is 
   assert.match(html,/billing-plan__badge" data-status-badge/);
   assert.match(html,/billing-plan__cta primary-cta/);
   assert.match(html,/365 hari/g);
-  assert.match(source,/PAYMENT_CHECKOUT_RELEASED/);
+  assert.match(source,/paymentCheckoutAllowed/);
   assert.doesNotMatch(source,/paymentService\.checkout|function checkout|toggleCheckout/);
   assert.match(source, /Peningkatan membership masih Under development\./);
   assert.match(source, /clearStatus\(status\)/);

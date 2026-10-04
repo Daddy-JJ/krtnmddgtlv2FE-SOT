@@ -70,10 +70,14 @@ dari backend. Browser tidak boleh mengaktifkan membership.
 ## Membership checkout pause
 
 - Gateway baru menggunakan Duitku POP browser redirect (FE-D-034).
+- FE-D-040 permits restricted sandbox frontend only when valid, user-scoped
+  capabilities report checkoutEnabled:true and environment:sandbox. Backend-only
+  dummy allowlist remains mandatory. Production release stays false. This source
+  approval does not authorize deploy or actual sandbox invoices in this task.
 - Checkout dan aktivasi payment baru tetap paused sampai keputusan owner
   terpisah setelah sandbox/UAT terkoordinasi; compatibility bukan aktivasi.
 - UI boleh menampilkan benefit dan harga informatif.
-- Tombol checkout tidak boleh aktif.
+- Tombol checkout production tidak boleh aktif; sandbox exception follows FE-D-040.
 - Note paused wajib menggunakan teks `Under development`.
 - Saat resumed melalui keputusan baru, transisi yang diizinkan adalah Starter ke
   Basic, Starter ke Pro, dan Basic ke Pro. Pro tidak memiliki upgrade CTA.

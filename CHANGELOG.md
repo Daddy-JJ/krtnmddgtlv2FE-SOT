@@ -5,6 +5,10 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Mengaktifkan gate frontend sandbox-only Duitku (FE-D-040) untuk capabilities
+  valid yang diizinkan backend. Production tetap false; UI/service dan history
+  redirect memakai gate yang sama, dengan pengecekan environment invoice.
+
 - Menambahkan recovery kartu Starter berdasarkan email akun terverifikasi pada
   dashboard kosong: daftar kandidat, pagination, konfirmasi eksplisit, CSRF sesi,
   guard submit ganda dan late-response lintas akun. Claim sukses membaca ulang

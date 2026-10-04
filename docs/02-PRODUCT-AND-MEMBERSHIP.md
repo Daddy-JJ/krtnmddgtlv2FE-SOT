@@ -143,8 +143,16 @@ They are owner-provided, not independently verified legal-registration evidence.
 
 ### Checkout remains paused
 
+FE-D-040 supersedes the sandbox-only part of the earlier pause: owner approved
+restricted sandbox frontend activation after confirming a verified/claimed dummy
+account is backend-allowlisted. UI and service use the same strict capability gate.
+Production checkout remains disabled, even with enabled production capabilities.
+Sandbox button label is `Uji pembayaran — Sandbox`; unavailable/nonmember users
+retain Under development. Never hardcode an email/UUID/role allowlist in frontend.
+No real invoice, deploy or production activation is authorized by this patch task.
+
 Restricted sandbox (FE-D-037) uses backend-only dummy account membership.
-Capabilities is user-scoped and never overrides the paused frontend release
+Capabilities is user-scoped and never overrides the paused production release
 gate. `Pembayaran uji — Sandbox` is a gateway label, NOT data/benefit isolation:
 owner approved sharing the production database, so confirmed sandbox paid can
 change dummy subscriptions/cards. Never allow customer accounts/resources into
@@ -158,9 +166,10 @@ aktivasi terpisah dari owner setelah sandbox/UAT (FE-D-034).
 Selama pause:
 
 - Benefit/harga boleh ditampilkan sebagai informasi.
-- Semua checkout CTA disabled atau tidak dirender.
+- Semua checkout production CTA disabled atau tidak dirender; restricted sandbox
+  exception follows FE-D-040 and validated backend capabilities.
 - Gunakan note exact `Under development`.
-- Browser tidak membuat payment baru.
+- Browser tidak membuat payment production baru.
 - Existing history/reconciliation hanya boleh mengikuti backend authorization.
 
 Jika payment diteruskan melalui keputusan baru, frontend hanya mengirim target

@@ -8,6 +8,36 @@ data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
 
+## 2026-10-04 - Restricted sandbox-only gate (FE-D-040)
+
+Owner subsequently requested release/activation of sandbox and reports backend
+ready. This authorizes publishing the frontend sandbox-only patch to main;
+production gate remains false. Public hosted module verification and authenticated
+provider UAT are separate evidence. No sandbox invoice/payment is run by this
+release operation, and backend readiness is owner-reported until live verification.
+
+Owner approved frontend sandbox activation and confirms the designated verifier
+account is verified, owns a claimed card and is backend-allowlisted. These are
+owner-reported hosting facts, not independently authenticated live evidence.
+Production PAYMENT_CHECKOUT_RELEASED stays false; separate sandbox flag is true.
+Shared validated capability gate controls UI, service POST and history links.
+Service rereads capabilities; failed/malformed/disabled/non-sandbox capabilities
+fail closed, and checkout responses/history links must match the environment.
+No email/UUID allowlist, credential, role bypass or merchant SDK was added.
+Safe sandbox labels and shared-database benefit warning remain visible.
+
+QA: focused payment/billing/admin 64 passed; npm.cmd run qa build/full suite
+314 passed, 0 failed/skipped; final Edge/Chromium browser QA 33 passed, 0 failed/
+skipped at mobile/tablet/desktop sizes. Includes actual UI sandbox double-click
+with one mock checkout POST, 202 pending, production capability rejection and
+sandbox denial closing checkout. The old paused-singleton test initially expected
+no capability read; updated to mock production capabilities and reran successfully.
+Browser QA is local API mock only; live approved
+account capabilities, merchant connectivity, invoice/callback/return and paid
+subscription/card UAT remain NOT VERIFIED. No real invoice/payment/email, backend
+or database edit, commit/push or deployment. Sandbox transaction execution still
+requires separate permission; production release requires separate owner approval.
+
 ## 2026-10-04 - Confirmed Starter recovery (FE-D-039)
 
 Consumed the read-only local backend STARTER-RECOVERY.md/OpenAPI contract.
