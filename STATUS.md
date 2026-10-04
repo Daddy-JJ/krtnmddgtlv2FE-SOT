@@ -8,6 +8,25 @@ data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
 
+## 2026-10-04 - First-card Starter CTA (FE-D-038)
+
+Completed the owner-approved CTA after the usage-limit interruption. Empty
+owned-card lists now read the current subscription: absent/inactive/expired paid
+plans show `Mulai dengan Starter` linking to /create/ and disable paid-card save.
+Malformed/failed reads fail closed, not as a claim that the user has no entitlement.
+Claimed Starter editing remains available without requiring a paid subscription.
+PAID_ENTITLEMENT_REQUIRED shows the same CTA, preserves input and does not replay
+the mutation or redirect automatically. Registration intent grants no benefits.
+Checkout remains paused. Product/API SOT, Decision Log and changelog aligned.
+
+QA: focused tests 45 passed, 0 failed/skipped; npm.cmd run qa static/Tailwind
+build and full native suite 285 passed, 0 failed/skipped. An additional malformed
+numeric-date fixture passed in the final focused rerun. Local Edge/Chromium mock
+browser smoke: 6 passed, 0 failed, covering unpaid CTA, keyboard focus, 390/1440px
+layout, active paid create availability, claimed Starter editing and failed-read
+lock. No real card/email/payment was created. Production authenticated UAT and
+deployment are NOT VERIFIED. No backend/database edit, commit, push or deploy.
+
 ## 2026-10-04 - First-card save CSRF and duplicate-submit hardening
 
 Owner confirmed the failing POST /cards was a first-card attempt after
@@ -31,6 +50,17 @@ cookie/session/hosting cause is not proven. Mock tests are not live session proo
 No backend/database edit, real card/email/payment, deploy, commit or push.
 
 ## 2026-10-04 - Restricted Duitku sandbox frontend alignment
+
+Revalidated after the repeated restricted-sandbox handover against current
+frontend source and read-only backend integration/payment references. Existing
+implementation in frontend commit 7cc4a0b satisfies the requested contracts;
+no additional runtime patch or duplicate abstraction was needed. Existing
+uncommitted Starter CTA changes were preserved. Current QA: focused payment,
+billing and admin tests 61 passed, full npm.cmd run qa/build 285 passed,
+local mock Edge/Chromium browser 31 passed; all 0 failed and 0 skipped.
+Checkout release remains false. Live deployment, authenticated CORS/header
+verification, approved dummy-account sandbox callback/return and UAT remain
+NOT VERIFIED. No backend/database edit, real transaction, deploy, commit or push.
 
 Frontend audited against read-only backend `2f24a89` and its integration/payment
 references. Capabilities remain uncached/user-scoped and feature gate remains

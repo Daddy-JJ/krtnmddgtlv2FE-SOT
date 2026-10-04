@@ -1,4 +1,5 @@
 import { cardService } from '../../services/card-service.js';
+import { paymentService } from '../../services/payment-service.js';
 import { buildCardInput, validateCardInput } from '../../validators/card-validator.js';
 import { clearFieldErrors, formValues, mapApiFieldErrors, setBusy, showFieldErrors, showStatus } from '../../components/forms/form-utils.js';
 import { mountCardLivePreview } from '../../components/card-live-preview.js';
@@ -11,6 +12,7 @@ const status = document.querySelector('[data-form-status]');
 const previewStage = document.querySelector('[data-card-live-preview]');
 const previewStatus = document.querySelector('[data-card-live-preview-status]');
 const whatsappPreview = document.querySelector('[data-whatsapp-preview]');
+const starterNextStep = document.querySelector('[data-starter-next-step]');
 const section = form?.dataset.editorSection ?? 'card';
 const editableFields = [
   'namePrefix', 'firstName', 'lastName', 'jobTitle', 'organization',
@@ -41,6 +43,21 @@ async function load() {
     }
     const first = cards[0];
     if (!first) {
+      const subscription = await paymentService.currentSubscription().catch(error => {
+        if (error.status === 404) return null;
+        throw error;
+      });
+      if (subscription !== null && (!subscription || !['basic', 'pro'].includes(subscription.planCode)
+        || typeof subscription.status !== 'string' || typeof subscription.startsAt !== 'string' || typeof subscription.endsAt !== 'string'
+        || !Number.isFinite(Date.parse(subscription.startsAt))
+        || !Number.isFinite(Date.parse(subscription.endsAt)))) {
+        throw new Error('Status paket belum dapat diverifikasi. Muat ulang halaman sebelum menyimpan.');
+      }
+      const now = Date.now();
+      if (!subscription || subscription.status !== 'active' || Date.parse(subscription.startsAt) > now || Date.parse(subscription.endsAt) <= now) {
+        requireStarter();
+        return;
+      }
       state.mode = 'empty';
       await loadLivePreview();
       showStatus(status, 'Belum ada kartu di akun ini. Isi form untuk membuat kartu pertama; akses paket tetap ditentukan oleh akun Anda.', 'info');
@@ -65,12 +82,14 @@ async function load() {
   } finally {
     setBusy(form, false);
     setEditorLocked(state.mode === 'load_failed');
+    if (state.mode === 'starter_required') lockCreation();
   }
 }
 
 async function save(event) {
   event.preventDefault();
   if (state.submitting) return;
+  if (state.mode === 'starter_required') { requireStarter(); return; }
   if (!['empty', 'ready'].includes(state.mode)) {
     showStatus(status, 'Data kartu belum siap. Muat ulang halaman sebelum menyimpan.', 'error');
     return;
@@ -116,7 +135,9 @@ async function save(event) {
     // A first-card POST may have persisted despite a lost/invalid response.
     // Require a new owned-card read before allowing another creation attempt.
     const ambiguous = creating && (['REQUEST_TIMEOUT', 'NETWORK_ERROR', 'CARD_RESPONSE_INVALID'].includes(error.code) || error.status >= 500);
-    if (ambiguous) {
+    if (error.code === 'PAID_ENTITLEMENT_REQUIRED') {
+      requireStarter();
+    } else if (ambiguous) {
       state.mode = 'save_unknown';
       showStatus(status, 'Status penyimpanan belum dapat dipastikan. Salin perubahan form, lalu muat ulang halaman untuk memeriksa kartu sebelum mencoba lagi.', 'error');
     } else showStatus(status, apiErrorMessage(error, 'Perubahan belum dapat disimpan. Periksa data atau muat ulang halaman.'), 'error');
@@ -124,7 +145,23 @@ async function save(event) {
     state.submitting = false;
     setBusy(form, false);
     if (state.mode === 'save_unknown') form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = true; });
+    if (state.mode === 'starter_required') lockCreation();
   }
+}
+
+function lockCreation() {
+  form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = true; });
+}
+
+function requireStarter() {
+  state.mode = 'starter_required';
+  if (starterNextStep) {
+    starterNextStep.hidden = false;
+    starterNextStep.querySelector('[data-starter-next-step-message]').textContent =
+      'Pembuatan kartu ini memerlukan Basic atau Pro aktif. Anda bisa mulai dengan Starter gratis, kemudian upgrade saat pembayaran tersedia.';
+  }
+  showStatus(status, 'Mulai dengan Starter gratis melalui tombol di atas. Paket Basic/Pro belum aktif untuk pembuatan kartu ini.', 'info');
+  lockCreation();
 }
 
 function validCard(card) {

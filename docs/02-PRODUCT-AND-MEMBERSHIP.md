@@ -59,6 +59,17 @@ memakai data inti yang sama; mengganti theme tidak membuat salinan contact data.
 
 Anonymous edit tidak diizinkan. Public slug bukan credential.
 
+### Account-first without paid entitlement (FE-D-038)
+
+Registering with intent=basic/pro does not grant entitlement. When GET /cards
+is empty and no active Basic/Pro subscription exists, offer an explicit
+`Mulai dengan Starter` link to /create/ and disable paid-card save. Do not
+redirect automatically, transfer input or store user data. Remind users to copy
+existing input before navigating. Use the existing email management, account
+verification and claim flow (including Login for already registered users).
+Claimed Starter editing does NOT require paid subscription. Authorized Basic/Pro
+creation remains subject to backend limits. Checkout remains paused.
+
 ## Account security UX
 
 The authenticated `/app/account/` surface contains only password reset. It

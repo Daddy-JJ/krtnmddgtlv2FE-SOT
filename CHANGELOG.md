@@ -5,6 +5,11 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- Menambahkan CTA `Mulai dengan Starter` untuk akun tanpa kartu dan tanpa Basic/Pro
+  aktif, dengan pembacaan subscription backend dan paid-card save disabled.
+  PAID_ENTITLEMENT_REQUIRED menampilkan arahan jelas tanpa redirect otomatis
+  atau menghapus input. Edit Starter yang diklaim tidak membutuhkan paket paid.
+
 - Memperbaiki save kartu pertama: sinkronisasi CSRF sebelum create/update,
   guard submit ganda, validasi load agar respons rusak tidak menjadi create,
   serta blokir create ulang setelah hasil ambigu sampai kartu diperiksa lewat

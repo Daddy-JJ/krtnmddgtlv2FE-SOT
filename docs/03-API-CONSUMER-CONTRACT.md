@@ -191,6 +191,16 @@ reload rereads owned cards; no automatic resend or guessed success.
 Registration intent=basic/pro never grants paid entitlement or bypasses backend
 creation eligibility. Checkout remains paused.
 
+Starter CTA (FE-D-038): after a validated empty card list, read
+GET /subscriptions/current through the existing payment service. Null/404 or
+a valid inactive/expired Basic/Pro response offers `Mulai dengan Starter` at
+/create/ and blocks paid-card save. An active Basic/Pro response with valid
+current startsAt/endsAt permits the form, but is not an authorization grant.
+Failed/malformed reads lock save without claiming the account is unpaid.
+Owned-card edits, including claimed Starter, skip this paid-subscription check.
+403 PAID_ENTITLEMENT_REQUIRED during save shows the same CTA without replay,
+automatic redirect or input loss. Intent/query does not determine entitlement.
+
 | Method | Path | Use |
 |---|---|---|
 | GET/POST | `/cards` | List/create account cards |

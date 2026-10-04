@@ -498,6 +498,21 @@ admin-role exemption, production checkout, real transaction, backend/database
 mutation, deployment or commit/push is authorized. Sandbox/UAT and activation
 remain separate owner decisions; this does not supersede FE-D-034's pause.
 
+## FE-D-038 - Explicit Starter CTA for unpaid account-first users
+
+Date: 2026-10-04
+Status: Accepted for frontend UX; checkout remains paused.
+
+Owner confirmed first-card PAID_ENTITLEMENT_REQUIRED after Basic registration
+and approved an explicit CTA rather than automatic navigation. If there are no
+owned cards and no active Basic/Pro subscription, offer `Mulai dengan Starter`
+at /create/ and disable paid-card save. Preserve inputs and remind users to copy
+them before following the existing email management/verification/claim journey.
+Registration intent grants no entitlement. Claimed Starter editing remains
+available without subscription. Failed entitlement reads fail closed, and paid
+creation stays backend-controlled. No data transfer, backend/database edit,
+payment activation, deployment, commit or push is authorized.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

@@ -61,25 +61,70 @@ async function editorHarness(overrides = {}) {
   const messages = [], calls = [];
   const fields = new Map();
   const submit = { disabled: false };
+  const starterMessage = { textContent: '' };
+  const starterNextStep = { hidden: true, querySelector: () => starterMessage };
   const form = { dataset: {}, elements: new Proxy({}, { get: (_target, field) => {
     if (!fields.has(field)) fields.set(field, { value: '' }); return fields.get(field);
   } }), addEventListener() {}, setAttribute() {}, removeAttribute() {}, querySelectorAll: () => [submit] };
   const service = { list: async () => [], get: async () => savedCard,
     create: async () => { calls.push('create'); return savedCard; },
     update: async () => { calls.push('update'); return savedCard; }, ...overrides };
-  const context = { cardService: service, apiErrorMessage, formValues: () => ({ firstName: 'Nama User' }),
+  const context = { cardService: service, paymentService: { currentSubscription: overrides.currentSubscription ?? (async () => ({ planCode: 'basic', status: 'active', startsAt: '2020-01-01T00:00:00Z', endsAt: '2099-01-01T00:00:00Z' })) }, apiErrorMessage, formValues: () => ({ firstName: 'Nama User' }),
     buildCardInput: values => ({ contact: { fullName: values.firstName } }), validateCardInput: () => ({}),
     clearFieldErrors() {}, showFieldErrors() {}, mapApiFieldErrors: () => ({}), bindWebsiteUrlInput() {},
     splitName: () => ({ firstName: 'Nama', lastName: 'User' }),
     setBusy: (_form, value) => { submit.disabled = value; }, showStatus: (_node, message) => messages.push(message),
-    document: { querySelector: selector => selector === '[data-card-editor-form]' ? form : selector === '[data-form-status]' ? {} : null,
+    document: { querySelector: selector => selector === '[data-card-editor-form]' ? form : selector === '[data-starter-next-step]' ? starterNextStep : selector === '[data-form-status]' ? {} : null,
       documentElement: { lang: 'id' }, dispatchEvent() {} },
     location: { assign() {}, origin: 'https://example.test' }, CustomEvent: class {},
   };
   const controller = runInNewContext(editorSource.replace(/^import .*;\r?$/gm, '') + '\n({save, state});', context);
   await new Promise(resolve => setImmediate(resolve));
-  return { controller, calls, messages, submit, service, event: { preventDefault() {} } };
+  return { controller, calls, messages, submit, service, starterNextStep, starterMessage, event: { preventDefault() {} } };
 }
+
+for (const subscription of [null, { planCode: 'basic', status: 'expired', startsAt: '2020-01-01', endsAt: '2021-01-01' }, { planCode: 'pro', status: 'active', startsAt: '2020-01-01', endsAt: '2021-01-01' }]) {
+  test(`empty account without active paid plan offers Starter, never attempts create: ${JSON.stringify(subscription)}`, async () => {
+    const h = await editorHarness({ currentSubscription: async () => subscription });
+    assert.equal(h.controller.state.mode, 'starter_required');
+    assert.equal(h.starterNextStep.hidden, false); assert.equal(h.submit.disabled, true);
+    await h.controller.save(h.event); assert.deepEqual(h.calls, []);
+    assert.match(h.starterMessage.textContent, /Starter gratis/);
+  });
+}
+
+test('subscription 404 offers Starter; errors/malformed subscriptions fail closed without claiming no entitlement', async () => {
+  const absent = await editorHarness({ currentSubscription: async () => { throw { status: 404 }; } });
+  assert.equal(absent.controller.state.mode, 'starter_required');
+  for (const read of [async () => { throw { status: 503 }; }, async () => ({}), async () => ({ planCode: 'basic' }), async () => ({ planCode: 'basic', status: 'active', startsAt: 0, endsAt: 4102444800000 })]) {
+    const h = await editorHarness({ currentSubscription: read });
+    assert.equal(h.controller.state.mode, 'load_failed'); assert.equal(h.starterNextStep.hidden, true);
+    await h.controller.save(h.event); assert.deepEqual(h.calls, []);
+  }
+});
+
+test('claimed Starter edit does not require a paid subscription', async () => {
+  const h = await editorHarness({ list: async () => [{ publicId: savedCard.publicId }], get: async () => ({ ...savedCard, planCode: 'starter' }),
+    currentSubscription: async () => assert.fail('Starter editing must not be gated by paid subscription') });
+  assert.equal(h.controller.state.mode, 'ready'); assert.equal(h.starterNextStep.hidden, true);
+  await h.controller.save(h.event); assert.deepEqual(h.calls, ['update']);
+});
+
+test('entitlement denied during save shows CTA, preserves form and never retries or redirects', async () => {
+  let posts = 0;
+  const h = await editorHarness({ create: async () => { posts += 1; throw { status: 403, code: 'PAID_ENTITLEMENT_REQUIRED' }; } });
+  await h.controller.save(h.event); await h.controller.save(h.event);
+  assert.equal(posts, 1); assert.equal(h.starterNextStep.hidden, false);
+  assert.equal(h.submit.disabled, true); assert.equal(h.controller.state.submitting, false);
+});
+
+test('Starter CTA is a keyboard-accessible existing route with no intent-based entitlement or automatic redirect', async () => {
+  const html = await readFile(new URL('../app/card/identity/index.html', import.meta.url), 'utf8');
+  assert.match(html, /href="\/create\/" aria-describedby="starterNextStepHint">Mulai dengan Starter/);
+  assert.match(html, /salin data sebelum melanjutkan/);
+  assert.doesNotMatch(editorSource, /location\.(?:assign|replace)\(['"]\/create/);
+  assert.doesNotMatch(editorSource, /URLSearchParams.*intent/);
+});
 
 test('first-card concurrent submit/Enter uses one create, then later save uses update', async () => {
   let resolveCreate;

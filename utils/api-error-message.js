@@ -1,4 +1,5 @@
 const messages = {
+  PAID_ENTITLEMENT_REQUIRED: 'Pembuatan kartu ini memerlukan Basic atau Pro aktif. Mulai dengan Starter gratis; pilihan paket saat registrasi belum mengaktifkan langganan.',
   AUTH_REQUIRED: 'Sesi Anda berakhir. Silakan login kembali.',
   INVALID_CREDENTIALS: 'Password saat ini salah.',
   RECENT_AUTH_REQUIRED: 'Untuk keamanan, silakan login ulang sebelum melanjutkan.',
