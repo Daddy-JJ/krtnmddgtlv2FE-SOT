@@ -49,8 +49,12 @@ const api = createServer(async (request, response) => {
   if (pathname === `/api/v1/payments/${ID}`) return reply(state.payment);
   if (pathname === `/api/v1/payments/${ID}/reconcile`) {
     if (state.reconcile === 'limited') return reply(null, 429, 'RATE_LIMITED');
-    state.payment.status = 'paid'; state.list = [{ ...state.payment }];
-    return reply({ result: 'paid', paymentPublicId: ID, paymentStatus: 'paid' });
+    state.payment.status = state.reconcile === 'canceled' ? 'canceled' : 'paid'; state.list = [{ ...state.payment }];
+    return reply({ result: 'verified', paymentPublicId: ID, paymentStatus: state.payment.status });
+  }
+  if (request.method === 'GET' && pathname.startsWith('/api/v1/payments/')) {
+    const owned = state.list.find(payment => pathname === `/api/v1/payments/${payment.publicId}`);
+    if (owned) return reply(owned);
   }
   if (pathname === '/api/v1/payments/checkout') {
     assert.deepEqual(JSON.parse(body), { planCode: 'basic' });
@@ -336,6 +340,58 @@ try {
   assert.equal(await tab.evaluate("document.querySelector('[data-status-badge]').textContent"), 'Under development');
   assert.equal(await tab.evaluate("document.querySelector('.billing-notify').hidden"), false);
   pass('server closes production after enabled capabilities: one POST, no retry, locked UI restored');
+
+  state.capabilities = 'production'; state.checkout = 'ready'; state.reconcile = 'canceled';
+  await clearIntents();
+  for (const [label, pending, message] of [
+    ['old sandbox', { ...fixture, redirectUrl: 'https://app-sandbox.duitku.com/redirect_checkout?reference=local-mock', expiresAt: '2026-10-04T12:08:00Z' }, /Transaksi uji sebelumnya belum selesai/],
+    ['unknown environment', { ...fixture, environment: null }, /konteks pembayarannya berbeda/],
+    ['legacy provider', { ...fixture, provider: 'legacy', environment: 'production' }, /konteks pembayarannya berbeda/],
+  ]) {
+    state.payment = pending; state.list = [{ ...pending }];
+    const before = requests.filter(request => request.pathname.endsWith('/checkout') || request.pathname.endsWith('/reconcile')).length;
+    await page('/app/billing/?intent=basic');
+    assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-checkout-plan]')].every(button=>button.disabled)"), true);
+    assert.match(await tab.evaluate("document.querySelector('[data-upgrade-note]').textContent"), message);
+    assert.equal(await tab.evaluate("document.querySelector('[data-payment-history] a') === null"), true);
+    await tab.evaluate("document.querySelector('[data-checkout-plan]').click();document.querySelector('[data-checkout-plan]').click()");
+    assert.equal(requests.filter(request => request.pathname.endsWith('/checkout') || request.pathname.endsWith('/reconcile')).length, before);
+    assert.equal(state.payment.status, 'pending');
+    pass(`production + ${label}: explicit blocker, no new invoice/redirect or local expiry`);
+  }
+  state.payment = { ...fixture, redirectUrl: 'https://app-sandbox.duitku.com/redirect_checkout?reference=local-mock' };
+  state.list = [{ ...state.payment }];
+  await page('/app/billing/result/?merchantOrderId=KND_local_mock&resultCode=00');
+  assert.match(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /Transaksi uji sebelumnya belum selesai/);
+  assert.equal(await tab.evaluate('location.search'), '');
+  assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-subscription-summary]').textContent"), /BASIC/);
+  pass('old sandbox return in production keeps conflict guidance and rejects forged success');
+
+  const beforeResolution = requests.filter(request => request.pathname.endsWith('/checkout')).length;
+  await tab.evaluate("document.querySelector('[data-reconcile-payment]').click()");
+  await waitFor(async () => /Dibatalkan/.test(await tab.evaluate("document.querySelector('[data-payment-history]').textContent")), 'old sandbox canceled by mock backend');
+  await page();
+  assert.equal(await tab.evaluate("document.querySelector('[data-checkout-plan]').disabled"), false);
+  assert.equal(requests.filter(request => request.pathname.endsWith('/checkout')).length, beforeResolution);
+  pass('manual server resolution releases blocker without automatic replacement checkout');
+
+  state.payment = { ...fixture, environment: 'production', redirectUrl: 'https://app-prod.duitku.com/redirect_checkout?reference=local-mock' };
+  state.list = [{ ...state.payment }]; await page();
+  assert.equal(await tab.evaluate("document.querySelector('[data-checkout-plan=basic]').disabled"), false);
+  assert.equal(await tab.evaluate("document.querySelector('[data-checkout-plan=pro]').disabled"), true);
+  assert.equal(await tab.evaluate("document.querySelector('[data-payment-history] a').textContent"), 'Lanjut bayar');
+  pass('compatible production pending resumes existing invoice; other plan cannot create another');
+
+  const otherId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  state.payment = { ...fixture };
+  const newer = { ...fixture, publicId: otherId, merchantOrderId: 'KND_owned_new', environment: 'production' };
+  state.list = [{ ...state.payment }, newer];
+  await tab.evaluate(`(async()=>{const {paymentIntents}=await import('/utils/payment-intent.js');await paymentIntents.write({userPublicId:'${USER}',key:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',planCode:'basic',publicId:'${ID}'})})()`);
+  await page('/app/billing/result/?merchantOrderId=KND_owned_new&resultCode=00');
+  assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-reconcile-payment]')].map(button=>button.dataset.reconcilePayment).join(',')"), `${otherId},${ID}`);
+  assert.equal(await tab.evaluate("document.querySelector('[data-payment-history] a') === null"), true);
+  assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-subscription-summary]').textContent"), /BASIC/);
+  pass('return with old intent selects owned matching order and preserves other pending blockers');
 
   state.reports = { productionRevenue: [{ currency: 'IDR', amount: '55000.00', count: 1 }, { currency: 'USD', amount: '2.50', count: 1 }],
     paymentTotals: [{ provider: 'duitku', environment: 'sandbox', status: 'paid', currency: 'IDR', amount: '97000', count: 1 },

@@ -158,6 +158,35 @@ backup diverifikasi. Operasi tersebut tidak dilakukan dari fase reintegrasi ini.
 
 ## Troubleshooting
 
+### Backend handover: old sandbox pending blocks production (FE-D-042)
+
+Use this prompt in the backend chat; frontend code does not edit financial rows:
+
+```text
+Investigate existing pending Duitku sandbox invoices for the owner-approved UAT
+account after DUITKU_ENV switched to production. Follow backend AGENTS/SOT.
+Read-only first: inspect owned invoice publicId/status/invoiceState/environment,
+reservation/idempotency evidence and saved merchant context. Do not log keys,
+reference/redirectUrl, cookie, signature, personal data or private payloads.
+Confirm sandbox status-check credentials remain available for historical invoices;
+select the gateway from the saved invoice environment, not current checkout mode.
+Check whether existing authenticated reconcile can resolve the order against the
+sandbox gateway with signature, order, amount and reference validation. Report
+the proposed operation and request separate approval BEFORE any hosting/data
+mutation, gateway reconcile or production purchase. Do not delete/relabel pending
+history, manually grant benefits, infer expiry from clock alone, or bypass the
+cross-environment CHECKOUT_PENDING_EXISTS guard. If verified terminal evidence is
+unavailable, keep the order blocked and propose an audited manual-resolution path
+in backend scope with explicit owner approval and tests. Verify pending old
+context still blocks new checkout, terminal verified resolution permits a later
+explicit production purchase, and concurrency/idempotency/one-time entitlement
+remain intact. No migration, deploy, real email or payment without new approval.
+```
+
+The frontend remediation changes guidance and flow safety; it does not resolve
+the hosted pending invoice itself. After backend resolution, reload billing and
+confirm the server state before separately authorized production UAT.
+
 - `BACKEND_NOT_CONFIGURED`: periksa `BACKEND_API_BASE_URL` di Vercel lalu redeploy.
 - Static route hilang: pastikan directory/file runtime masuk allowlist
   `scripts/build-static.mjs` dan hasilnya ada di `dist/`.

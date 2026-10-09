@@ -6,7 +6,7 @@ import { ApiClient, api } from '../services/api-client.js';
 import { createPaymentService, paymentService } from '../services/payment-service.js';
 import { createPaymentFlow } from '../services/payment-flow.js';
 import { createIntentStore, createBrowserIntentStore, PAYMENT_INTENT_KEY } from '../utils/payment-intent.js';
-import { PAYMENT_CHECKOUT_RELEASED, PAYMENT_SANDBOX_RELEASED, paymentCheckoutAllowed, paymentRedirectUrl, paymentErrorMessage, validCapabilities } from '../validators/payment-validator.js';
+import { PAYMENT_CHECKOUT_RELEASED, PAYMENT_SANDBOX_RELEASED, paymentCheckoutAllowed, paymentRedirectUrl, paymentErrorMessage, validCapabilities, pendingPaymentIssue, pendingCheckoutIssue } from '../validators/payment-validator.js';
 
 const USER = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const OTHER = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -39,7 +39,7 @@ test('sandbox-only checkout uses confirmable server payment environment, not a m
     post: async () => { calls++; return { success: true, data: { publicId: ID, provider: 'duitku', environment: 'production' } }; } }, { sandboxReleased: true });
   await assert.rejects(service.checkout('basic', KEY), { code: 'PAYMENT_RESPONSE_INVALID' }); assert.equal(calls, 1);
 });
-const payment = { publicId: ID, merchantOrderId: 'KND_order', provider: 'duitku', environment: 'sandbox', status: 'pending', invoiceState: 'ready', redirectUrl: 'https://app-sandbox.duitku.com/redirect_checkout?reference=example' };
+const payment = { publicId: ID, merchantOrderId: 'KND_order', provider: 'duitku', environment: 'sandbox', targetPlanCode: 'basic', status: 'pending', invoiceState: 'ready', redirectUrl: 'https://app-sandbox.duitku.com/redirect_checkout?reference=example' };
 function memoryStorage() {
   const data = new Map();
   return { data, getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value), removeItem: key => data.delete(key) };
@@ -49,6 +49,7 @@ function harness(overrides = {}) {
   const storage = memoryStorage();
   const intents = createIntentStore(() => storage);
   const service = {
+    capabilities: async () => capabilities,
     listPayments: async () => { calls.push('list'); return []; },
     checkout: async (plan, key) => { calls.push(['checkout', plan, key]); return payment; },
     getPayment: async id => { calls.push(['get', id]); return { ...payment, publicId: id }; },
@@ -203,14 +204,17 @@ test('user switch prevents requests using another user intent', async () => {
   await assert.rejects(h.flow.purchase('basic'), { code: 'AUTH_REQUIRED' });
   assert.equal(h.calls.length, 0); assert.equal(h.intents.read(USER), null);
 });
-test('pending conflict uses owned data.publicId without replacement checkout', async () => {
+test('pending conflict reads owned data.publicId without binding an unrelated key or replacement checkout', async () => {
   const h = harness({ checkout: async () => { throw { code: 'CHECKOUT_PENDING_EXISTS', details: { publicId: ID } }; } });
-  assert.equal((await h.flow.purchase('basic')).publicId, ID);
-  assert.equal(h.intents.read(USER).publicId, ID);
+  await assert.rejects(h.flow.purchase('basic'), { code: 'CHECKOUT_PENDING_EXISTS' });
+  assert.equal(h.intents.read(USER).publicId, null);
+  assert.equal(h.intents.read(USER).key, KEY);
+  assert.deepEqual(h.calls.filter(Array.isArray), [['get', ID]]);
 });
 test('return lookup prefers publicId and cannot equate it with merchantOrderId', async () => {
   const h = harness(); h.intents.write({ userPublicId: USER, key: KEY, planCode: 'basic', publicId: ID });
-  await h.flow.resolveReturn('fake-order'); assert.deepEqual(h.calls, [['get', ID]]);
+  assert.equal((await h.flow.resolveReturn('KND_order')).publicId, ID); assert.deepEqual(h.calls, [['get', ID]]);
+  assert.equal(await h.flow.resolveReturn('fake-order'), null);
   h.intents.clear(); h.service.listPayments = async () => [payment];
   assert.equal(await h.flow.resolveReturn(ID), null);
   assert.equal((await h.flow.resolveReturn('KND_order')).publicId, ID);
@@ -220,6 +224,111 @@ test('owned detail denies inaccessible payment rather than trusting return query
   const h = harness({ getPayment: async () => { throw { status: 404, code: 'PAYMENT_NOT_FOUND' }; } });
   h.intents.write({ userPublicId: USER, key: KEY, planCode: 'basic', publicId: ID });
   await assert.rejects(h.flow.resolveReturn('KND_order'), { code: 'PAYMENT_NOT_FOUND' });
+});
+
+for (const [label, existing, code] of [
+  ['old sandbox', payment, 'PAYMENT_SANDBOX_PENDING'],
+  ['unknown environment', { ...payment, environment: null }, 'PAYMENT_PENDING_CONTEXT_CONFLICT'],
+  ['legacy provider', { ...payment, provider: 'legacy', environment: 'production' }, 'PAYMENT_PENDING_CONTEXT_CONFLICT'],
+  ['different plan', { ...payment, environment: 'production', targetPlanCode: 'pro' }, 'CHECKOUT_PENDING_EXISTS'],
+]) {
+  test(`production pending ${label} blocks POST/UUID and preserves ambiguous intent`, async () => {
+    const h = harness({ capabilities: async () => ({ ...capabilities, environment: 'production' }), listPayments: async () => [existing] });
+    const saved = { userPublicId: USER, key: KEY, planCode: 'basic', publicId: null };
+    h.intents.write(saved);
+    await assert.rejects(h.flow.purchase('basic'), { code });
+    assert.equal(h.uuids(), 0);
+    assert.deepEqual(h.calls.filter(Array.isArray), []);
+    assert.deepEqual(h.intents.read(USER), saved);
+  });
+}
+test('sandbox conflict without storage and elapsed invoice deadline never creates/relabels an order', async () => {
+  const old = { ...payment, expiresAt: '2026-10-04T12:08:00Z' };
+  const h = harness({ capabilities: async () => ({ ...capabilities, environment: 'production' }), listPayments: async () => [old] });
+  await assert.rejects(h.flow.purchase('basic'), { code: 'PAYMENT_SANDBOX_PENDING' });
+  await assert.rejects(h.flow.purchase('pro'), { code: 'PAYMENT_SANDBOX_PENDING' });
+  assert.equal(h.uuids(), 0); assert.equal(h.intents.read(USER), null);
+  assert.equal(old.status, 'pending'); assert.equal(old.environment, 'sandbox');
+});
+test('compatible pending can be resumed without reassigning its publicId to an unrelated intent', async () => {
+  const h = harness({ listPayments: async () => [payment] });
+  const saved = { userPublicId: USER, key: KEY, planCode: 'pro', publicId: null };
+  h.intents.write(saved);
+  assert.equal((await h.flow.purchase('basic')).publicId, ID);
+  assert.deepEqual(h.intents.read(USER), saved); assert.equal(h.uuids(), 0);
+  assert.deepEqual(h.calls.filter(Array.isArray), [['get', ID]]);
+});
+test('multiple pending invoices fail closed rather than selecting the first one', async () => {
+  const h = harness({ listPayments: async () => [payment, { ...payment, publicId: OTHER }] });
+  await assert.rejects(h.flow.purchase('basic'), { code: 'PAYMENT_PENDING_CONTEXT_CONFLICT' });
+  assert.equal(h.uuids(), 0); assert.deepEqual(h.calls.filter(Array.isArray), []);
+});
+test('fresh owned detail is validated when history context was stale', async () => {
+  const h = harness({ listPayments: async () => [payment], getPayment: async () => ({ ...payment, environment: 'production' }) });
+  await assert.rejects(h.flow.purchase('basic'), { code: 'PAYMENT_PENDING_CONTEXT_CONFLICT' });
+  assert.equal(h.uuids(), 0); assert.equal(h.intents.read(USER), null);
+});
+test('409 old sandbox conflict preserves the submitted key without binding another invoice', async () => {
+  let posts = 0;
+  const h = harness({ capabilities: async () => ({ ...capabilities, environment: 'production' }),
+    checkout: async () => { posts++; throw { code: 'CHECKOUT_PENDING_EXISTS', details: { publicId: ID } }; } });
+  await assert.rejects(h.flow.purchase('basic'), { code: 'PAYMENT_SANDBOX_PENDING' });
+  assert.equal(posts, 1); assert.equal(h.uuids(), 1);
+  assert.equal(h.intents.read(USER).key, KEY); assert.equal(h.intents.read(USER).publicId, null);
+});
+test('disabled/malformed capabilities also close the orchestration before key creation', async () => {
+  for (const data of [null, {}, { ...capabilities, checkoutEnabled: false }]) {
+    const h = harness({ capabilities: async () => data });
+    await assert.rejects(h.flow.purchase('basic'), { code: 'PAYMENT_CHECKOUT_DISABLED' });
+    assert.equal(h.uuids(), 0); assert.deepEqual(h.calls, []);
+  }
+});
+test('server terminal status allows a later explicit production purchase, never countdown auto-purchase', async () => {
+  let old = { ...payment };
+  const h = harness({ capabilities: async () => ({ ...capabilities, environment: 'production' }), listPayments: async () => [old] });
+  await assert.rejects(h.flow.purchase('basic'), { code: 'PAYMENT_SANDBOX_PENDING' });
+  h.advance(3600_000); assert.equal(h.uuids(), 0);
+  old = { ...old, status: 'canceled' };
+  h.service.checkout = async (plan, key) => { h.calls.push(['checkout', plan, key]); return { ...payment, environment: 'production' }; };
+  assert.equal((await h.flow.purchase('basic')).environment, 'production');
+  assert.equal(h.uuids(), 1);
+  assert.deepEqual(h.calls.filter(Array.isArray), [['checkout', 'basic', KEY]]);
+});
+test('preflight capability rate limit applies cooldown before history/intent/POST', async () => {
+  const h = harness({ capabilities: async () => { throw { status: 429, code: 'RATE_LIMITED', retryAfterSeconds: 90 }; } });
+  await assert.rejects(h.flow.purchase('basic'), { code: 'RATE_LIMITED' });
+  assert.equal(h.flow.remaining('checkout'), 90);
+  assert.equal(await h.flow.purchase('basic'), null);
+  assert.equal(h.uuids(), 0); assert.deepEqual(h.calls, []);
+});
+test('return with old saved intent resolves a different order only through owned server history', async () => {
+  const newer = { ...payment, publicId: OTHER, environment: 'production', merchantOrderId: 'KND_new', status: 'pending' };
+  const h = harness({ listPayments: async () => [payment, newer], getPayment: async id => id === OTHER ? newer : payment });
+  const saved = { userPublicId: USER, key: KEY, planCode: 'basic', publicId: ID };
+  h.intents.write(saved);
+  assert.equal((await h.flow.resolveReturn('KND_new')).publicId, OTHER);
+  assert.equal(await h.flow.resolveReturn('unowned-order'), null);
+  assert.equal((await h.flow.resolveReturn()).publicId, ID);
+  assert.deepEqual(h.intents.read(USER), saved);
+  assert.equal(h.uuids(), 0);
+});
+test('pending classifier never treats paid/expired history as a new checkout blocker', () => {
+  const production = { ...capabilities, environment: 'production' };
+  assert.equal(pendingCheckoutIssue([{ ...payment, status: 'expired' }, { ...payment, status: 'paid' }], production), '');
+  assert.equal(pendingPaymentIssue(payment, production), 'PAYMENT_SANDBOX_PENDING');
+  assert.match(paymentErrorMessage({ code: 'PAYMENT_SANDBOX_PENDING' }), /Transaksi uji sebelumnya belum selesai/);
+});
+test('actual billing checkout handler reports context conflict, not malformed response or redirect', async () => {
+  const source = await readFile(new URL('../pages/app/billing.js', import.meta.url), 'utf8');
+  const handler = source.match(/async function requestCheckout\(event\) \{[\s\S]*?\n\}/)[0];
+  let errorCode; let redirects = 0; let reloads = 0;
+  const context = { submitting: false, loading: false, state: { capabilities: { ...capabilities, environment: 'production' } },
+    flow: { purchase: async () => payment }, paymentCheckoutAllowed, pendingPaymentIssue, paymentRedirectUrl,
+    paymentSessionVersion: () => 0, currentSession: () => true, active: () => true, renderUpgradeOptions: () => {},
+    showStatus: () => {}, status: {}, load: async () => { reloads++; }, errorState: error => { errorCode = error.code; }, location: { assign: () => { redirects++; } } };
+  runInNewContext(handler, context);
+  await context.requestCheckout({ target: { closest: () => ({ disabled: false, dataset: { checkoutPlan: 'basic' } }) } });
+  assert.equal(errorCode, 'PAYMENT_SANDBOX_PENDING'); assert.equal(redirects, 0); assert.equal(reloads, 1);
 });
 test('reconcile outcome is followed by GET detail; paid refreshes subscription/cards and respects absolute cooldown', async () => {
   const h = harness({ getPayment: async () => { h.calls.push('detail'); return { ...payment, status: 'paid' }; } });

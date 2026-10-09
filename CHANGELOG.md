@@ -5,6 +5,13 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- FE-D-042: classify pending invoices by provider/environment/plan before resume;
+  block replacement checkout with explicit sandbox/context guidance, preserve
+  ambiguous intent keys and prevent unrelated publicId binding on history/409.
+  Return pages verify conflicting order hints through owned history and retain
+  other pending invoices. Deadline/return query never changes payment status.
+  Regression coverage includes unit flow and isolated local browser mocks.
+
 - FE-D-041: menyetujui gate source checkout production bersyarat capabilities
   backend; menyelaraskan CTA, badge, aria-label, ikon kunci dan notify billing.
   Copy homepage/FAQ/Starter mengarahkan ke Langganan tanpa menjanjikan ketersediaan.

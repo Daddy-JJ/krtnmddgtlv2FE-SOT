@@ -8,6 +8,29 @@ data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
 
+## 2026-10-09 - Pending context remediation (FE-D-042)
+
+Fixed billing production handling of old sandbox pending invoices, unknown/legacy
+contexts, different plans and multiple pending records. Conflicting checkout
+buttons are disabled with explicit resolution guidance; compatible pending can
+resume without a new invoice. Intent keys survive ambiguity and history/409 does
+not rebind an unrelated invoice. Saved return metadata cannot mask another owned
+return order; the result page retains other pending history and keeps all redirect
+and backend-only entitlement guards. New checkout never auto-retries or locally
+expires a payment. Capability preflight also respects 429 cooldown.
+
+Cross-page audit: shared controller owns /app/billing/ and /app/billing/result/.
+Homepage/pricing, login/register intents and member dashboard link to billing;
+no parallel checkout owner or admin checkout mutation found. History resume links
+use the same context guards. Existing API paths/payloads and payment storage
+schema are unchanged. Local QA: focused payment/billing 72 passed, full build/test
+334 passed, browser 49 passed; 0 failed/skipped. Browser coverage is Edge/Chromium
+headless at mobile/tablet/desktop sizes using LOCAL API MOCK only. Initial
+sandboxed browser attempt stalled and was stopped; elevated local rerun passed.
+Hosted gateway credentials, callback, actual old sandbox resolution and paid UAT
+remain NOT VERIFIED. No backend/database changes or real payment was performed.
+Owner authorizes commit/push after QA; deployment/transaction proof is separate.
+
 ## 2026-10-09 - Production frontend source gate (FE-D-041)
 
 Owner reports Duitku production approval/credentials and approves frontend source,

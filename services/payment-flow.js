@@ -1,4 +1,4 @@
-import { isPaymentId, validatePlanCode } from '../validators/payment-validator.js';
+import { isPaymentId, validatePlanCode, paymentCheckoutAllowed, pendingPaymentIssue, pendingCheckoutIssue } from '../validators/payment-validator.js';
 import { paymentSessionVersion } from '../utils/payment-intent.js';
 
 const failure = code => Object.assign(new Error(code), { code });
@@ -41,17 +41,30 @@ export function createPaymentFlow({ service, intents, userPublicId, currentUser,
         return await lockOperation(async () => {
           await assertUser();
           await intents.ensureShared?.();
+          const capabilities = await service.capabilities();
+          await assertUser();
+          if (!paymentCheckoutAllowed(capabilities)) throw failure('PAYMENT_CHECKOUT_DISABLED');
           const history = await service.listPayments();
           if (!Array.isArray(history)) throw failure('PAYMENT_RESPONSE_INVALID');
           let intent = await intents.read(userPublicId);
+          await assertUser();
           const pending = history.find(payment => payment.status === 'pending');
           if (pending) {
-            if (intent) await intents.write({ ...intent, publicId: pending.publicId });
-            return ownedPayment(pending.publicId);
+            const issue = pendingCheckoutIssue(history, capabilities, planCode);
+            if (issue) throw failure(issue);
+            const existing = await ownedPayment(pending.publicId);
+            const detailIssue = pendingPaymentIssue(existing, capabilities, planCode);
+            if (detailIssue) throw failure(detailIssue);
+            // Reading an existing invoice is not evidence that it belongs to this key.
+            return existing;
           }
           if (intent?.publicId) {
             const previous = await ownedPayment(intent.publicId);
-            if (!['paid', 'failed', 'expired', 'canceled', 'refunded', 'refund_pending_review'].includes(previous.status)) return previous;
+            if (!['paid', 'failed', 'expired', 'canceled', 'refunded', 'refund_pending_review'].includes(previous.status)) {
+              const issue = pendingPaymentIssue(previous, capabilities, planCode);
+              if (issue) throw failure(issue);
+              return previous;
+            }
             await intents.clear(); intent = null;
           }
           if (intent && intent.planCode !== planCode) throw failure('IDEMPOTENCY_CONFLICT');
@@ -65,14 +78,16 @@ export function createPaymentFlow({ service, intents, userPublicId, currentUser,
             await assertUser();
             return payment;
           } catch (error) {
-            if (error.status === 429) deadlines.set('checkout', now() + rateLimitDelay(error) * 1000);
             if (error.code === 'CHECKOUT_PENDING_EXISTS' && isPaymentId(error.details?.publicId)) {
-              await intents.write({ ...intent, publicId: error.details.publicId });
-              return ownedPayment(error.details.publicId);
+              const existing = await ownedPayment(error.details.publicId);
+              throw failure(pendingPaymentIssue(existing, capabilities, planCode) || 'CHECKOUT_PENDING_EXISTS');
             }
             throw error;
           }
         });
+      } catch (error) {
+        if (error.status === 429) deadlines.set('checkout', now() + rateLimitDelay(error) * 1000);
+        throw error;
       } finally { busy = false; }
     },
     async reconcile(id) {
@@ -95,8 +110,14 @@ export function createPaymentFlow({ service, intents, userPublicId, currentUser,
     async resolveReturn(merchantOrderId) {
       await assertUser();
       const intent = await intents.read(userPublicId);
-      if (intent?.publicId) return ownedPayment(intent.publicId);
+      if (intent?.publicId) {
+        const saved = await ownedPayment(intent.publicId);
+        if (!merchantOrderId || saved.merchantOrderId === merchantOrderId) return saved;
+        // An older intent must not mask a different return order. The hint can
+        // only select a payment from owned server history, never grant entitlement.
+      }
       const history = await service.listPayments();
+      await assertUser();
       const match = Array.isArray(history) && typeof merchantOrderId === 'string'
         ? history.find(payment => payment.merchantOrderId === merchantOrderId) : null;
       return match ? ownedPayment(match.publicId) : null;

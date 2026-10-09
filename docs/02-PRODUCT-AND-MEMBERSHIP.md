@@ -154,6 +154,11 @@ never promise checkout. No email/UUID/role allowlist or credentials in frontend.
 No hosting activation, deploy or real invoice is authorized by this source patch.
 
 Restricted sandbox (FE-D-037) uses backend-only dummy account membership.
+FE-D-042 blocks NEW checkout while incompatible/multiple pending invoices need
+resolution, with clear history/manual-status/support guidance. A compatible
+pending invoice can be resumed without creating another purchase or rebinding
+an unrelated intent. Sandbox history is retained; only backend/gateway evidence
+can resolve it before a subsequent production purchase.
 Capabilities is user-scoped and both environments have separate release gates.
 Sandbox button remains `Uji pembayaran — Sandbox` under FE-D-040.
 `Pembayaran uji — Sandbox` is a gateway label, NOT data/benefit isolation:

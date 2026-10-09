@@ -3,7 +3,7 @@ import { cardService } from '../../services/card-service.js';
 import { authService } from '../../services/auth-service.js';
 import { createPaymentFlow } from '../../services/payment-flow.js';
 import { paymentIntents, paymentSessionVersion } from '../../utils/payment-intent.js';
-import { billingStatusLabel, paymentEnvironmentLabel, paymentRedirectUrl, paymentErrorMessage, paymentCheckoutAllowed } from '../../validators/payment-validator.js';
+import { billingStatusLabel, paymentEnvironmentLabel, paymentRedirectUrl, paymentErrorMessage, paymentCheckoutAllowed, pendingPaymentIssue, pendingCheckoutIssue } from '../../validators/payment-validator.js';
 import { clearStatus, showStatus } from '../../components/forms/form-utils.js';
 import { safeMembershipIntent } from '../../utils/auth-flow.js';
 
@@ -105,14 +105,15 @@ async function load() {
       try {
         const payment = await flow.resolveReturn(returnOrder);
         if (payment) {
-          state.payments = [payment];
+          state.payments = [payment, ...payments.filter(item => item.publicId !== payment.publicId)];
           if (payment.status === 'paid') {
             const [freshSubscription, freshCards] = await Promise.all([paymentService.currentSubscription(), cardService.list()]);
             if (!currentSession(version)) return;
             [state.subscription, state.cards] = [freshSubscription, freshCards];
           }
+          const pendingIssue = pendingCheckoutIssue(state.payments, capabilities);
           resultMessage = payment.status === 'pending'
-            ? 'Pembayaran sedang diverifikasi. Jangan membuat pembayaran baru.'
+            ? pendingIssue ? paymentErrorMessage({ code: pendingIssue }) : 'Pembayaran sedang diverifikasi. Jangan membuat pembayaran baru.'
             : 'Status transaksi telah diperiksa. Paket mengikuti langganan akun Anda saat ini.';
         } else resultMessage = 'Transaksi belum dapat dicocokkan. Periksa riwayat pembayaran akun Anda di bawah.';
       } catch (error) { resultError = error; }
@@ -124,6 +125,9 @@ async function load() {
     if (retry) retry.hidden = true;
     if (resultError) errorState(resultError);
     else if (resultMessage) showStatus(status, resultMessage, 'info');
+    else if (paymentCheckoutAllowed(state.capabilities) && pendingCheckoutIssue(state.payments, state.capabilities)) {
+      showStatus(status, paymentErrorMessage({ code: pendingCheckoutIssue(state.payments, state.capabilities) }), 'info');
+    }
     else if (requestedIntent) showStatus(status, paymentCheckoutAllowed(state.capabilities)
       ? 'Pilih paket yang sesuai di bawah. Paket aktif setelah pembayaran dikonfirmasi.'
       : 'Under development — Pembayaran online belum tersedia.', 'info');
@@ -171,6 +175,11 @@ async function requestCheckout(event) {
   try {
     const payment = await flow.purchase(button.dataset.checkoutPlan);
     if (!payment || !currentSession(version)) return;
+    const pendingIssue = pendingPaymentIssue(payment, state.capabilities, button.dataset.checkoutPlan);
+    if (pendingIssue) {
+      await load(); if (currentSession(version)) errorState({ code: pendingIssue });
+      return;
+    }
     const url = paymentRedirectUrl(payment);
     if (paymentCheckoutAllowed(state.capabilities) && payment.environment === state.capabilities.environment
       && payment.provider === 'duitku' && payment.status === 'pending' && url) location.assign(url);
@@ -182,7 +191,10 @@ async function requestCheckout(event) {
       if (currentSession(version)) showStatus(status, payment.status === 'pending'
         ? 'Pembayaran sedang diverifikasi. Jangan membuat pembayaran baru.' : 'Status transaksi telah diperiksa.', 'info');
     }
-  } catch (error) { if (currentSession(version)) errorState(error); }
+  } catch (error) {
+    if (currentSession(version) && ['PAYMENT_SANDBOX_PENDING', 'PAYMENT_PENDING_CONTEXT_CONFLICT', 'CHECKOUT_PENDING_EXISTS'].includes(error?.code)) await load();
+    if (currentSession(version)) errorState(error);
+  }
   finally { submitting = false; if (active()) renderUpgradeOptions(); }
 }
 function render() { renderSubscription(); renderUpgradeOptions(); renderHistory(); }
@@ -200,6 +212,8 @@ function renderUpgradeOptions() {
   const availability = enabled ? sandbox ? 'Pembayaran uji — Sandbox' : 'Pembayaran online' : 'Under development';
   const wait = flow?.remaining('checkout') || 0;
   upgradeCards.forEach(card => {
+    const pendingIssue = enabled ? pendingCheckoutIssue(state.payments, state.capabilities, card.dataset.upgradeCard) : '';
+    const existing = state.payments.find(payment => payment.status === 'pending');
     card.hidden = currentPlan === 'pro' || (currentPlan === 'basic' && card.dataset.upgradeCard === 'basic');
     card.classList.toggle('billing-plan--locked', !enabled);
     card.setAttribute('aria-label', `${card.dataset.upgradeCard === 'basic' ? 'Basic' : 'Pro'} Tahunan, ${availability}`);
@@ -208,10 +222,11 @@ function renderUpgradeOptions() {
     const lock = card.querySelector('.billing-plan__lock');
     if (lock) lock.hidden = enabled;
     card.querySelectorAll('button').forEach(button => {
-      button.disabled = !enabled || submitting || loading || wait > 0;
+      button.disabled = !enabled || submitting || loading || wait > 0 || Boolean(pendingIssue);
       button.setAttribute('aria-disabled', String(button.disabled));
       button.textContent = submitting ? 'Memproses permintaan...' : enabled && wait ? `Coba lagi dalam ${wait} detik`
-        : enabled ? sandbox ? 'Uji pembayaran — Sandbox' : 'Bayar melalui Duitku' : 'Under development';
+        : pendingIssue ? 'Selesaikan transaksi sebelumnya' : enabled && existing ? 'Periksa transaksi yang menunggu'
+          : enabled ? sandbox ? 'Uji pembayaran — Sandbox' : 'Bayar melalui Duitku' : 'Under development';
     });
   });
   if (upgradeEyebrow) upgradeEyebrow.textContent = availability;
@@ -222,6 +237,8 @@ function renderUpgradeOptions() {
   if (upgradeNote) upgradeNote.textContent = enabled ? 'Harga akhir dan kelayakan diperiksa saat pembayaran.' : 'Under development — Pembayaran online belum tersedia.';
   if (upgradeNote && state.capabilities?.environment === 'sandbox') upgradeNote.textContent +=
     ' Pembayaran uji — Sandbox. Hanya akun pengujian yang disetujui. Pembayaran uji yang dikonfirmasi dapat mengubah paket dan kartu akun dummy pada database yang sama, bukan manfaat yang terisolasi.';
+  const pendingIssue = enabled ? pendingCheckoutIssue(state.payments, state.capabilities) : '';
+  if (upgradeNote && pendingIssue) upgradeNote.textContent = paymentErrorMessage({ code: pendingIssue });
 }
 function openNotifyEmail(event) {
   event.preventDefault();
@@ -252,14 +269,16 @@ function renderHistory() {
     if (payment.expiresAt) row.append(node('p', `Batas waktu invoice: ${formatDate(payment.expiresAt)}. Status diperiksa melalui server.`, 'mt-1 text-sm'));
     const actions = node('div', '', 'mt-3 flex flex-wrap gap-2');
     const redirectUrl = paymentRedirectUrl(payment);
-    if (paymentCheckoutAllowed(state.capabilities) && payment.environment === state.capabilities.environment && redirectUrl) {
+    const pendingIssue = pendingPaymentIssue(payment, state.capabilities);
+    if (paymentCheckoutAllowed(state.capabilities) && !pendingCheckoutIssue(state.payments, state.capabilities) && !pendingIssue && payment.environment === state.capabilities.environment && redirectUrl) {
       const pay = node('a', 'Lanjut bayar', 'fdn-button--primary');
       pay.href = redirectUrl;
       pay.referrerPolicy = 'no-referrer';
       actions.append(pay);
     }
     if (payment.status === 'pending') {
-      row.append(node('p', payment.provider !== 'duitku' ? 'Transaksi ini tidak dapat diproses. Hubungi bantuan.'
+      row.append(node('p', pendingIssue && paymentCheckoutAllowed(state.capabilities) ? paymentErrorMessage({ code: pendingIssue })
+        : payment.provider !== 'duitku' ? 'Transaksi ini tidak dapat diproses. Hubungi bantuan.'
         : payment.redirectUrl && !redirectUrl ? 'Tautan pembayaran tidak dapat diverifikasi. Hubungi bantuan.'
           : 'Pembayaran sedang diverifikasi. Jangan membuat pembayaran baru.', 'mt-2 text-sm'));
     }

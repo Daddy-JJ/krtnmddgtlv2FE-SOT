@@ -222,6 +222,9 @@ API client. `services/payment-flow.js` orchestrates intent/retry, owned return
 lookup, manual reconciliation and entitlement refetch. `utils/payment-intent.js`
 owns minimal session/IndexedDB metadata and auth cleanup; no parallel subscription
 system exists. The early `assets/js/payment-return.js` owns return query scrubbing.
+`validators/payment-validator.js` owns shared pending-context presentation checks
+for flow, billing options and history/return links (FE-D-042). No status authority
+or replacement checkout is derived from an elapsed invoice deadline.
 The existing payment session-version owner also emits `payment:session-changed`
 for local auth and BroadcastChannel transitions. Billing clears its memory-only
 capabilities/data/flow, stops the timer, and rejects delayed responses from an

@@ -561,6 +561,22 @@ be account-restricted, backend needs a production gate; sandbox allowlist does
 not apply. Merchant approval is owner-reported, not evidence of deployed
 credentials, valid callback, exactly-once activation or browser/provider UAT.
 
+## FE-D-042 - Pending payment context remediation
+
+Date: 2026-10-09. Status: Accepted by owner after read-only investigation.
+Scope: frontend patch, regression QA and cross-page recheck; commit/push after
+successful checks. No backend/database mutation, hosted transaction or manual
+deployment authorized. Preserves FE-D-041 release gates and all payment evidence.
+
+Old sandbox pending can block production checkout; classifying it as a malformed
+response is misleading. Use shared provider/environment/plan classification,
+block incompatible replacement orders, retain manual status/support actions and
+strict redirect validation. Never bind a history/409 invoice to an unrelated
+UUID intent; never auto-expire an order or retry POST. Result pages resolve a
+different return-order hint only through owned history/detail and retain other
+pending invoices. Hosted stale-invoice resolution belongs to backend operations
+and requires separate authorization. Prices and entitlement rules unchanged.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

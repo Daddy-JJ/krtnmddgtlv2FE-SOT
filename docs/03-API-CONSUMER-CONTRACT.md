@@ -350,7 +350,18 @@ not establish live deployment or sandbox readiness.
   token, provider reference, URL, price or provider payload is stored. Failed
   shared persistence or missing Web Locks closes creation; history/return still
   work. Existing owned pending payments are read before an explicit retry. An
-  ambiguous attempt preserves its key until a terminal server state is known.
+  enabled fresh capability response is required even when resuming history.
+  FE-D-042: classify pending provider/environment/targetPlanCode against current
+  capabilities/selected plan before resuming. Sandbox-to-production, unknown or
+  retired context, different plan and multiple pending records block NEW orders;
+  do not filter away old evidence and issue a replacement checkout. Matching
+  owned detail is revalidated. Reading history or a 409 publicId is NOT evidence
+  that it belongs to the current UUID; never bind an unrelated intent to it.
+  CHECKOUT_PENDING_EXISTS reads owned detail and gives manual resolution guidance
+  without resubmitting. The frontend-only presentation codes
+  PAYMENT_SANDBOX_PENDING/PAYMENT_PENDING_CONTEXT_CONFLICT are not new API codes.
+  Pending UI disables conflicting plan buttons and preserves manual reconcile.
+  An ambiguous attempt preserves its key until a terminal server state is known.
   Logout/user changes clear metadata and auth transitions invalidate old
   controllers. Re-authentication of the same user preserves an ambiguous intent.
 - A redirect requires provider duitku, pending status and strict URL parsing:
@@ -363,6 +374,9 @@ not establish live deployment or sandbox readiness.
   before other application scripts. resultCode/reference are never trusted.
   Resolve saved payment publicId through owned GET detail, otherwise match
   merchantOrderId inside owned GET history only. Unknown match shows history;
+  if a saved intent belongs to a different return order, match the hint only
+  against owned backend history and then read owned detail, or show history.
+  Never replace the intent from this hint or hide other pending history rows.
   inaccessible detail shows a safe error. No frontend payment callback exists.
 - Manual reconcile returns outcome `{result,paymentPublicId,paymentStatus}`;
   reread payment detail afterward. Apply an absolute >=30-second cooldown and
