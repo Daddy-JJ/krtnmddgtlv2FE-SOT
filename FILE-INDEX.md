@@ -62,7 +62,7 @@ locally; planned frontend runtime files are not included in the inventory below.
 | `services/payment-flow.js` | Payment intent/retry, return lookup and reconcile orchestration |
 | `utils/payment-intent.js` | Minimal payment metadata and cross-tab session cleanup |
 | `assets/js/payment-return.js` | Early untrusted return-query scrubbing |
-| `scripts/qa-duitku-browser.mjs` | Isolated local mock browser QA |
+| `scripts/qa-duitku-browser.mjs` | Isolated local mock payment and visual browser QA |
 | `config/` | Runtime config dan theme registry |
 | `assets/` | Compiled CSS, global theme, opt-in Foundations adapter, image, icon, theme preview |
 | `locales/` | Locale resources; English saat ini deferred |

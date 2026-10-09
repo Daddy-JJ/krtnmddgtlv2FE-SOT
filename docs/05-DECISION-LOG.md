@@ -577,6 +577,27 @@ different return-order hint only through owned history/detail and retain other
 pending invoices. Hosted stale-invoice resolution belongs to backend operations
 and requires separate authorization. Prices and entitlement rules unchanged.
 
+## FE-D-043 - Billing result spacing and readable Bayu previews
+
+Date: 2026-10-09. Status: Accepted by owner after visual investigation.
+Scope: frontend visual patch, regression checks and synchronized commit/push to
+main/development. No backend/database mutation, real payment or manual deploy.
+
+Separate billing result heading, status, server hint and actions with explicit
+grid/flex gaps. Shared Foundations buttons use a layout box rather than padded
+inline text, retaining hidden controls. Preserve FE-D-041/042 financial guards.
+
+Bayu keeps its stable code, dark artwork and light contact footer. The reproduced
+problem was very small scaled preview text, not confirmed black-on-black colors.
+Increase contact typography and explicitly preserve dark footer link states.
+Offer an accessible read-only enlarged preview of all ten existing templates,
+plus unscaled contact details. Reuse the closed Shadow DOM renderer; saving still
+requires backend entitlement. Contact details remain in memory/DOM only, are
+rendered as text, and are cleared when the dialog/page closes. Refresh Bayu's
+static fallback PNG from the same local template/styles and bump registry cache
+version; do not alter other theme artwork or immutable codes. Browser mock proof
+does not substitute for authenticated hosted visual/UAT verification.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

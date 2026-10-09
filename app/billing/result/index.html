@@ -18,14 +18,16 @@
 <body class="dashboard-shell app-shell-page">
   <a class="skip-link" href="#main">Lewati ke konten</a>
   <main id="main" class="mx-auto max-w-6xl space-y-6 px-4 py-8" data-payment-result>
-    <section class="dashboard-panel p-6">
+    <section class="dashboard-panel billing-result-panel p-6">
       <h1>Hasil pembayaran</h1>
-      <p data-form-status role="status" aria-live="polite">Memuat status pembayaran...</p>
-      <button class="fdn-button--secondary" type="button" data-billing-retry hidden>Coba muat ulang</button>
-      <p>Jangan membuat pembayaran baru saat status masih menunggu.</p>
-      <a class="fdn-button--secondary" href="/app/billing/">Lihat seluruh riwayat pembayaran</a>
+      <p class="billing-result-status" data-form-status role="status" aria-live="polite">Memuat status pembayaran...</p>
+      <p class="billing-result-hint">Status pembayaran dan paket diperiksa melalui server.</p>
+      <div class="billing-result-actions">
+        <button class="fdn-button--secondary" type="button" data-billing-retry hidden>Coba muat ulang</button>
+        <a class="fdn-button--secondary" href="/app/billing/">Lihat seluruh riwayat pembayaran</a>
+      </div>
     </section>
-    <section class="dashboard-panel p-6" aria-labelledby="subscription-title">
+    <section class="dashboard-panel billing-result-panel p-6" aria-labelledby="subscription-title">
       <h2 id="subscription-title">Langganan saat ini</h2>
       <div data-subscription-summary></div>
     </section>

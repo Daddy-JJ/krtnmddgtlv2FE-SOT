@@ -109,6 +109,11 @@ Pengguna boleh preview seluruh theme aktif, tetapi penyimpanan pilihan mengikuti
 entitlement backend. Tujuh theme landscape dan tiga theme portrait menggunakan
 normalized field contract yang sama.
 
+FE-D-043 adds `Perbesar preview` for all existing themes, including locked ones.
+The read-only dialog exposes readable contact details and does not save the
+theme or grant any benefit. Bayu retains its dark artwork/light contact strip;
+footer text sizing and explicit link contrast improve readability.
+
 ## Resume Enhancement
 
 - Benefit hanya untuk Pro aktif dan terverifikasi backend.

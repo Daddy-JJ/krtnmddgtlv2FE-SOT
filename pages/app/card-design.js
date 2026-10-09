@@ -38,41 +38,103 @@ const nodes = {
   previewName: document.querySelector('[data-theme-preview-name]'),
   save: document.querySelector('[data-save-theme]'),
   filters: document.querySelectorAll('[data-orientation-filter]'),
+  enlarge: document.querySelector('[data-enlarge-theme-preview]'),
+  dialog: document.querySelector('[data-theme-preview-dialog]'),
+  dialogTitle: document.querySelector('[data-enlarged-theme-title]'),
+  dialogStage: document.querySelector('[data-enlarged-theme-stage]'),
+  dialogDetails: document.querySelector('[data-enlarged-theme-details]'),
+  closeDialog: document.querySelector('[data-close-theme-preview]'),
 };
 const mountedPreviews = new Set();
+const listeners = new AbortController();
+let dialogPreview;
+let disposed = false;
 
 init();
 
 function init() {
   load();
-  nodes.save?.addEventListener('click', saveTheme);
+  nodes.save?.addEventListener('click', saveTheme, { signal: listeners.signal });
+  nodes.enlarge?.addEventListener('click', openEnlargedPreview, { signal: listeners.signal });
+  nodes.closeDialog?.addEventListener('click', () => nodes.dialog.close(), { signal: listeners.signal });
+  nodes.dialog?.addEventListener('close', () => { if (!nodes.dialog.open) clearEnlargedPreview(); }, { signal: listeners.signal });
+  document.addEventListener('app:page-leave', dispose, { once: true, signal: listeners.signal });
+  addEventListener('pagehide', (event) => {
+    dispose();
+    // A history-cache restore must reload current session/card data, not revive a disposed preview.
+    if (event.persisted) addEventListener('pageshow', () => location.reload(), { once: true });
+  }, { once: true, signal: listeners.signal });
   nodes.filters.forEach((button) => button.addEventListener('click', () => {
     state.orientation = button.dataset.orientationFilter ?? 'all';
     render();
-  }));
+  }, { signal: listeners.signal }));
+}
+
+function clearEnlargedPreview() {
+  dialogPreview?.destroy(); dialogPreview = undefined;
+  nodes.dialogDetails?.replaceChildren();
+}
+function dispose() {
+  disposed = true;
+  if (nodes.dialog?.open) nodes.dialog.close();
+  clearEnlargedPreview(); resetPreviewMounts(); listeners.abort(); state.card = null;
+}
+function openEnlargedPreview() {
+  if (disposed || !nodes.dialog || nodes.dialog.open) return;
+  nodes.dialog.showModal();
+  renderEnlargedPreview();
+}
+function renderEnlargedPreview() {
+  clearEnlargedPreview();
+  const theme = state.themes.find(item => item.code === state.previewCode);
+  if (!theme || disposed) return;
+  nodes.dialogTitle.textContent = `Preview besar — ${theme.name}`;
+  nodes.dialogStage.className = 'theme-option__preview theme-preview-dialog__stage';
+  nodes.dialogStage.dataset.previewOrientation = theme.orientation;
+  nodes.dialogStage.setAttribute('aria-label', `Desain ${theme.name}`);
+  try {
+    dialogPreview = mountCardThemePreview(nodes.dialogStage, theme, state.themeStyles, previewCardData());
+  } catch {
+    nodes.dialogStage.hidden = false;
+    mountPreviewFallback(nodes.dialogStage, theme);
+  }
+  const data = previewCardData();
+  for (const [field, label] of Object.entries({ fullName: 'Nama', jobTitle: 'Jabatan', organization: 'Organisasi', officePhone: 'Telepon kantor', mobilePhone: 'Nomor handphone', email: 'Email', websiteUrl: 'Website', addressText: 'Alamat' })) {
+    if (!data[field]) continue;
+    const row = document.createElement('div');
+    const term = document.createElement('dt'); const value = document.createElement('dd');
+    term.textContent = label; value.textContent = data[field];
+    row.append(term, value); nodes.dialogDetails.append(row);
+  }
 }
 
 async function load() {
   showStatus(nodes.status, 'Memuat varian desain...', 'info');
   try {
     const catalog = await loadCardThemePreviewCatalog();
+    if (disposed) return;
     state.themes = catalog.themes;
     state.themeStyles = catalog.stylesheet;
     state.previewCode = state.themes[0]?.code ?? '';
     render();
   } catch {
+    if (disposed) return;
     showStatus(nodes.status, 'Katalog desain belum dapat dimuat.', 'error');
   }
 
   try {
     const cards = await cardService.list();
+    if (disposed) return;
     const first = Array.isArray(cards) ? cards[0] : null;
     if (!first) {
       showStatus(nodes.status, 'Pilih desain untuk melihat preview.', 'info');
       return;
     }
-    state.card = await cardService.get(first.publicId);
-    const entitledThemes = await cardService.themes(state.card.publicId);
+    const card = await cardService.get(first.publicId);
+    if (disposed) return;
+    const entitledThemes = await cardService.themes(card.publicId);
+    if (disposed) return;
+    state.card = card;
     state.themes = mergeEntitlements(state.themes, entitledThemes);
     state.availabilityKnown = true;
     state.selectedCode = state.card.themeCode;
@@ -80,6 +142,7 @@ async function load() {
     render();
     showStatus(nodes.status, `${state.themes.length} varian desain siap dipreview.`, 'success');
   } catch (error) {
+    if (disposed) return;
     if (error.status === 401) {
       location.assign('/login/');
       return;
@@ -144,6 +207,7 @@ function mergeEntitlements(catalog, entitledThemes) {
 }
 
 function render() {
+  if (disposed) return;
   resetPreviewMounts();
   nodes.gallery.replaceChildren();
   for (const theme of filterThemes(state.themes, state.orientation)) {
@@ -170,6 +234,8 @@ function render() {
     mountThemePreview(nodes.previewStage, previewed);
     nodes.previewName.textContent = previewed.name;
   }
+  if (nodes.enlarge) nodes.enlarge.disabled = !previewed;
+  if (nodes.dialog?.open) renderEnlargedPreview();
   const canSave = Boolean(state.card && previewed?.isAvailable);
   nodes.save.disabled = !canSave;
   nodes.save.textContent = canSave
@@ -210,14 +276,17 @@ async function saveTheme() {
   nodes.save.disabled = true;
   showStatus(nodes.status, 'Menyimpan tema...', 'info');
   try {
-    state.card = await cardService.updateTheme(state.card.publicId, state.previewCode);
+    const card = await cardService.updateTheme(state.card.publicId, state.previewCode);
+    if (disposed) return;
+    state.card = card;
     state.selectedCode = state.card.themeCode;
     document.dispatchEvent(new CustomEvent('theme:saved', { detail: { themeCode: state.card.themeCode } }));
     showStatus(nodes.status, 'Tema tersimpan.', 'success');
   } catch (error) {
+    if (disposed) return;
     showStatus(nodes.status, error.message, 'error');
   } finally {
-    nodes.save.disabled = false;
+    if (!disposed) nodes.save.disabled = false;
   }
 }
 

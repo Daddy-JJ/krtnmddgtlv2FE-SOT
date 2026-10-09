@@ -8,6 +8,44 @@ data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
 
+## 2026-10-09 - Billing result and Bayu visual correction (FE-D-043)
+
+Approved frontend-only patch separates billing result title/status/hint/actions
+with measured gaps, including mobile error/retry states. Low-specificity shared
+button display defaults retain responsive Menu/logout visibility and hidden
+controls. Bayu preserves its dark artwork and light contact strip, with larger
+contact fonts and explicit normal/visited/hover/focus link color. Black-on-black
+was not reproduced locally; the confirmed compact preview issue was scaled text.
+All ten existing themes gain a read-only native enlarged dialog with safe
+contact text at least 16px; no storage, entitlement or payment authority changes.
+Dialog/page cleanup destroys previews and removes contact DOM/listeners.
+The Bayu fallback PNG was rendered from the same template/styles using fixtures;
+registry 2.5.4 invalidates its old cache. Other artwork/codes remain unchanged.
+
+QA commands/evidence:
+- Focused: `node --test tests/card-theme-template.test.js
+  tests/card-live-preview-contract.test.js tests/billing-contract.test.js
+  tests/site-theme-contract.test.js`: 24 passed, 0 failed/skipped.
+- `npm.cmd run qa`: static allowlisted build (172 files), CSS build, and full
+  frontend suite: 337 passed, 0 failed/skipped.
+- `npm.cmd run qa:payments:browser`: 72 grouped scenarios passed, 0 failed/skipped.
+  The explicit `node scripts/qa-duitku-browser.mjs --update-bayu-preview` run
+  passed 73 including the asset-generation check. Default QA does not edit PNGs.
+- Edge/Chromium headless LOCAL API MOCK only: billing/result pending/error at
+  390/768/1440px in Light/Dark; all 10 gallery dialogs at 390/1440px in both
+  palettes; keyboard/focus, closed Shadow DOM, safe contact text and cleanup;
+  persisted page lifecycle reload (simulated events, not native BFCache proof);
+  shared identity-editor unsaved preview in both palettes; public Bayu at
+  390/768/1440px. Payment/auth/CSRF/idempotency guards retain existing coverage.
+- Reviewed generated PNG and desktop/mobile screenshots. Syntax and diff checks
+  passed. Earlier browser harness attempts were corrected for flex blockification,
+  background animation frames and the existing 15px root font before final QA.
+
+NOT VERIFIED: authenticated hosted rendering with the reported user's actual
+data; Safari/Firefox/native mobile devices; real gateway/callback/paid UAT.
+No backend/database change, real email/payment or manual deployment. Owner
+authorizes synchronized main/development commit/push after successful QA.
+
 ## 2026-10-09 - Pending context remediation (FE-D-042)
 
 Fixed billing production handling of old sandbox pending invoices, unknown/legacy

@@ -16,6 +16,14 @@ const requiredFields = [
   'qrUrl',
 ];
 
+test('Bayu keeps its light contact footer with explicit dark link states and legible typography', async () => {
+  const styles = await readFile(new URL('assets/css/card-themes.css', frontendUrl), 'utf8');
+  assert.match(styles, /\.theme-basic-blue-line \.digital-card__contacts\s*\{[^}]*background: #f5f3ee/);
+  assert.match(styles, /\.theme-basic-blue-line \.digital-card__contact\s*\{[^}]*font-size: clamp\(\.8rem, 1\.45cqw, \.95rem\);[^}]*font-weight: 550/);
+  assert.match(styles, /\.theme-basic-blue-line \.digital-card__contact a:focus-visible\s*\{\s*color: #15191f/);
+  assert.match(styles, /\.theme-basic-blue-line \.digital-card__contact a:visited/);
+});
+
 test('locked theme catalog keeps 10 templates with 7 landscape and 3 portrait', () => {
   assert.equal(registry.themes.length, 10);
   assert.equal(registry.themes.filter(({ orientation }) => orientation === 'landscape').length, 7);

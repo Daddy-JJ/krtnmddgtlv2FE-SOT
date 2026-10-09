@@ -1,5 +1,5 @@
 {
-  "version": "2.5.3",
+  "version": "2.5.4",
   "fieldContract": {
     "fullName": "card_contacts.full_name -> vCard FN/N",
     "jobTitle": "card_contacts.job_title -> vCard TITLE",

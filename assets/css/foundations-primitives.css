@@ -272,10 +272,20 @@ html.ui-foundations :is(.fdn-button--secondary, .secondary-cta, .auth-secondary,
   color: var(--fdn-accent-foreground) !important;
 }
 
+:where(html.ui-foundations) :where(.fdn-button--primary, .fdn-button--secondary) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 html.ui-foundations :is(.fdn-button--primary, .fdn-button--secondary) {
   min-height: 2.75rem;
   padding: var(--fdn-space-3) var(--fdn-space-4);
   cursor: pointer;
+}
+
+html.ui-foundations :is(.fdn-button--primary, .fdn-button--secondary)[hidden] {
+  display: none !important;
 }
 
 html.ui-foundations :is(input, select, textarea, button) {

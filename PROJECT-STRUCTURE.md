@@ -73,6 +73,9 @@ Shared responsibility owners include:
 - `/app/billing/` and `/app/billing/result/` share `pages/app/billing.js`.
 
 - `components/card-live-preview.js` for isolated member theme previews.
+- `pages/app/card-design.js` owns the read-only enlarged native dialog and contact
+  details, reusing that preview renderer. `scripts/qa-duitku-browser.mjs` covers
+  billing/result spacing, gallery dialogs and public Bayu using local API mocks.
 - `services/auth-service.js` for current-user `GET /me` access.
 - `services/admin-operations-service.js` for Super Admin statistics, feedback,
   cards, reports, system, security, and existing operational endpoints.

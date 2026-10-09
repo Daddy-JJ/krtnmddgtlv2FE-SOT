@@ -5,6 +5,13 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- FE-D-043: memperbaiki overlap/spacing heading, status dan CTA billing result;
+  tombol Foundations memiliki layout box dan tetap menghormati atribut hidden.
+  Memperbesar typography kontak Bayu dengan warna link footer eksplisit;
+  menambah dialog preview besar read-only dan detail kontak normal-font untuk
+  seluruh tema, tanpa mengubah artwork/tier atau logic pembayaran. Regression
+  mencakup viewport, Light/Dark, keyboard, cleanup dan data fixture lokal.
+
 - FE-D-042: classify pending invoices by provider/environment/plan before resume;
   block replacement checkout with explicit sandbox/context guidance, preserve
   ambiguous intent keys and prevent unrelated publicId binding on history/409.

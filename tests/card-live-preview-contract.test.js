@@ -30,3 +30,26 @@ test('card editor renders unsaved form data through the allowlisted active theme
   assert.match(styles, /\.card-editor-preview/);
   assert.match(styles, /\.card-theme-preview__host/);
 });
+
+test('enlarged design preview is a labelled read-only dialog using the existing isolated renderer', async () => {
+  const [html, controller, styles] = await Promise.all([
+    readFile(new URL('../app/card/design/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../pages/app/card-design.js', import.meta.url), 'utf8'),
+    readFile(new URL('../assets/css/app.css', import.meta.url), 'utf8'),
+  ]);
+  assert.match(html, /data-enlarge-theme-preview aria-haspopup="dialog" disabled/);
+  assert.match(html, /<dialog[^>]+aria-labelledby="enlarged-theme-title" aria-describedby="enlarged-theme-hint"/);
+  assert.match(html, /data-close-theme-preview autofocus/);
+  assert.match(html, /<dl[^>]+data-enlarged-theme-details/);
+  const dialogFunctions = controller.slice(controller.indexOf('function clearEnlargedPreview'), controller.indexOf('async function load'));
+  assert.match(dialogFunctions, /nodes\.dialog\.showModal\(\)/);
+  assert.match(dialogFunctions, /mountCardThemePreview\(nodes\.dialogStage/);
+  assert.match(dialogFunctions, /value\.textContent = data\[field\]/);
+  assert.match(dialogFunctions, /dialogPreview\?\.destroy\(\)/);
+  assert.doesNotMatch(dialogFunctions, /innerHTML|cardService\.|localStorage|sessionStorage|fetch\(/);
+  assert.match(controller, /app:page-leave/);
+  assert.match(controller, /listeners\.abort\(\); state\.card = null/);
+  assert.match(controller, /event\.persisted\) addEventListener\('pageshow', \(\) => location\.reload\(\)/);
+  assert.match(styles, /\.theme-preview-dialog__details[\s\S]*font-size: max\(1rem, 16px\)/);
+  assert.match(styles, /\.theme-preview-dialog__stage\[data-preview-orientation="portrait"\]/);
+});

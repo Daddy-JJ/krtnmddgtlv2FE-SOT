@@ -127,6 +127,16 @@ owns allowlisted template loading, closed Shadow DOM isolation, preview updates,
 and scaling for member previews. Tier labels are authorization metadata and must
 not appear in card artwork.
 
+The member design controller also mounts the same renderer in a native modal
+dialog for enlarged viewing (FE-D-043). Its contact definition list uses safe
+textContent at normal font size, with no storage or new API/renderer boundary.
+Dialog close/page leave destroy the preview and clear contact DOM; page leave
+also detaches listeners and ignores late async reads. Persisted history-cache
+restoration reloads the page to read current session/card data. Locked themes may be
+previewed but not saved without backend entitlement. The billing result shell
+uses scoped grid/flex spacing and shared Foundations button primitives; its
+payment controller, endpoints and financial state authority are unchanged.
+
 ## Configuration
 
 `config/app-config.js` reads `globalThis.__KND_CONFIG__` and defaults to:

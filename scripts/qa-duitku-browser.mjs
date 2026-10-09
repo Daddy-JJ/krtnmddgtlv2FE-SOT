@@ -1,6 +1,9 @@
 // Isolated local mock only. This script never uses production/backend credentials.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
+import { writeFile, mkdtemp } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { createLocalFrontendServer } from './local-server.mjs';
 import { launchBrowser, waitFor } from '../tests/helpers/cdp-browser.mjs';
 
@@ -10,6 +13,14 @@ const fixture = { publicId: ID, merchantOrderId: 'KND_local_mock', provider: 'du
   status: 'pending', invoiceState: 'ready', planName: 'Basic', targetPlanCode: 'basic', amount: 55000, currency: 'IDR', durationDays: 365,
   redirectUrl: null, createdAt: '2026-10-02T11:00:00.000Z' };
 const requests = [];
+const cardFixture = { publicId: ID, slug: 'local-visual-card', themeCode: 'basic-blue-line', status: 'published', planCode: 'starter',
+  canonicalUrl: 'https://example.test/local-visual-card',
+  qrImageUrl: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="white"/><g fill="#020617"><path d="M10 10h32v32H10zm8 8v16h16V18zM78 10h32v32H78zm8 8v16h16V18zM10 78h32v32H10zm8 8v16h16V86z" fill-rule="evenodd"/><path d="M52 10h10v10H52zm14 0h10v20H66zM52 26h10v16H52zm0 26h12v10H52zm18-12h10v22H70zm16 10h10v12H86zm14 0h10v10h-10zM46 66h14v10H46zm20 2h10v10H66zm14 0h12v12H80zm18 0h12v18H98zM50 84h18v10H50zm0 14h10v12H50zm16-2h12v14H66zm18-10h10v24H84zm14 8h12v16H98z"/></g></svg>'),
+  socialLinks: [{ platform: 'linkedin', label: 'LinkedIn', url: 'https://example.test/linkedin' }, { platform: 'instagram', label: 'Instagram', url: 'https://example.test/instagram' }],
+  contact: { fullName: 'Begitu Indah, SE', jobTitle: 'Digital Marketer', organization: 'Fixture Company',
+    officePhone: '(021) 555-0188', mobilePhone: '0812-3456-7890', email: 'fixture@example.test', websiteUrl: 'https://example.test',
+    addressText: 'Alamat fixture panjang untuk pemeriksaan wrapping dan keterbacaan tanpa data pengguna nyata.' } };
+let visualCard = null;
 let frontendOrigin;
 const state = { user: USER, list: [], payment: { ...fixture }, capabilities: 'enabled', failList: false, reconcile: 'paid', checkout: 'ready', expose: false, delay: 0, retryAfter: '90', requestId: 'local-support-429', reports: {} };
 const api = createServer(async (request, response) => {
@@ -65,7 +76,10 @@ const api = createServer(async (request, response) => {
     state.list = [{ ...state.payment }]; return reply(state.payment, state.checkout === 'created' ? 201 : 202);
   }
   if (pathname === '/api/v1/subscriptions/current') return reply(state.payment.status === 'paid' ? { planCode: 'basic', endsAt: '2027-10-02T00:00:00.000Z' } : null);
-  if (pathname === '/api/v1/cards') return reply([]);
+  if (pathname === '/api/v1/cards') return reply(visualCard ? [visualCard] : []);
+  if (pathname === `/api/v1/cards/${ID}`) return reply(visualCard);
+  if (pathname === `/api/v1/cards/${ID}/themes`) return reply([{ code: 'starter-clean', isAvailable: true }, { code: 'basic-blue-line', isAvailable: false }]);
+  if (pathname === '/api/v1/public/cards/local-visual-card') return reply(visualCard);
   return reply(null, 404, 'PAYMENT_NOT_FOUND');
 });
 async function listen(server) { await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); return server.address().port; }
@@ -410,6 +424,146 @@ try {
     assert.match(await tab.evaluate("document.querySelector('[data-admin-root]').textContent"), /Belum ada data pada periode ini/);
     pass('Reports tolerate legacy or empty payment aggregates');
   }
+
+  // Visual regressions use the same local server, API boundary and browser harness.
+  await tab.send('Page.bringToFront');
+  const screenshots = await mkdtemp(path.join(os.tmpdir(), 'knd-visual-qa-'));
+  const screenshot = async name => {
+    const result = await tab.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+    await writeFile(path.join(screenshots, name + '.png'), Buffer.from(result.data, 'base64'));
+  };
+  state.payment = { ...fixture, environment: 'production' }; state.list = [{ ...state.payment }];
+  await clearIntents();
+  for (const palette of ['light', 'dark']) {
+    for (const width of [390, 768, 1440]) {
+      await tab.send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 600 });
+      await page('/app/billing/result/?merchantOrderId=KND_local_mock');
+      await tab.evaluate(`document.documentElement.dataset.siteTheme='${palette}'`);
+      for (const error of [false, true]) {
+        state.failList = error;
+        if (error) await page('/app/billing/result/');
+        await tab.evaluate(`document.documentElement.dataset.siteTheme='${palette}'`);
+        const metrics = await tab.evaluate(`(()=>{
+          const panel=document.querySelector('.billing-result-panel');
+          const rect=el=>{const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}};
+          const rows=[...panel.children].filter(el=>getComputedStyle(el).display!=='none').map(rect);
+          const actions=[...panel.querySelectorAll('.billing-result-actions > *')].filter(el=>!el.hidden).map(rect);
+          return {rows,actions,width:innerWidth,scroll:document.documentElement.scrollWidth,
+            hiddenRetry:getComputedStyle(panel.querySelector('[data-billing-retry]')).display==='none',
+            buttonDisplay:getComputedStyle(panel.querySelector('a')).display,
+            menu:getComputedStyle(document.querySelector('.app-shell__menu-button')).display,
+            logout:getComputedStyle(document.querySelector('.app-shell__logout')).display};})()`);
+        assert.ok(metrics.scroll <= width + 1, JSON.stringify(metrics));
+        metrics.rows.slice(1).forEach((row, index) => assert.ok(row.top >= metrics.rows[index].bottom + 8, JSON.stringify(metrics)));
+        if (metrics.actions.length > 1) {
+          const [a, b] = metrics.actions;
+          assert.ok(b.top >= a.bottom + 8 || b.left >= a.right + 8, JSON.stringify(metrics));
+        }
+        assert.equal(metrics.hiddenRetry, !error);
+        assert.ok(['flex', 'inline-flex'].includes(metrics.buttonDisplay));
+        assert.equal(metrics.menu==='none', width>=768);
+        assert.equal(metrics.logout==='none', width<768);
+        await screenshot(`result-${palette}-${width}-${error ? 'error' : 'pending'}`);
+        pass(`result ${palette} ${width}px ${error ? 'error/retry' : 'pending'}: non-overlapping spaced rows/actions, no overflow`);
+      }
+      state.failList = false;
+    }
+  }
+  visualCard = { ...cardFixture, contact: { ...cardFixture.contact, fullName: '<img src=x onerror=alert(1)> Fixture' } };
+  await tab.send('Page.addScriptToEvaluateOnNewDocument', { source: `globalThis.qaPreviewRoots=new WeakMap();const originalAttachShadow=Element.prototype.attachShadow;Element.prototype.attachShadow=function(options){const root=originalAttachShadow.call(this,options);qaPreviewRoots.set(this,root);return root;};` });
+  for (const palette of ['light', 'dark']) {
+    for (const width of [390, 1440]) {
+      await tab.send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 600 });
+      await tab.navigate(origin + '/app/card/design/');
+      await waitFor(async () => /varian desain siap/.test(await tab.evaluate("document.querySelector('[data-form-status]').textContent")), 'design fixture loaded');
+      await tab.evaluate(`document.documentElement.dataset.siteTheme='${palette}'`);
+      assert.equal(await tab.evaluate("document.querySelector('[data-save-theme]').disabled"), true);
+      const codes = await tab.evaluate("[...document.querySelectorAll('[data-theme-code]')].map(el=>el.dataset.themeCode)");
+      assert.equal(codes.length, 10);
+      for (const code of codes) {
+        await tab.evaluate(`document.querySelector('[data-theme-code="${code}"]').click();document.querySelector('[data-enlarge-theme-preview]').focus();document.querySelector('[data-enlarge-theme-preview]').click()`);
+        await waitFor(async () => await tab.evaluate("Boolean(document.querySelector('[data-enlarged-theme-stage] .card-theme-preview__host'))"), 'large preview mounted');
+        await tab.evaluate('new Promise(resolve=>{setTimeout(resolve,250);requestAnimationFrame(()=>requestAnimationFrame(resolve));})');
+        const metrics = await tab.evaluate(`(()=>{
+          const dialog=document.querySelector('dialog');const stage=document.querySelector('[data-enlarged-theme-stage]');
+          const host=stage.querySelector('.card-theme-preview__host');const root=qaPreviewRoots.get(host);
+          const card=root.querySelector('article');const cr=card.getBoundingClientRect();const sr=stage.getBoundingClientRect();
+          const links=[...root.querySelectorAll('.digital-card__contact a')];
+          const contacts=links.map(a=>({color:getComputedStyle(a).color,font:parseFloat(getComputedStyle(a).fontSize),height:a.getBoundingClientRect().height}));
+          const footer=root.querySelector('.digital-card__contacts');
+          return {open:dialog.open,closed:host.shadowRoot===null,inert:host.inert,code:card.dataset.themeCode,
+            stageFits:cr.width<=sr.width+1&&cr.height<=sr.height+1,orientation:stage.dataset.previewOrientation,
+            font:parseFloat(getComputedStyle(dialog.querySelector('dd')).fontSize), contacts,
+            background:getComputedStyle(footer).backgroundColor,
+            safe:dialog.querySelector('dd img')===null,detail:dialog.querySelector('dd').textContent,
+            overflow:dialog.scrollWidth>dialog.clientWidth+1,focus:document.activeElement.hasAttribute('data-close-theme-preview')};})()`);
+        assert.equal(metrics.open, true); assert.equal(metrics.closed, true); assert.equal(metrics.inert, true);
+        assert.equal(metrics.code, code); assert.equal(metrics.stageFits, true); assert.equal(metrics.overflow, false);
+        assert.ok(metrics.font >= 16); assert.equal(metrics.safe, true); assert.match(metrics.detail, /<img/);
+        assert.equal(metrics.focus, true); assert.ok(metrics.contacts.length >= 4);
+        if (code === 'basic-blue-line') {
+          assert.equal(metrics.background, 'rgb(245, 243, 238)');
+          metrics.contacts.forEach(contact=>{assert.equal(contact.color, 'rgb(21, 25, 31)');assert.ok(contact.font >= 12.8);assert.ok(contact.height > 0);});
+          await screenshot(`bayu-enlarged-${palette}-${width}`);
+        }
+        await tab.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+        await tab.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+        assert.equal(await tab.evaluate("document.querySelector('dialog').contains(document.activeElement) || document.activeElement.tagName==='BODY'"), true);
+        await tab.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+        await tab.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+        await waitFor(async () => await tab.evaluate("!document.querySelector('dialog').open && document.querySelector('[data-enlarged-theme-stage]').childElementCount===0"), 'dialog close cleanup');
+        assert.equal(await tab.evaluate("document.activeElement.hasAttribute('data-enlarge-theme-preview')"), true);
+      }
+      pass(`all 10 themes ${palette} ${width}px: closed Shadow DOM, fit, readable safe details, keyboard close/focus restoration`);
+    }
+  }
+  await tab.evaluate("document.querySelector('[data-enlarge-theme-preview]').click();document.dispatchEvent(new CustomEvent('app:page-leave'))");
+  assert.equal(await tab.evaluate("!document.querySelector('dialog').open && document.querySelector('[data-enlarged-theme-details]').childElementCount===0"), true);
+  const afterLeave = requests.length;
+  await tab.evaluate("document.querySelector('[data-enlarge-theme-preview]').click()");
+  assert.equal(await tab.evaluate("document.querySelector('dialog').open"), false);
+  assert.equal(requests.length, afterLeave);
+  assert.equal(requests.some(request=>request.pathname.startsWith('/api/v1/cards') && request.method!=='GET'), false);
+  pass('preview never saves cards; SPA page leave destroys previews, clears contact data and detaches controls');
+
+  await tab.navigate(origin + '/app/card/design/');
+  await waitFor(async () => /varian desain siap/.test(await tab.evaluate("document.querySelector('[data-form-status]').textContent")), 'fresh design page');
+  await tab.evaluate("globalThis.qaBeforeRestore=true;dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));");
+  await waitFor(async () => await tab.evaluate("globalThis.qaBeforeRestore!==true && document.querySelector('[data-enlarge-theme-preview]')?.disabled===false && /varian desain siap/.test(document.querySelector('[data-form-status]')?.textContent||'')"), 'history-cache lifecycle reload');
+  pass('persisted page lifecycle reloads session/card data instead of reviving disposed preview (simulated events)');
+
+  visualCard = { ...cardFixture };
+  for (const palette of ['light', 'dark']) {
+    await tab.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+    await tab.navigate(origin + '/app/card/identity/');
+    await waitFor(async () => /Data kartu siap/.test(await tab.evaluate("document.querySelector('[data-form-status]').textContent")), 'identity editor loaded');
+    await tab.evaluate(`document.documentElement.dataset.siteTheme='${palette}';document.querySelector('[name=email]').value='unsaved@example.test';document.querySelector('[name=email]').dispatchEvent(new Event('input',{bubbles:true}));`);
+    const metrics = await tab.evaluate(`(()=>{const host=document.querySelector('[data-card-live-preview] .card-theme-preview__host');const root=qaPreviewRoots.get(host);const link=root.querySelector('[data-field=email]');return {text:link.textContent,color:getComputedStyle(link).color,background:getComputedStyle(root.querySelector('.digital-card__contacts')).backgroundColor};})()`);
+    assert.equal(metrics.text, 'unsaved@example.test'); assert.equal(metrics.color, 'rgb(21, 25, 31)'); assert.equal(metrics.background, 'rgb(245, 243, 238)');
+    assert.equal(requests.some(request=>request.pathname.startsWith('/api/v1/cards')&&request.method!=='GET'),false);
+    pass(`identity editor ${palette}: unsaved Bayu preview uses shared contrast without saving`);
+  }
+  for (const width of [390, 768, 1440]) {
+    await tab.send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 600 });
+    await tab.navigate(origin + '/local-visual-card');
+    await waitFor(async () => await tab.evaluate("document.querySelector('[data-public-content]')?.hidden===false"), 'public Bayu loaded');
+    const metrics = await tab.evaluate(`(()=>{
+      const card=document.querySelector('.theme-basic-blue-line');const footer=card.querySelector('.digital-card__contacts');const bounds=footer.getBoundingClientRect();
+      return {width:innerWidth,scroll:document.documentElement.scrollWidth,background:getComputedStyle(footer).backgroundColor,
+        contacts:[...footer.querySelectorAll('a')].map(a=>{const r=a.getBoundingClientRect();return {color:getComputedStyle(a).color,font:parseFloat(getComputedStyle(a).fontSize),inside:r.top>=bounds.top-1&&r.bottom<=bounds.bottom+1}})};})()`);
+    assert.ok(metrics.scroll<=width+1, JSON.stringify(metrics)); assert.equal(metrics.background,'rgb(245, 243, 238)');
+    metrics.contacts.forEach(contact=>{assert.equal(contact.color,'rgb(21, 25, 31)');assert.ok(contact.inside,JSON.stringify(metrics));assert.ok(contact.font>=12.8);});
+    await screenshot(`bayu-public-${width}`);
+    pass(`public Bayu ${width}px: contrast, readable contact size and footer bounds (LOCAL fixture)`);
+  }
+  if (process.argv.includes('--update-bayu-preview')) {
+    await tab.send('Emulation.setDeviceMetricsOverride', { width: 1700, height: 1200, deviceScaleFactor: 1, mobile: false });
+    const clip = await tab.evaluate(`(()=>{const card=document.querySelector('.theme-basic-blue-line');Object.assign(card.style,{width:'1573px',height:'1000px',maxWidth:'none',margin:'0',boxShadow:'none'});scrollTo(0,0);const r=card.getBoundingClientRect();return {x:r.left,y:r.top,width:1573,height:1000,scale:1};})()`);
+    const image = await tab.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip });
+    await writeFile(new URL('../assets/images/themes/basic-blue-line.png', import.meta.url), Buffer.from(image.data, 'base64'));
+    pass('explicit local-only Bayu fallback PNG regenerated from the shared template and stylesheet');
+  }
+  console.log(`Visual screenshot artifacts: ${screenshots}`);
   assert.deepEqual(corsTab.errors, []);
   assert.deepEqual(tab.errors, []); assert.deepEqual(second.errors, []);
   console.log(`Browser QA: ${passed} passed, 0 failed, 0 skipped; Chromium/Edge headless, LOCAL API MOCK only.`);

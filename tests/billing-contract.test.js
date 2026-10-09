@@ -70,3 +70,19 @@ test('billing user copy does not expose implementation details', async () => {
   const source = await readFile(new URL('../pages/app/billing.js', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /status dari backend|backend melaporkan|backend memverifikasi/i);
 });
+
+test('billing result separates status, server hint, and block-level responsive actions', async () => {
+  const [html, appStyles, primitives] = await Promise.all([
+    readFile(new URL('../app/billing/result/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../assets/css/app.css', import.meta.url), 'utf8'),
+    readFile(new URL('../assets/css/foundations-primitives.css', import.meta.url), 'utf8'),
+  ]);
+  assert.match(html, /dashboard-panel billing-result-panel/);
+  assert.match(html, /billing-result-status[^>]+role="status" aria-live="polite"/);
+  assert.match(html, /billing-result-actions[\s\S]*data-billing-retry hidden[\s\S]*href="\/app\/billing\/"/);
+  assert.match(html, /Status pembayaran dan paket diperiksa melalui server/);
+  assert.match(appStyles, /\.billing-result-panel\s*\{[^}]*display: grid;[^}]*gap:/);
+  assert.match(appStyles, /\.billing-result-actions\s*\{[^}]*flex-wrap: wrap/);
+  assert.match(primitives, /:where\(html\.ui-foundations\) :where\(\.fdn-button--primary, \.fdn-button--secondary\)\s*\{[^}]*display: inline-flex/);
+  assert.match(primitives, /\.fdn-button--secondary\)\[hidden\]\s*\{\s*display: none !important/);
+});

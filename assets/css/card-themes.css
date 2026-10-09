@@ -484,7 +484,17 @@
   gap: clamp(5px, .8cqw, 9px);
   padding: clamp(5px, .65cqw, 8px) clamp(8px, 1.25cqw, 14px);
   border-right: 1px solid #cfd4d8;
-  font-size: clamp(.56rem, 1.05cqw, .72rem);
+  font-size: clamp(.8rem, 1.45cqw, .95rem);
+  font-weight: 550;
+  line-height: 1.4;
+}
+
+/* Keep the light contact strip independent from dark website/link states. */
+.theme-basic-blue-line .digital-card__contact a,
+.theme-basic-blue-line .digital-card__contact a:visited,
+.theme-basic-blue-line .digital-card__contact a:hover,
+.theme-basic-blue-line .digital-card__contact a:focus-visible {
+  color: #15191f;
 }
 
 .theme-basic-blue-line .digital-card__contact:nth-child(3n),
@@ -1382,7 +1392,7 @@
     padding: 7px 0;
     border-right: 0;
     border-bottom: 1px solid #d8dcdf;
-    font-size: .74rem;
+    font-size: .9rem;
   }
 
   .theme-basic-blue-line .digital-card__contact:last-child {
