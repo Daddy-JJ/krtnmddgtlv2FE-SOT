@@ -57,7 +57,8 @@ const api = createServer(async (request, response) => {
     assert.ok(request.headers['idempotency-key']); assert.equal(request.headers['x-csrf-token'], 'local-mock-csrf');
     if (state.checkout === 'forbidden') return reply(null, 403, 'PAYMENT_SANDBOX_FORBIDDEN');
     if (state.checkout === 'ambiguous') return reply(null, 503, 'PAYMENT_PROVIDER_UNAVAILABLE');
-    state.list = [{ ...state.payment }]; return reply(state.payment, 202);
+    if (state.checkout === 'disabled') return reply(null, 503, 'PAYMENT_CHECKOUT_DISABLED');
+    state.list = [{ ...state.payment }]; return reply(state.payment, state.checkout === 'created' ? 201 : 202);
   }
   if (pathname === '/api/v1/subscriptions/current') return reply(state.payment.status === 'paid' ? { planCode: 'basic', endsAt: '2027-10-02T00:00:00.000Z' } : null);
   if (pathname === '/api/v1/cards') return reply([]);
@@ -83,12 +84,38 @@ try {
     }, 'billing loaded');
     await waitFor(async () => !(await tab.evaluate("document.querySelector('[data-payment-history]')?.getAttribute('aria-busy') === 'true'")), 'billing settled');
   }
+  const clearIntents = () => tab.evaluate("(async()=>{const {paymentIntents}=await import('/utils/payment-intent.js');await paymentIntents.clear()})()");
   for (const capabilities of ['disabled', 'enabled', 'production', 'malformed', 'error']) {
     state.capabilities = capabilities;
     await page();
-    assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-checkout-plan]')].every(button=>button.disabled)"), capabilities !== 'enabled');
+    const enabled = ['enabled', 'production'].includes(capabilities);
+    assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-checkout-plan]')].every(button=>button.disabled)"), !enabled);
+    const label = enabled ? capabilities === 'production' ? 'Pembayaran online' : 'Pembayaran uji — Sandbox' : 'Under development';
+    assert.equal(await tab.evaluate("document.querySelector('[data-upgrade-eyebrow]').textContent"), label);
+    assert.equal(await tab.evaluate("document.querySelector('[data-status-badge]').textContent"), label);
+    assert.equal(await tab.evaluate("document.querySelector('.billing-plan__lock').hidden"), enabled);
+    assert.equal(await tab.evaluate("document.querySelector('.billing-notify').hidden"), enabled);
+    assert.equal(await tab.evaluate("document.querySelector('[data-upgrade-card]').classList.contains('billing-plan--locked')"), !enabled);
+    if (capabilities === 'production') {
+      assert.equal(await tab.evaluate("document.querySelector('[data-checkout-plan]').textContent"), 'Bayar melalui Duitku');
+      assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-upgrade-note]').textContent"), /Sandbox/);
+    }
     assert.equal(requests.filter(request => request.pathname.endsWith('/checkout')).length, 0);
-    pass(`capabilities ${capabilities}: sandbox-only gate, no automatic checkout`);
+    pass(`capabilities ${capabilities}: environment gate, accessible labels, no automatic checkout`);
+  }
+  state.capabilities = 'production';
+  await page('/app/billing/?intent=pro');
+  assert.match(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /Pilih paket yang sesuai/);
+  assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /Under development/);
+  pass('production registration intent gets accurate guidance without automatic purchase');
+  for (const [width, height, label] of [[390, 844, 'mobile'], [768, 1024, 'tablet'], [1440, 900, 'desktop']]) {
+    await tab.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 600 });
+    const metrics = await tab.evaluate('({width:innerWidth,scroll:document.documentElement.scrollWidth,h1:document.querySelectorAll("h1").length,main:document.querySelectorAll("main").length})');
+    assert.ok(metrics.scroll <= metrics.width + 1, JSON.stringify(metrics));
+    assert.equal(metrics.h1, 1); assert.equal(metrics.main, 1);
+    assert.equal(await tab.evaluate("getComputedStyle(document.querySelector('.billing-plan__lock')).display"), 'none');
+    assert.equal(await tab.evaluate("getComputedStyle(document.querySelector('.billing-notify')).display"), 'none');
+    pass(`${label}: production billing layout and hidden unavailable controls`);
   }
   state.capabilities = 'enabled';
   state.delay = 1000;
@@ -258,6 +285,57 @@ try {
   assert.ok(pageCheckouts.at(-1).key); assert.equal(pageCheckouts.at(-1).csrf, 'local-mock-csrf');
   assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-subscription-summary]').textContent"), /BASIC/);
   pass('actual sandbox button double-click sends one mock checkout; 202 never grants entitlement');
+
+  state.capabilities = 'production'; state.list = [];
+  state.payment = { ...fixture, environment: 'production' };
+  for (const checkout of ['created', 'ready']) {
+    state.checkout = checkout; state.list = [];
+    await clearIntents(); await page();
+    const before = requests.filter(request => request.pathname.endsWith('/checkout')).length;
+    await tab.evaluate("document.querySelector('[data-checkout-plan]').click();document.querySelector('[data-checkout-plan]').click()");
+    await waitFor(async () => /sedang diverifikasi/.test(await tab.evaluate("document.querySelector('[data-form-status]').textContent")), 'production pending without URL');
+    const sent = requests.filter(request => request.pathname.endsWith('/checkout'));
+    assert.equal(sent.length, before + 1);
+    assert.deepEqual(JSON.parse(sent.at(-1).body), { planCode: 'basic' });
+    assert.ok(sent.at(-1).key); assert.equal(sent.at(-1).csrf, 'local-mock-csrf');
+    assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-subscription-summary]').textContent"), /BASIC/);
+    pass(`production ${checkout === 'created' ? 201 : 202} without URL: one POST, pending, no entitlement`);
+  }
+  state.payment.redirectUrl = 'https://app-prod.duitku.com/redirect_checkout?reference=local-mock';
+  state.list = [{ ...state.payment }]; await page();
+  assert.equal(await tab.evaluate("document.querySelector('[data-payment-history] a').href"), state.payment.redirectUrl);
+  state.payment.redirectUrl += '&returnUrl=https://evil.test'; state.list = [{ ...state.payment }];
+  await page();
+  assert.equal(await tab.evaluate("document.querySelector('[data-payment-history] a') === null"), true);
+  assert.match(await tab.evaluate("document.querySelector('[data-payment-history]').textContent"), /tidak dapat diverifikasi/);
+  pass('production history permits exact approved URL only; hostile redirect is not clickable');
+  state.payment.redirectUrl = null;
+  await page('/app/billing/result/?resultCode=00&merchantOrderId=KND_local_mock&reference=private&amount=1');
+  assert.equal(await tab.evaluate('location.search'), '');
+  assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-subscription-summary]').textContent"), /BASIC/);
+  const beforeProductionSubscription = requests.filter(request => request.pathname.endsWith('/subscriptions/current')).length;
+  const beforeProductionCards = requests.filter(request => request.pathname.endsWith('/cards')).length;
+  state.reconcile = 'paid';
+  await tab.evaluate("document.querySelector('[data-reconcile-payment]').click()");
+  await waitFor(async () => /Berhasil/.test(await tab.evaluate("document.querySelector('[data-payment-history]').textContent")), 'production paid mock');
+  assert.match(await tab.evaluate("document.querySelector('[data-subscription-summary]').textContent"), /BASIC/);
+  assert.ok(requests.filter(request => request.pathname.endsWith('/subscriptions/current')).length > beforeProductionSubscription);
+  assert.ok(requests.filter(request => request.pathname.endsWith('/cards')).length > beforeProductionCards);
+  await page();
+  assert.equal(await tab.evaluate("document.querySelector('[data-upgrade-card=basic]').hidden"), true);
+  assert.equal(await tab.evaluate("document.querySelector('[data-pro-upgrade-price]').textContent"), 'Rp55.000');
+  pass('production forged return cannot activate; confirmed paid refetches entitlement and Basic-to-Pro price');
+
+  state.payment = { ...fixture, environment: 'production' }; state.list = []; state.checkout = 'disabled';
+  await clearIntents(); await page();
+  const beforeClosedCheckout = requests.filter(request => request.pathname.endsWith('/checkout')).length;
+  await tab.evaluate("document.querySelector('[data-checkout-plan]').click();document.querySelector('[data-checkout-plan]').click()");
+  await waitFor(async () => /belum tersedia/.test(await tab.evaluate("document.querySelector('[data-form-status]').textContent")), 'production closed after capability');
+  assert.equal(await tab.evaluate("[...document.querySelectorAll('[data-checkout-plan]')].every(button=>button.disabled)"), true);
+  assert.equal(requests.filter(request => request.pathname.endsWith('/checkout')).length, beforeClosedCheckout + 1);
+  assert.equal(await tab.evaluate("document.querySelector('[data-status-badge]').textContent"), 'Under development');
+  assert.equal(await tab.evaluate("document.querySelector('.billing-notify').hidden"), false);
+  pass('server closes production after enabled capabilities: one POST, no retry, locked UI restored');
 
   state.reports = { productionRevenue: [{ currency: 'IDR', amount: '55000.00', count: 1 }, { currency: 'USD', amount: '2.50', count: 1 }],
     paymentTotals: [{ provider: 'duitku', environment: 'sandbox', status: 'paid', currency: 'IDR', amount: '97000', count: 1 },

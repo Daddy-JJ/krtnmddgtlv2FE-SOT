@@ -67,19 +67,22 @@ dari backend. Browser tidak boleh mengaktifkan membership.
 - Maksimal tiga revisi.
 - File privat tersedia selama 90 hari sesuai status authoritative backend.
 
-## Membership checkout pause
+## Membership checkout release gates (FE-D-041)
 
 - Gateway baru menggunakan Duitku POP browser redirect (FE-D-034).
-- FE-D-040 permits restricted sandbox frontend only when valid, user-scoped
-  capabilities report checkoutEnabled:true and environment:sandbox. Backend-only
-  dummy allowlist remains mandatory. Production release stays false. This source
-  approval does not authorize deploy or actual sandbox invoices in this task.
-- Checkout dan aktivasi payment baru tetap paused sampai keputusan owner
-  terpisah setelah sandbox/UAT terkoordinasi; compatibility bukan aktivasi.
+- FE-D-041 approves production source with PAYMENT_CHECKOUT_RELEASED=true,
+  superseding the production pause in FE-D-004/FE-D-034/FE-D-040. Backend must
+  still return valid user-scoped Duitku production capabilities with
+  checkoutEnabled:true; failed/malformed/disabled capabilities fail closed.
+- Restricted sandbox remains separately gated by FE-D-040 and backend-only
+  dummy allowlisting. Never infer checkout permission from role/email alone.
+- Owner reports merchant production approval and credentials available; this
+  is not live connectivity, callback or paid UAT evidence. No deploy, hosting
+  change, commit/push or real transaction is authorized by the source patch.
 - UI boleh menampilkan benefit dan harga informatif.
-- Tombol checkout production tidak boleh aktif; sandbox exception follows FE-D-040.
-- Note paused wajib menggunakan teks `Under development`.
-- Saat resumed melalui keputusan baru, transisi yang diizinkan adalah Starter ke
+- Production CTA is `Bayar melalui Duitku`; sandbox CTA remains
+  `Uji pembayaran — Sandbox`. Unavailable checkout shows `Under development`.
+- Transisi yang diizinkan adalah Starter ke
   Basic, Starter ke Pro, dan Basic ke Pro. Pro tidak memiliki upgrade CTA.
 
 ## Website theme and locale

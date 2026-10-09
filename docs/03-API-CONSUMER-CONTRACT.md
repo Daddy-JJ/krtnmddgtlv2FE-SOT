@@ -215,7 +215,7 @@ CSRF rejection preserves input for explicit retry. Ambiguous first-card POST
 (timeout/network/5xx/invalid successful response) blocks further creation until
 reload rereads owned cards; no automatic resend or guessed success.
 Registration intent=basic/pro never grants paid entitlement or bypasses backend
-creation eligibility. Checkout remains paused.
+creation eligibility. Checkout follows FE-D-041 and backend capabilities.
 
 Starter CTA (FE-D-038): after a validated empty card list, read
 GET /subscriptions/current through the existing payment service. Null/404 or
@@ -288,12 +288,12 @@ PNG contains the backend canonical public URL, not raw contact data.
 | GET | `/payments` | Payment history |
 | GET | `/payments/capabilities` | Fail-closed provider/release capabilities |
 | GET | `/payments/{publicId}` | Owned payment detail |
-| POST | `/payments/checkout` | Restricted sandbox FE-D-040; production paused |
+| POST | `/payments/checkout` | Production source FE-D-041 / restricted sandbox FE-D-040; valid enabled capabilities required |
 | POST | `/payments/{publicId}/reconcile` | Authorized status refresh |
 | POST | `/feedback` | Authenticated improvement message |
 
-Production checkout must not be invoked while its product decision remains paused.
-Restricted sandbox follows FE-D-040 only; executing real UAT is separately authorized.
+FE-D-041 releases production frontend source, not hosting or actual transactions.
+Restricted sandbox follows FE-D-040; real UAT execution is separately authorized.
 Status payment `refunded` dan `refund_pending_review` harus dirender berbeda.
 Setelah reconciliation, subscription, payment history, dan cards dimuat ulang
 dari backend; tier/benefit tidak ditentukan dari cache frontend.
@@ -306,13 +306,13 @@ backend sandbox membership. No frontend allowlist or admin-role bypass exists.
 Read capabilities after login and on each billing load/explicit checkout; do not
 cache across accounts. Logout/auth transitions and cross-tab notification clear
 billing data/capabilities, and late old-session responses are discarded. The
-production release constant remains false even if capabilities is true. FE-D-040
-adds a separate sandbox release flag: paymentCheckoutAllowed requires valid
-capabilities, checkoutEnabled:true, provider:duitku and environment:sandbox.
+production release constant is true under FE-D-041. FE-D-040 retains a separate
+sandbox flag: paymentCheckoutAllowed requires valid capabilities,
+checkoutEnabled:true, provider:duitku and the matching environment release flag.
 UI submit, history payment links and service checkout share this gate. Service
 rereads capabilities before POST; checkout response provider/environment must
 match capabilities. History redirects require the same environment too. No
-frontend allowlist or production activation is introduced.
+frontend allowlist or hosting activation is introduced.
 
 `403 PAYMENT_SANDBOX_FORBIDDEN` closes checkout and displays
 `Pembayaran uji hanya tersedia untuk akun pengujian yang disetujui` without
@@ -331,8 +331,9 @@ not establish live deployment or sandbox readiness.
   `success:true`, provider `duitku`, sandbox/production environment, boolean
   `checkoutEnabled`, `idempotencyKeyRequired:true`, integer cooldown >=30 seconds.
   Failed/malformed/unavailable capabilities close checkout. Capabilities do not
-  prove per-user eligibility. `PAYMENT_CHECKOUT_RELEASED=false` is a separate
-  frontend release gate, not overridden by runtime config/server flags.
+  prove per-user eligibility. `PAYMENT_CHECKOUT_RELEASED=true` records FE-D-041's
+  source approval, not a bypass of disabled capabilities or backend eligibility.
+  Runtime config cannot override either environment release flag.
 - Checkout body ONLY `{planCode:'basic'|'pro'}` plus UUID `Idempotency-Key`.
   Existing client owns credentials/include, JSON, CSRF and transport. Checkout
   and reconcile explicitly synchronize access CSRF and use that fresh token.
@@ -379,9 +380,11 @@ not establish live deployment or sandbox readiness.
   Historical provider names use bounded safe plain text only, without restoring
   any provider-specific checkout/SDK integration.
 
-Release order: compatible backend with checkout disabled, compatible frontend
-with checkout disabled, owner merchant sandbox configuration + browser/UAT,
-then separate owner activation. Return URL must match `/app/billing/result/`
+Release order: verify compatible backend with checkout disabled, deploy approved
+frontend source (capabilities keep it closed), then separately authorize hosting
+activation, controlled paid UAT and public opening. A production account gate,
+if needed for restricted UAT, must be implemented in backend: sandbox allowlisting
+does not restrict production. Return URL must match `/app/billing/result/`
 on the approved test/production origin. Migration 013/local backend QA are not
 proof of hosting migration/deployment. Credentials belong only to backend.
 
@@ -392,7 +395,7 @@ are local and not assumed committed/deployed. An exposed header can still be
 absent on an endpoint response. Frontend uses the capabilities cooldown fallback
 (safe default 30 seconds), with reconcile always >=30 seconds and a longer valid
 Retry-After honored. Checkout follows the same fallback without changing its
-disabled release gate. Absolute deadlines never schedule retries automatically.
+backend capability gate. Absolute deadlines never schedule retries automatically.
 Browser mock covers missing/exposed headers and HTTP-date; this is not live CORS
 evidence. Port 3000 was unavailable during this frontend pass; real backend
 browser verification and deployed allowed-origin 429 checks remain pending.

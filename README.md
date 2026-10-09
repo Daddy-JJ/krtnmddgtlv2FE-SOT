@@ -166,7 +166,9 @@ dinamis dikecualikan; query string serta fragment URL dibuang sebelum event.
 ## Status penting
 
 - Launch menggunakan Bahasa Indonesia; English ditunda.
-- Checkout membership masih paused dan harus menampilkan `Under development`.
+- FE-D-041 menyetujui source checkout production, tetap wajib capabilities
+  backend valid/enabled per akun. Jika tidak tersedia, tombol disabled dan
+  menampilkan `Under development`. Hosting activation/deploy/UAT berbayar terpisah.
 - First-visit Light/Dark chooser sudah diimplementasikan dan diuji.
 - Build dan test lokal lulus; staging API, Vercel Preview, serta UAT perangkat
   nyata tetap diperlukan sebelum production-readiness disetujui.

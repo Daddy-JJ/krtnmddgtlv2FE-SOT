@@ -113,8 +113,8 @@ function isStarterPlan() {
 
 function starterUnavailableMessage() {
   return mode === 'social'
-    ? 'Tautan sosial tidak tersedia pada paket Starter. Membership Basic dan Pro masih Under development.'
-    : 'Katalog tidak tersedia pada paket Starter. Membership Basic dan Pro masih Under development.';
+    ? 'Tautan sosial tidak tersedia pada paket Starter. Periksa pilihan upgrade Basic atau Pro di menu Langganan.'
+    : 'Katalog tidak tersedia pada paket Starter. Periksa pilihan upgrade Basic atau Pro di menu Langganan.';
 }
 
 function setCreateLocked(locked) {

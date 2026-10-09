@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile, readdir } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
-import { ApiClient } from '../services/api-client.js';
+import { ApiClient, api } from '../services/api-client.js';
 import { createPaymentService, paymentService } from '../services/payment-service.js';
 import { createPaymentFlow } from '../services/payment-flow.js';
 import { createIntentStore, createBrowserIntentStore, PAYMENT_INTENT_KEY } from '../utils/payment-intent.js';
@@ -14,14 +14,17 @@ const ID = '8c7e9857-7fbb-4c1f-8e6c-42bdcf9fe60a';
 const KEY = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const capabilities = { checkoutEnabled: true, provider: 'duitku', environment: 'sandbox', idempotencyKeyRequired: true, reconcileCooldownSeconds: 30 };
 
-test('owner gate permits valid enabled sandbox only; production and malformed capabilities fail closed', () => {
-  assert.equal(PAYMENT_CHECKOUT_RELEASED, false); assert.equal(PAYMENT_SANDBOX_RELEASED, true);
+test('owner production release still requires valid enabled environment-scoped capabilities', () => {
+  assert.equal(PAYMENT_CHECKOUT_RELEASED, true); assert.equal(PAYMENT_SANDBOX_RELEASED, true);
   assert.equal(paymentCheckoutAllowed(capabilities), true);
-  for (const data of [null, {}, { ...capabilities, environment: 'production' }, { ...capabilities, environment: null },
+  assert.equal(paymentCheckoutAllowed({ ...capabilities, environment: 'production' }), true);
+  for (const data of [null, {}, { ...capabilities, environment: null },
     { ...capabilities, checkoutEnabled: false }, { ...capabilities, provider: 'other' }, { ...capabilities, idempotencyKeyRequired: false }]) {
     assert.equal(paymentCheckoutAllowed(data), false);
   }
   assert.equal(paymentCheckoutAllowed(capabilities, { released: false, sandboxReleased: false }), false);
+  assert.equal(paymentCheckoutAllowed({ ...capabilities, environment: 'production' }, { released: false }), false);
+  assert.equal(paymentCheckoutAllowed(capabilities, { sandboxReleased: false }), false);
 });
 
 test('sandbox-only service rejects enabled production capabilities before CSRF or POST', async () => {
@@ -63,12 +66,44 @@ function harness(overrides = {}) {
     switchUser: () => { current = OTHER; }, advance: value => { time += value; }, uuids: () => uuids };
 }
 
-test('release gate blocks the production singleton even if backend would enable checkout', async () => {
-  assert.equal(PAYMENT_CHECKOUT_RELEASED, false);
-  const original = paymentService.capabilities;
-  paymentService.capabilities = async () => ({ ...capabilities, environment: 'production' });
-  try { await assert.rejects(paymentService.checkout('basic', KEY), { code: 'PAYMENT_CHECKOUT_DISABLED' }); }
-  finally { paymentService.capabilities = original; }
+test('released singleton rereads production capability and sends one fresh-CSRF checkout', async t => {
+  const calls = [];
+  let enabled = true;
+  t.mock.method(paymentService, 'capabilities', async () => ({ ...capabilities, environment: 'production', checkoutEnabled: enabled }));
+  t.mock.method(api, 'synchronizeAccessCsrf', async () => { calls.push('csrf'); });
+  t.mock.method(api, 'post', async (path, body, options) => {
+    calls.push({ path, body, options });
+    return { success: true, data: { ...payment, environment: 'production', redirectUrl: 'https://app-prod.duitku.com/redirect_checkout?reference=fixture' } };
+  });
+  assert.equal((await paymentService.checkout('basic', KEY)).status, 'pending');
+  assert.equal(calls[0], 'csrf');
+  assert.equal(calls[1].path, '/payments/checkout');
+  assert.deepEqual(calls[1].body, { planCode: 'basic' });
+  assert.equal(calls[1].options.headers['Idempotency-Key'], KEY);
+  assert.equal(calls[1].options.forceAccessCsrf, true);
+  assert.equal(calls[1].options.skipRefresh, true);
+  enabled = false;
+  await assert.rejects(paymentService.checkout('basic', KEY), { code: 'PAYMENT_CHECKOUT_DISABLED' });
+  assert.equal(calls.length, 2);
+});
+
+test('production release fails closed for disabled, malformed or failed capabilities before CSRF', async () => {
+  for (const get of [
+    async () => ({ success: true, data: { ...capabilities, environment: 'production', checkoutEnabled: false } }),
+    async () => ({ success: true, data: { ...capabilities, environment: 'production', checkoutEnabled: 'true' } }),
+    async () => { throw { status: 503 }; },
+  ]) {
+    const service = createPaymentService({ get, synchronizeAccessCsrf: () => assert.fail('CSRF'), post: () => assert.fail('POST') }, { released: true });
+    await assert.rejects(service.checkout('basic', KEY));
+  }
+});
+
+test('production response cannot silently switch to sandbox or a different provider', async () => {
+  for (const data of [{ ...payment }, { ...payment, environment: 'production', provider: 'other' }]) {
+    const service = createPaymentService({ get: async () => ({ success: true, data: { ...capabilities, environment: 'production' } }),
+      synchronizeAccessCsrf: async () => {}, post: async () => ({ success: true, data }) }, { released: true });
+    await assert.rejects(service.checkout('basic', KEY), { code: 'PAYMENT_RESPONSE_INVALID' });
+  }
 });
 for (const data of [null, {}, { ...capabilities, provider: 'unsupported-provider' }, { ...capabilities, environment: null }, { ...capabilities, checkoutEnabled: 'true' }, { ...capabilities, reconcileCooldownSeconds: 0 }, { ...capabilities, idempotencyKeyRequired: false }]) {
   test(`capabilities fail closed for ${JSON.stringify(data)}`, async () => {
@@ -86,17 +121,17 @@ test('disabled/failing capabilities never create a payment', async () => {
   }
   assert.equal(posts, 0);
 });
-for (const status of [201, 202]) {
-  test(`HTTP ${status} retains pending status, uses only planCode, UUID, fresh CSRF and cookies`, async () => {
+for (const environment of ['sandbox', 'production']) for (const status of [201, 202]) {
+  test(`${environment} HTTP ${status} retains pending status, uses only planCode, UUID, fresh CSRF and cookies`, async () => {
     const calls = [];
     const client = new ApiClient({ baseUrl: 'https://test.invalid/api/v1', cookieSource: () => '', fetchImpl: async (url, options) => {
       calls.push({ url, options });
-      const data = url.endsWith('/capabilities') ? capabilities : url.endsWith('/csrf') ? { csrfToken: 'fresh-csrf' } : { ...payment, redirectUrl: status === 202 ? null : payment.redirectUrl };
+      const data = url.endsWith('/capabilities') ? { ...capabilities, environment } : url.endsWith('/csrf') ? { csrfToken: 'fresh-csrf' } : { ...payment, environment, redirectUrl: status === 202 ? null : `https://app-${environment === 'sandbox' ? 'sandbox' : 'prod'}.duitku.com/redirect_checkout?reference=fixture` };
       return new Response(JSON.stringify({ success: true, data }), { status: url.endsWith('/checkout') ? status : 200 });
     } });
-    const result = await createPaymentService(client, { sandboxReleased: true }).checkout('basic', KEY);
+    const result = await createPaymentService(client, { released: true, sandboxReleased: true }).checkout('basic', KEY);
     assert.equal(result.status, 'pending');
-    assert.equal(result.redirectUrl, status === 202 ? null : payment.redirectUrl);
+    assert.equal(result.redirectUrl, status === 202 ? null : `https://app-${environment === 'sandbox' ? 'sandbox' : 'prod'}.duitku.com/redirect_checkout?reference=fixture`);
     const { options } = calls.find(call => call.url.endsWith('/checkout'));
     assert.deepEqual(JSON.parse(options.body), { planCode: 'basic' });
     assert.equal(options.headers.get('Idempotency-Key'), KEY);
@@ -310,6 +345,18 @@ test('strict redirect rejects hostile URLs, extra queries, mismatched environmen
   }
   assert.equal(paymentRedirectUrl({ ...payment, status: 'paid' }), '');
   assert.equal(paymentRedirectUrl({ ...payment, environment: null }), '');
+});
+test('production redirect allowlist rejects sandbox, hostile hosts, extra parameters and unsafe URL parts', () => {
+  const production = { ...payment, environment: 'production', redirectUrl: 'https://app-prod.duitku.com/redirect_checkout?reference=fixture' };
+  assert.equal(paymentRedirectUrl(production), production.redirectUrl);
+  for (const redirectUrl of [payment.redirectUrl, 'https://app-prod.duitku.com.evil.test/redirect_checkout?reference=x',
+    production.redirectUrl + '&returnUrl=https://evil.test', production.redirectUrl + '&reference=duplicate',
+    production.redirectUrl + '#fragment', production.redirectUrl.replace('https:', 'http:'),
+    'https://user:password@app-prod.duitku.com/redirect_checkout?reference=x',
+    'https://app-prod.duitku.com:444/redirect_checkout?reference=x',
+    'https://app-prod.duitku.com/other?reference=x', 'https://app-prod.duitku.com/redirect_checkout?reference=%20']) {
+    assert.equal(paymentRedirectUrl({ ...production, redirectUrl }), '', redirectUrl);
+  }
 });
 for (const [status, code] of [[401, 'AUTH_REQUIRED'], [403, 'CSRF_INVALID'], [403, 'PAYMENT_SANDBOX_FORBIDDEN'], [422, 'VALIDATION_ERROR'], [429, 'RATE_LIMITED'], [503, 'PAYMENT_CHECKOUT_DISABLED'], [503, 'PAYMENT_GATEWAY_UNAVAILABLE'], [500, 'HTTP_ERROR']]) {
   test(`checkout ${status} ${code} never retries POST and retains safe error data`, async () => {

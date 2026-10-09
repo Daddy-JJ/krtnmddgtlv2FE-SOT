@@ -79,7 +79,7 @@ redirect automatically, transfer input or store user data. Remind users to copy
 existing input before navigating. Use the existing email management, account
 verification and claim flow (including Login for already registered users).
 Claimed Starter editing does NOT require paid subscription. Authorized Basic/Pro
-creation remains subject to backend limits. Checkout remains paused.
+creation remains subject to backend limits. Checkout follows FE-D-041 capabilities.
 
 ## Account security UX
 
@@ -127,7 +127,8 @@ Owner-confirmed public informational prices (2026-10-03): Starter is free (Rp0),
 Starter to Basic Rp55.000, Starter to Pro Rp97.000, and Basic to Pro Rp55.000.
 Basic/Pro term remains 365 days. Homepage prices do not calculate invoices or
 activate entitlement; backend remains authoritative. Paid-package links lead to
-account registration only, with an explicit checkout-unavailable notice.
+account registration only; verified users claim Starter, then check availability
+in billing. Registration is not purchase or entitlement activation.
 
 ### Official merchant contact
 
@@ -141,38 +142,39 @@ Owner approved publishing these details on the homepage footer and Contact page:
 These public merchant details are static HTML and remain visible without API/JS.
 They are owner-provided, not independently verified legal-registration evidence.
 
-### Checkout remains paused
+### Checkout release gates (FE-D-041)
 
-FE-D-040 supersedes the sandbox-only part of the earlier pause: owner approved
-restricted sandbox frontend activation after confirming a verified/claimed dummy
-account is backend-allowlisted. UI and service use the same strict capability gate.
-Production checkout remains disabled, even with enabled production capabilities.
-Sandbox button label is `Uji pembayaran — Sandbox`; unavailable/nonmember users
-retain Under development. Never hardcode an email/UUID/role allowlist in frontend.
-No real invoice, deploy or production activation is authorized by this patch task.
+Owner approved production frontend source on 2026-10-09 after reporting Duitku
+approval and available production credentials. UI and service share the strict
+capability gate: production source is released, but only valid enabled
+account-scoped capabilities allow checkout. Production CTA is
+`Bayar melalui Duitku`; badges, lock icon and accessible labels follow availability.
+Unavailable users retain `Under development` and disabled buttons. Failed reads
+never promise checkout. No email/UUID/role allowlist or credentials in frontend.
+No hosting activation, deploy or real invoice is authorized by this source patch.
 
 Restricted sandbox (FE-D-037) uses backend-only dummy account membership.
-Capabilities is user-scoped and never overrides the paused production release
-gate. `Pembayaran uji — Sandbox` is a gateway label, NOT data/benefit isolation:
+Capabilities is user-scoped and both environments have separate release gates.
+Sandbox button remains `Uji pembayaran — Sandbox` under FE-D-040.
+`Pembayaran uji — Sandbox` is a gateway label, NOT data/benefit isolation:
 owner approved sharing the production database, so confirmed sandbox paid can
 change dummy subscriptions/cards. Never allow customer accounts/resources into
 UAT. Sandbox/unknown/legacy totals are separate from backend production gross
 revenue; other operational metrics may include dummy accounts.
 
 Membership Basic/Pro tetap didefinisikan sebagai annual 365-day product, tetapi
-checkout baru menggunakan Duitku POP redirect dan tetap paused sampai keputusan
-aktivasi terpisah dari owner setelah sandbox/UAT (FE-D-034).
+checkout menggunakan Duitku POP redirect. FE-D-041 supersedes the source pause
+in FE-D-034; hosted activation and paid UAT remain separate release steps.
 
-Selama pause:
+When capabilities are disabled/failed/malformed:
 
 - Benefit/harga boleh ditampilkan sebagai informasi.
-- Semua checkout production CTA disabled atau tidak dirender; restricted sandbox
-  exception follows FE-D-040 and validated backend capabilities.
+- All checkout CTA remain disabled and no checkout POST is made.
 - Gunakan note exact `Under development`.
-- Browser tidak membuat payment production baru.
+- No automatic request on page load/countdown; explicit user action is required.
 - Existing history/reconciliation hanya boleh mengikuti backend authorization.
 
-Jika payment diteruskan melalui keputusan baru, frontend hanya mengirim target
+Frontend hanya mengirim target
 tier. Amount, term, order, status, activation, dan allowed transition ditentukan
 backend. Pro tidak menampilkan upgrade CTA.
 

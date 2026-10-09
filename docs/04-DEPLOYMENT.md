@@ -154,12 +154,61 @@ No analytics-specific environment variable or frontend secret is required.
 - Starter creation, email handoff, Login/Signup, claim, edit.
 - Public card exact-case slug, vCard, and QR.
 - Resume authorized upload/download.
-- Disabled checkout and exact paused copy.
+- Checkout disabled for failed/malformed/disabled capabilities; enabled production
+  uses `Bayar melalui Duitku`, enabled restricted sandbox retains its warning.
 - Light/Dark chooser pada fresh storage serta stored `light`/`dark` preference.
 - Mobile, keyboard, reduced motion, Android/iOS/Safari evidence.
 
 Promote the exact accepted deployment artifact. Backend health alone does not
 approve frontend production, and frontend smoke alone does not approve backend.
+
+### Duitku production coordination (FE-D-041)
+
+Owner approved production frontend source, not hosting activation/deploy/payment.
+The release flag is true; backend capabilities remain a mandatory second gate.
+All local payment/browser QA uses mocks and does not prove merchant connectivity.
+
+Backend operator only: cPanel -> Setup Node.js App -> API application
+(`api.kartunamadigital.id`) -> Environment Variables. Never place merchant keys
+in Vercel/frontend runtime config, documentation, chat, logs or Git. Validate the
+exact keys against the deployed backend before applying them:
+
+```dotenv
+PAYMENT_PROVIDER=duitku
+DUITKU_ENV=production
+DUITKU_ENABLED=true
+PAYMENT_CHECKOUT_ENABLED=false
+DUITKU_PRODUCTION_MERCHANT_CODE=<enter production merchant code directly in hosting>
+DUITKU_PRODUCTION_API_KEY=<enter production API key directly in hosting>
+DUITKU_PRODUCTION_CALLBACK_URL=https://api.kartunamadigital.id/api/v1/payments/duitku/callback
+DUITKU_PRODUCTION_RETURN_URL=https://kartunamadigital.id/app/billing/result/
+```
+
+These are configuration names/placeholders, not credentials. Save and restart
+the backend application after the separately authorized change. Do not replace
+unrelated environment values or remove sandbox credentials/history without
+reviewing pending sandbox invoices and backend startup validation. Callback is
+provider POST; opening its URL with GET does not test payment notification.
+
+Release sequence:
+
+1. Verify compatible backend/version, production configuration and callback/return
+   URLs while PAYMENT_CHECKOUT_ENABLED=false. Confirm migration state in backend.
+2. Deploy approved frontend; user-scoped disabled capabilities keep checkout shut.
+3. If controlled UAT requires account restriction, arrange a backend production
+   gate BEFORE activation. Sandbox UUID allowlisting does not restrict production.
+4. Separate owner approval for hosting activation and account/plan/real amount.
+   Backend operator enables PAYMENT_CHECKOUT_ENABLED, saves and restarts app.
+5. Verify authenticated capabilities report enabled Duitku production; complete
+   an approved real payment. Verify backend-confirmed paid, valid callback/status
+   evidence, exactly-once entitlement, subscription/cards refetch and reload/login.
+   Test pending, cancel/failure, duplicate submit, unsafe return and recovery safely.
+6. Public opening only after recorded hosted/browser UAT and owner approval.
+
+Rollback new orders with PAYMENT_CHECKOUT_ENABLED=false and restart backend.
+Keep gateway/callback/reconcile processing available for already-created invoices;
+do not erase history, change pending orders to a different environment, or infer
+success from browser resultCode. Frontend rollback alone does not stop API orders.
 
 ## Transitional cPanel path
 

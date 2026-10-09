@@ -1,12 +1,43 @@
 # Frontend Repository Status
 
-Updated: 2026-10-04
+Updated: 2026-10-09
 
 Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
 and live local health/authorization guards verified. The approved session,
 data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
+
+## 2026-10-09 - Production frontend source gate (FE-D-041)
+
+Owner reports Duitku production approval/credentials and approves frontend source,
+SOT and regression tests only. PAYMENT_CHECKOUT_RELEASED=true now permits valid
+enabled account-scoped production capabilities; restricted sandbox gate remains
+separate. UI, service and history share the gate; failed/malformed/disabled
+capabilities keep checkout closed. Production CTA, badges, aria labels, lock icon,
+notify and registration-intent guidance follow availability/environment. Public
+and Starter copy directs users to billing without promising checkout is available.
+
+Cookie/CSRF, idempotency, no automatic POST retry, strict redirect URL validation,
+untrusted return handling and backend-confirmed entitlement are retained. Backend
+production config/runbook and controlled UAT/rollback steps are in
+docs/04-DEPLOYMENT.md. Sandbox allowlisting does not restrict production accounts.
+
+QA: focused payment/billing/landing/admin tests 74 passed, 0 failed/skipped;
+npm.cmd run qa static/Tailwind build and full tests 319 passed, 0 failed/skipped.
+npm.cmd run qa:payments:browser 42 passed, 0 failed/skipped using local API mocks
+in Edge/Chromium headless. Covers production and sandbox capability gates,
+mobile/tablet/desktop billing/result layout, keyboard, pending 201/202, duplicate
+clicks, environment URL restrictions, forged return, paid refetch, server-side
+checkout closure, headers/cooldowns, multi-tab/session cleanup and reports.
+Initial sandbox build/browser execution needed elevated filesystem/process
+access; a new QA helper lost its page global after navigation, was corrected,
+then the browser suite reran successfully. These are local evidence only.
+
+Hosted configuration, merchant connectivity, callback, exactly-once activation
+and paid browser UAT are NOT VERIFIED. No backend
+or database edit, hosting change, email, real invoice/payment, commit/push or deploy.
+Earlier status entries below are historical and do not override FE-D-041.
 
 ## 2026-10-04 - Restricted sandbox-only gate (FE-D-040)
 
@@ -242,10 +273,10 @@ mobile behavior remain unverified. No production-ready claim is made.
 | Canonical hosting | Vercel |
 | Backend | Separate repository/shared-hosted API |
 | Static build | 172 allowlisted runtime files in `dist/` |
-| Automated tests | 250 passing; no known test failure |
+| Automated tests | 319 passing; focused 74 and mock browser 42 (2026-10-09) |
 | Launch locale | Bahasa Indonesia |
 | English | Deferred; scaffold remains |
-| Checkout | Duitku POP compatible; paused pending owner sandbox/UAT activation |
+| Checkout | FE-D-041 production source approved; backend capabilities still mandatory; hosted activation/UAT pending |
 | Production readiness | Not yet approved |
 
 External hosting update (owner-reported, pending post-migration health/UAT):

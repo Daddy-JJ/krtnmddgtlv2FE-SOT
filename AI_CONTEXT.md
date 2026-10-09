@@ -20,10 +20,12 @@ Tier terkunci: Starter, Basic, Pro.
 
 - Starter dibuat anonim, tetapi edit hanya setelah Login/Signup dan claim kartu.
 - Resume source wajib DOCX maksimal 10 MB.
-- Duitku POP redirect adalah gateway baru; checkout tetap paused sampai aktivasi
-  terpisah disetujui owner setelah sandbox/UAT. Gunakan note `Under development`.
-- FE-D-040 now approves sandbox-only UI/service checkout for valid enabled sandbox
-  capabilities; production remains paused. Backend owns dummy allowlist and keys.
+- Duitku POP redirect adalah gateway baru. FE-D-041 approves production source
+  release, conditional on valid enabled account-scoped backend capabilities.
+  Disabled/failed capabilities retain `Under development`; deployment, hosting
+  activation and paid UAT require separate authority and evidence.
+- Restricted sandbox remains supported under FE-D-040. Backend owns the dummy
+  allowlist, gateway environment, credentials and all payment/entitlement status.
 - First-visit Light/Dark chooser wajib.
 - Frontend di-host di Vercel.
 - Backend berada di repository terpisah dan shared hosting, terhubung melalui API.

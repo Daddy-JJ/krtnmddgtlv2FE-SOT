@@ -13,6 +13,7 @@ const subscription = main?.querySelector('[data-subscription-summary]');
 const historyList = main?.querySelector('[data-payment-history]');
 const upgradeCards = main?.querySelectorAll('[data-upgrade-card]') ?? [];
 const upgradeNote = main?.querySelector('[data-upgrade-note]');
+const upgradeEyebrow = main?.querySelector('[data-upgrade-eyebrow]');
 const proUpgradePrice = main?.querySelector('[data-pro-upgrade-price]');
 const proUpgradePath = main?.querySelector('[data-pro-upgrade-path]');
 const notifyForm = main?.querySelector('[data-notify-form]');
@@ -123,7 +124,9 @@ async function load() {
     if (retry) retry.hidden = true;
     if (resultError) errorState(resultError);
     else if (resultMessage) showStatus(status, resultMessage, 'info');
-    else if (requestedIntent) showStatus(status, 'Peningkatan membership masih Under development.', 'info');
+    else if (requestedIntent) showStatus(status, paymentCheckoutAllowed(state.capabilities)
+      ? 'Pilih paket yang sesuai di bawah. Paket aktif setelah pembayaran dikonfirmasi.'
+      : 'Under development — Pembayaran online belum tersedia.', 'info');
     else clearStatus(status);
   } catch (error) {
     if (!currentSession(version)) return;
@@ -193,15 +196,27 @@ function renderSubscription() {
 function renderUpgradeOptions() {
   const currentPlan = state.subscription?.planCode ?? 'starter';
   const enabled = paymentCheckoutAllowed(state.capabilities) && Boolean(flow);
+  const sandbox = state.capabilities?.environment === 'sandbox';
+  const availability = enabled ? sandbox ? 'Pembayaran uji — Sandbox' : 'Pembayaran online' : 'Under development';
   const wait = flow?.remaining('checkout') || 0;
   upgradeCards.forEach(card => {
     card.hidden = currentPlan === 'pro' || (currentPlan === 'basic' && card.dataset.upgradeCard === 'basic');
+    card.classList.toggle('billing-plan--locked', !enabled);
+    card.setAttribute('aria-label', `${card.dataset.upgradeCard === 'basic' ? 'Basic' : 'Pro'} Tahunan, ${availability}`);
+    const badge = card.querySelector('[data-status-badge]');
+    if (badge) badge.textContent = availability;
+    const lock = card.querySelector('.billing-plan__lock');
+    if (lock) lock.hidden = enabled;
     card.querySelectorAll('button').forEach(button => {
       button.disabled = !enabled || submitting || loading || wait > 0;
       button.setAttribute('aria-disabled', String(button.disabled));
-      button.textContent = submitting ? 'Memproses permintaan...' : enabled && wait ? `Coba lagi dalam ${wait} detik` : enabled ? 'Uji pembayaran — Sandbox' : 'Under development';
+      button.textContent = submitting ? 'Memproses permintaan...' : enabled && wait ? `Coba lagi dalam ${wait} detik`
+        : enabled ? sandbox ? 'Uji pembayaran — Sandbox' : 'Bayar melalui Duitku' : 'Under development';
     });
   });
+  if (upgradeEyebrow) upgradeEyebrow.textContent = availability;
+  const notify = notifyForm?.closest('.billing-notify');
+  if (notify) notify.hidden = enabled || currentPlan === 'pro';
   if (proUpgradePrice) proUpgradePrice.textContent = currentPlan === 'basic' ? 'Rp55.000' : 'Rp97.000';
   if (proUpgradePath) proUpgradePath.textContent = currentPlan === 'basic' ? 'Basic ke Pro' : 'Starter ke Pro';
   if (upgradeNote) upgradeNote.textContent = enabled ? 'Harga akhir dan kelayakan diperiksa saat pembayaran.' : 'Under development — Pembayaran online belum tersedia.';

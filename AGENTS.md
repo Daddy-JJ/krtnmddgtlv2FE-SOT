@@ -34,8 +34,9 @@ API di repository ini hanya mendefinisikan kebutuhan frontend sebagai consumer.
 - Scope repository dan SOT ini hanya frontend.
 - Tier hanya `Starter`, `Basic`, dan `Pro`.
 - Launch menggunakan Bahasa Indonesia; English ditunda.
-- Checkout membership tetap paused sampai keputusan baru disetujui dan UI harus
-  menampilkan `Under development`.
+- FE-D-041 approves production checkout source, still gated by valid enabled
+  per-account backend capabilities. Unavailable checkout shows `Under development`.
+  This does not authorize hosting activation, deploy or real transactions.
 - First-visit Light/Dark chooser wajib.
 - Starter dapat dibuat tanpa akun, tetapi edit mewajibkan Login/Signup dan claim
   ke akun terverifikasi.

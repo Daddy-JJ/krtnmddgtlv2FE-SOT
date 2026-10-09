@@ -537,6 +537,30 @@ No invoice, payment simulation, backend write, commit/push or deploy in this tas
 real sandbox UAT requires separate authority and evidence. Source approval alone
 does not prove backend flags, credentials or provider connectivity on hosting.
 
+## FE-D-041 - Production checkout source approval
+
+Date: 2026-10-09. Status: Accepted by owner for frontend patch and local QA only.
+Owner reports Duitku production merchant approval and credentials available, then
+approves the proposed production frontend patch, SOT and regression tests.
+Supersedes the production source pause in FE-D-004/FE-D-034/FE-D-040; accepted
+history and separate restricted sandbox authorization remain intact.
+
+Set PAYMENT_CHECKOUT_RELEASED=true; valid enabled per-account backend
+capabilities are still mandatory for UI, service and same-environment history
+redirects. Failed/malformed/disabled capabilities close checkout. Production
+CTA reads `Bayar melalui Duitku`; sandbox keeps its test label/shared-DB warning.
+Synchronize badges/aria labels/lock/notify states and remove unconditional
+checkout-paused claims from public/member copy without promising availability.
+Retain cookie/CSRF, UUID idempotency, no automatic POST replay, strict environment
+URL allowlist and backend-only paid entitlement. Prices/transitions unchanged.
+
+No backend/database/hosting edit, commit/push, deploy or real invoice/payment is
+authorized. Deploy backend compatible with checkout disabled before frontend;
+hosting activation and paid UAT require separate owner instructions. If UAT must
+be account-restricted, backend needs a production gate; sandbox allowlist does
+not apply. Merchant approval is owner-reported, not evidence of deployed
+credentials, valid callback, exactly-once activation or browser/provider UAT.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

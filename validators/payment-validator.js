@@ -2,8 +2,8 @@ export function validatePlanCode(value) {
   return value === 'basic' || value === 'pro' ? '' : 'Pilih paket Basic atau Pro.';
 }
 
-// Backend capability is not an owner authorization to release checkout.
-export const PAYMENT_CHECKOUT_RELEASED = false;
+// FE-D-041 approves production source; valid backend capabilities are still required.
+export const PAYMENT_CHECKOUT_RELEASED = true;
 // Owner-approved restricted sandbox only; account allowlist remains backend-owned.
 export const PAYMENT_SANDBOX_RELEASED = true;
 

@@ -54,12 +54,13 @@ test('official merchant contacts are static, consistent and actionable on homepa
   }
 });
 
-test('merchant information patch does not expose a checkout action or enable payment release', async () => {
-  assert.match(home, /Under development — Pembayaran online belum tersedia/);
+test('public merchant copy explains account-first billing without promising gateway availability or creating checkout', async () => {
+  assert.match(home, /periksa ketersediaan pembayaran melalui Duitku di menu Langganan setelah login/);
+  assert.doesNotMatch(home, /Under development|Pembayaran online belum tersedia/);
   assert.match(home, /Pendaftaran akun bukan pembelian/);
   assert.match(home, /href="\/register\/\?intent=basic">Daftar untuk Basic/);
   assert.match(home, /href="\/register\/\?intent=pro">Daftar untuk Pro/);
   assert.doesNotMatch(home, /data-checkout-plan|snapToken|duitku\.js/);
   const { PAYMENT_CHECKOUT_RELEASED } = await import('../validators/payment-validator.js');
-  assert.equal(PAYMENT_CHECKOUT_RELEASED, false);
+  assert.equal(PAYMENT_CHECKOUT_RELEASED, true);
 });

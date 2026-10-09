@@ -1,6 +1,6 @@
 # Tier Implementation Matrix
 
-Updated: 2026-09-12
+Updated: 2026-10-09 (payment source gate; older backend evidence remains dated)
 
 Backend evidence paths are relative to the canonical sibling repository
 `C:\xampp\htdocs\krtnmdgtlv2API`. Database evidence was verified against
@@ -20,7 +20,7 @@ smoke used only the isolated `_test` database.
 | Katalog | 0 | Maks. 2 | Maks. 10 | catalog editor | card catalog routes | catalog table plus `catalog_item_limit` | server-side plan limit | `card-content.test.ts`; database integration test | Verified | Edit/reorder UX is outside this limit-enforcement claim |
 | Click-to-WhatsApp | Yes | Yes | Yes | `pages/public/card.js` | public aggregate `whatsappUrl` | `plan_features`; applied migration 012 (011 retained as history) | backend derives a validated URL for every tier | backend `card-core.test.ts`; frontend public-card tests; database integration test | Verified | FE-D-017/ADR-006 restores all-tier availability; backend remains authoritative |
 | vCard/VCF | Yes | Yes | Yes | public VCF action | `GET /public/cards/:slug/vcard` | N/A | published card lookup | backend `vcard-http.test.ts`, `vcard-rendering.test.ts`; HTTP 200 smoke | Verified | N/A |
-| Upgrade/payment | Paused | Paused | No upgrade target | Duitku POP compatibility; checkout gate false | capabilities/history/detail/reconcile implemented; new checkout remains paused | Backend-owned financial history preserved | authenticated transition and gateway verification | frontend mock and browser payment QA; backend evidence separate | Blocked for activation | Owner sandbox/UAT and separate activation decision required (FE-D-034) |
+| Upgrade/payment | Basic/Pro when eligible | Pro when eligible | No upgrade target | FE-D-041 production source gate true; FE-D-040 sandbox gate retained | Valid enabled per-account capabilities mandatory; backend owns final eligibility | Backend-owned financial history preserved | cookie/CSRF, UUID, verified paid and environment allowlist | frontend local mock/browser QA; backend evidence separate | Source approved; hosted UAT NOT VERIFIED | Hosting activation/deploy/paid UAT need separate authority; sandbox allowlist does not restrict production |
 | Resume Enhancement | No | No | Pro | member and internal resume pages | resume service route families | migration 004 resume tables | Pro eligibility, assigned specialist, service admin | backend resume tests; frontend resume tests; database integration test | Verified | Real DOCX delivery/mailbox UAT remains external |
 
 ## Resume rules retained

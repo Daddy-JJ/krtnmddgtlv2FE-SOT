@@ -5,6 +5,12 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- FE-D-041: menyetujui gate source checkout production bersyarat capabilities
+  backend; menyelaraskan CTA, badge, aria-label, ikon kunci dan notify billing.
+  Copy homepage/FAQ/Starter mengarahkan ke Langganan tanpa menjanjikan ketersediaan.
+  Menambah regression production pending, redirect dan rollback UI dengan mock.
+  Bukan aktivasi hosting/deployment atau bukti transaksi/callback production.
+
 - Mengaktifkan gate frontend sandbox-only Duitku (FE-D-040) untuk capabilities
   valid yang diizinkan backend. Production tetap false; UI/service dan history
   redirect memakai gate yang sama, dengan pengecekan environment invoice.
