@@ -5,6 +5,12 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- FE-D-044: membatasi tinggi dan memusatkan preview besar sesuai viewport agar
+  seluruh kartu/footer terlihat pada layar pendek; mempertahankan proporsi,
+  menyediakan header tutup sticky, dan mereset scroll saat dialog dibuka ulang.
+  Regression memeriksa bounds kartu/footer di dalam dialog, layar pendek dan
+  viewport/DPR setara zoom 125/150/200% dalam Light/Dark.
+
 - FE-D-043: memperbaiki overlap/spacing heading, status dan CTA billing result;
   tombol Foundations memiliki layout box dan tetap menghormati atribut hidden.
   Memperbesar typography kontak Bayu dengan warna link footer eksplisit;

@@ -52,4 +52,7 @@ test('enlarged design preview is a labelled read-only dialog using the existing 
   assert.match(controller, /event\.persisted\) addEventListener\('pageshow', \(\) => location\.reload\(\)/);
   assert.match(styles, /\.theme-preview-dialog__details[\s\S]*font-size: max\(1rem, 16px\)/);
   assert.match(styles, /\.theme-preview-dialog__stage\[data-preview-orientation="portrait"\]/);
+  assert.match(styles, /\.theme-preview-dialog__stage\s*\{[^}]*max-height: max\(0px, calc\(100dvh - 14rem\)\)/);
+  assert.match(styles, /\.theme-preview-dialog__header\s*\{[^}]*position: sticky;[^}]*background: var\(--fdn-card\)/);
+  assert.match(dialogFunctions, /nodes\.dialog\.scrollTop = 0/);
 });

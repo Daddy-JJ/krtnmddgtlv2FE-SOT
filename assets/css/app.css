@@ -600,9 +600,10 @@ html:not([data-site-theme="light"]) .app-shell-page .app-shell__main textarea {
   padding: clamp(16px, 3vw, 28px);
   overflow: auto;
 }
-.theme-preview-dialog__header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.theme-preview-dialog__header { position: sticky; top: 0; z-index: 1; background: var(--fdn-card); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .theme-preview-dialog__header h2 { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.theme-preview-dialog__stage { margin-top: 16px; aspect-ratio: 85 / 54; }
+/* Reserve space for a wrapped header and dialog padding; keep the whole artwork in view. */
+.theme-preview-dialog__stage { margin-top: 16px; margin-inline: auto; aspect-ratio: 85 / 54; max-height: max(0px, calc(100dvh - 14rem)); }
 .theme-preview-dialog__stage[data-preview-orientation="portrait"] { width: min(100%, 460px); margin-inline: auto; aspect-ratio: 54 / 85; }
 .theme-preview-dialog__details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; margin: 16px 0 0; }
 .theme-preview-dialog__details > div { min-width: 0; }

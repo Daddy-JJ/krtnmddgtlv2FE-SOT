@@ -83,6 +83,7 @@ function openEnlargedPreview() {
   if (disposed || !nodes.dialog || nodes.dialog.open) return;
   nodes.dialog.showModal();
   renderEnlargedPreview();
+  nodes.dialog.scrollTop = 0;
 }
 function renderEnlargedPreview() {
   clearEnlargedPreview();

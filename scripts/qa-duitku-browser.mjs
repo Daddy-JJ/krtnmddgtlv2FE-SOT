@@ -471,9 +471,20 @@ try {
   }
   visualCard = { ...cardFixture, contact: { ...cardFixture.contact, fullName: '<img src=x onerror=alert(1)> Fixture' } };
   await tab.send('Page.addScriptToEvaluateOnNewDocument', { source: `globalThis.qaPreviewRoots=new WeakMap();const originalAttachShadow=Element.prototype.attachShadow;Element.prototype.attachShadow=function(options){const root=originalAttachShadow.call(this,options);qaPreviewRoots.set(this,root);return root;};` });
+  // Zoom-equivalent viewport/DPR pairs; not native browser Ctrl+ zoom proof.
+  const previewViewports = [
+    { width: 390, height: 844, label: 'mobile' },
+    { width: 390, height: 568, label: 'short mobile' },
+    { width: 1440, height: 1000, label: 'desktop' },
+    { width: 1440, height: 720, label: 'short desktop' },
+    { width: 1280, height: 720, label: 'short laptop' },
+    { width: 1152, height: 576, scale: 1.25, label: '1440x720 / 125% zoom-equivalent' },
+    { width: 960, height: 480, scale: 1.5, label: '1440x720 / 150% zoom-equivalent' },
+    { width: 720, height: 360, scale: 2, label: '1440x720 / 200% zoom-equivalent' },
+  ];
   for (const palette of ['light', 'dark']) {
-    for (const width of [390, 1440]) {
-      await tab.send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 600 });
+    for (const { width, height, scale = 1, label } of previewViewports) {
+      await tab.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: width < 600 });
       await tab.navigate(origin + '/app/card/design/');
       await waitFor(async () => /varian desain siap/.test(await tab.evaluate("document.querySelector('[data-form-status]').textContent")), 'design fixture loaded');
       await tab.evaluate(`document.documentElement.dataset.siteTheme='${palette}'`);
@@ -488,24 +499,38 @@ try {
           const dialog=document.querySelector('dialog');const stage=document.querySelector('[data-enlarged-theme-stage]');
           const host=stage.querySelector('.card-theme-preview__host');const root=qaPreviewRoots.get(host);
           const card=root.querySelector('article');const cr=card.getBoundingClientRect();const sr=stage.getBoundingClientRect();
+          const dr=dialog.getBoundingClientRect();const ds=getComputedStyle(dialog);
+          const header=dialog.querySelector('.theme-preview-dialog__header').getBoundingClientRect();
           const links=[...root.querySelectorAll('.digital-card__contact a')];
           const contacts=links.map(a=>({color:getComputedStyle(a).color,font:parseFloat(getComputedStyle(a).fontSize),height:a.getBoundingClientRect().height}));
           const footer=root.querySelector('.digital-card__contacts');
+          const fr=footer.getBoundingClientRect();
+          const contentCenter=dr.left+dialog.clientLeft+parseFloat(ds.paddingLeft)+(dialog.clientWidth-parseFloat(ds.paddingLeft)-parseFloat(ds.paddingRight))/2;
           return {open:dialog.open,closed:host.shadowRoot===null,inert:host.inert,code:card.dataset.themeCode,
             stageFits:cr.width<=sr.width+1&&cr.height<=sr.height+1,orientation:stage.dataset.previewOrientation,
+            visibleCard:cr.top>=header.bottom+8 && cr.bottom<=dr.bottom-parseFloat(ds.paddingBottom)-parseFloat(ds.borderBottomWidth)+1,
+            scrollTop:dialog.scrollTop, viewport:[innerWidth,innerHeight], cardBottom:cr.bottom, dialogBottom:dr.bottom,
+            visibleFooter:fr.top>=header.bottom && fr.bottom<=dr.bottom-parseFloat(ds.paddingBottom)-parseFloat(ds.borderBottomWidth)+1,
+            centered:Math.abs(sr.left+sr.width/2-contentCenter)<1,
             font:parseFloat(getComputedStyle(dialog.querySelector('dd')).fontSize), contacts,
             background:getComputedStyle(footer).backgroundColor,
             safe:dialog.querySelector('dd img')===null,detail:dialog.querySelector('dd').textContent,
             overflow:dialog.scrollWidth>dialog.clientWidth+1,focus:document.activeElement.hasAttribute('data-close-theme-preview')};})()`);
         assert.equal(metrics.open, true); assert.equal(metrics.closed, true); assert.equal(metrics.inert, true);
         assert.equal(metrics.code, code); assert.equal(metrics.stageFits, true); assert.equal(metrics.overflow, false);
+        assert.equal(metrics.visibleCard, true, JSON.stringify({ code, label, metrics }));
+        assert.equal(metrics.visibleFooter, true, JSON.stringify({ code, label, metrics }));
+        assert.equal(metrics.centered, true, JSON.stringify({ code, label, metrics }));
+        assert.equal(metrics.scrollTop, 0);
         assert.ok(metrics.font >= 16); assert.equal(metrics.safe, true); assert.match(metrics.detail, /<img/);
         assert.equal(metrics.focus, true); assert.ok(metrics.contacts.length >= 4);
         if (code === 'basic-blue-line') {
           assert.equal(metrics.background, 'rgb(245, 243, 238)');
           metrics.contacts.forEach(contact=>{assert.equal(contact.color, 'rgb(21, 25, 31)');assert.ok(contact.font >= 12.8);assert.ok(contact.height > 0);});
-          await screenshot(`bayu-enlarged-${palette}-${width}`);
+          await screenshot(`bayu-enlarged-${palette}-${width}-${height}`);
         }
+        await tab.evaluate("document.querySelector('dialog').scrollTop=10000");
+        assert.equal(await tab.evaluate("(()=>{const d=document.querySelector('dialog');const r=d.querySelector('[data-close-theme-preview]').getBoundingClientRect();const dr=d.getBoundingClientRect();return r.top>=dr.top && r.bottom<=dr.bottom;})()"), true);
         await tab.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
         await tab.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
         assert.equal(await tab.evaluate("document.querySelector('dialog').contains(document.activeElement) || document.activeElement.tagName==='BODY'"), true);
@@ -514,7 +539,7 @@ try {
         await waitFor(async () => await tab.evaluate("!document.querySelector('dialog').open && document.querySelector('[data-enlarged-theme-stage]').childElementCount===0"), 'dialog close cleanup');
         assert.equal(await tab.evaluate("document.activeElement.hasAttribute('data-enlarge-theme-preview')"), true);
       }
-      pass(`all 10 themes ${palette} ${width}px: closed Shadow DOM, fit, readable safe details, keyboard close/focus restoration`);
+      pass(`all 10 themes ${palette} ${label}: full artwork/footer visible on open, sticky close, scroll reset, safe details, keyboard/focus`);
     }
   }
   await tab.evaluate("document.querySelector('[data-enlarge-theme-preview]').click();document.dispatchEvent(new CustomEvent('app:page-leave'))");

@@ -136,6 +136,13 @@ restoration reloads the page to read current session/card data. Locked themes ma
 previewed but not saved without backend entitlement. The billing result shell
 uses scoped grid/flex spacing and shared Foundations button primitives; its
 payment controller, endpoints and financial state authority are unchanged.
+FE-D-044 caps and centers the enlarged stage using the dynamic viewport height,
+reserving room for the dialog header/padding. The existing contain-scaling keeps
+card proportions unchanged; normal-size contact details may scroll. The close
+header stays sticky and every open resets scroll to the top. Browser regressions
+must check actual artwork/footer bounds inside the visible dialog, not merely
+card fit within its stage. Reduced CSS viewport/DPR pairs model desktop zoom;
+they are not proof of native browser zoom behavior.
 
 ## Configuration
 

@@ -1,12 +1,62 @@
 # Frontend Repository Status
 
-Updated: 2026-10-09
+Updated: 2026-10-10
 
 Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
 and live local health/authorization guards verified. The approved session,
 data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
+
+## 2026-10-10 - FE-D-044 release authorization
+
+Owner explicitly authorizes frontend commit/push and deployment of the approved
+short-viewport preview patch. Synchronize main/development through fast-forward
+history and use the existing GitHub/Vercel integration. Verify exact commit CI
+status and production-served CSS/controller after push; a successful local mock
+suite is not hosted deployment or authenticated user-workflow evidence.
+Backend/database, payment flags, real transactions and email remain out of scope.
+The 2026-10-09 no-commit/no-deploy note below describes the original patch phase,
+not the subsequently authorized release. Native zoom/device/account UAT remains
+separate from static asset and local mock verification.
+
+Release rerun evidence: `npm.cmd run qa` completed with 337 passed, 0 failed,
+0 skipped (including static/CSS build). Browser QA was attempted twice: one
+run exited during temporary Edge profile cleanup (EBUSY); the sequential rerun
+timed out at the existing `billing loaded` mock fixture before visual scenarios.
+Neither rerun is a browser-suite PASS. The 84-scenario success below is the
+2026-10-09 result for the same preview source patch, not today's rerun. Hosted
+assets/deployment and authenticated/device visual UAT require separate proof.
+
+## 2026-10-09 - Short-viewport preview follow-up (FE-D-044)
+
+Approved frontend-only follow-up: the original enlarged preview could fit its
+own stage yet extend below a short dialog viewport. A 1440x720 local reproduction
+confirmed the crop. The stage now has a viewport-height cap and is centered;
+the existing renderer preserves card proportions/artwork. The dialog close
+header remains sticky and opening resets scrollTop. Normal-size safe contact
+details still scroll separately below the artwork. No API, entitlement, public
+card stylesheet, template, PNG, payment or backend changes.
+
+QA:
+- Focused visual/contract suites: 24 passed, 0 failed/skipped.
+- `npm.cmd run qa`: static/CSS builds and 337 frontend tests passed,
+  0 failed/skipped.
+- `npm.cmd run qa:payments:browser`: 84 grouped scenarios passed,
+  0 failed/skipped, LOCAL API MOCK only, Edge/Chromium headless.
+- All 10 templates in Light/Dark: 390x844, 390x568, 1440x1000,
+  1440x720, 1280x720, plus CSS viewport/DPR pairs 1152x576/1.25,
+  960x480/1.5, 720x360/2 (equivalent to 1440x720 at 125/150/200%).
+  Assertions now check actual artwork AND footer against visible dialog bounds,
+  centered stage, scroll reset, sticky close, keyboard/focus and safe details.
+  Existing payment/auth/CSRF and editor/public-card regressions remain covered.
+- Reviewed short-screen and zoom-equivalent screenshots. Syntax/diff checks pass.
+
+NOT VERIFIED: native browser zoom controls, Safari/Firefox, actual mobile devices
+and authenticated hosted rendering. The viewport/DPR cases model layout changes,
+not a live native zoom test. Source patch only: no commit/push/deploy, backend/DB
+mutation, real email or payment. The earlier FE-D-043 QA entry is historical;
+its stage-fit assertion alone did not cover the reported short-screen crop.
 
 ## 2026-10-09 - Billing result and Bayu visual correction (FE-D-043)
 

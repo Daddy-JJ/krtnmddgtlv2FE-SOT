@@ -598,6 +598,28 @@ static fallback PNG from the same local template/styles and bump registry cache
 version; do not alter other theme artwork or immutable codes. Browser mock proof
 does not substitute for authenticated hosted visual/UAT verification.
 
+## FE-D-044 - Enlarged preview visibility on short viewports
+
+Date: 2026-10-09. Status: Accepted by owner after hosted screenshot and local
+1440x720 reproduction. Scope: frontend sizing and regression patch only; no new
+commit/push, deploy, backend/database mutation or payment authorization.
+
+Follow-up to FE-D-043: a card fitting its stage is not sufficient if that stage
+extends below the dialog viewport. Cap/center its height while preserving card
+proportions and existing art. Keep normal-size safe contact details, sticky close
+controls and reset dialog scrolling when reopened. Verify whole artwork and
+footer visibility at shorter mobile/desktop heights in both palettes and
+125/150/200 percent zoom-equivalent viewport/DPR cases. Native browser zoom,
+actual devices and hosted authenticated rendering require separate verification.
+Existing API, theme entitlement, renderer and payment guards are unchanged.
+
+Release follow-up 2026-10-10: owner explicitly authorizes commit/push and frontend
+deployment of this patch. Synchronize main/development without rewriting history,
+use the existing Vercel Git integration, and verify exact commit status plus
+served production assets. This does not authorize backend/database changes,
+payment flag changes, real transactions or email; authenticated visual/device
+UAT and native browser zoom remain separate evidence.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration
