@@ -259,6 +259,27 @@ upload/delete operation is approved in this consumer contract yet.
 Update/reorder operations are not yet represented in current frontend services.
 They require synchronized backend contract before implementation.
 
+FE-D-045: createSocial/createCatalog first call the existing authenticated
+GET /auth/csrf, then send exactly one POST with its access token forced in
+X-CSRF-Token, credentials/include and skipRefresh. Endpoint/body contracts are
+unchanged; no token is persisted in Web Storage or logged. A failed preflight
+sends no POST.
+Abort/page leave/account changes prevent a late preflight from posting. Existing
+DELETE access-CSRF and bounded idempotent recovery are unchanged.
+The page guards concurrent submits/deletes and preserves rejected input.
+Validation details map only known form fields; malformed/unknown entries are
+ignored rather than breaking error feedback.
+CSRF/401/403/409/422/429/5xx/network/timeouts have safe distinct guidance;
+401/recent-auth offers explicit login rather than losing input via redirect.
+Rate limits honor Retry-After with 30s fallback and never auto-retry at expiry.
+Uncertain writes lock mutation until an explicit owned-list read. A successful
+write followed by a failed list refresh is reported as already saved/deleted,
+not a failed mutation. Read-only recovery does not guarantee exactly-once writes
+across tabs/devices or an outstanding timed-out backend request.
+Public disclosure reads only socialLinks/catalogItems from GET public aggregate.
+It excludes explicit isPublished:false, stays compatible when older public
+aggregates omit that flag, and still relies on backend publication filtering.
+
 ### Public content and card output
 
 | Method | Path | Use |

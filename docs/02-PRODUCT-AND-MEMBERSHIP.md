@@ -42,6 +42,12 @@ Maps URL, logo, social links, dan catalog mengikuti tier. WhatsApp CTA tersedia
 untuk Starter, Basic, dan Pro ketika nomor handphone valid. Semua theme
 memakai data inti yang sama; mengganti theme tidak membuat salinan contact data.
 
+FE-D-045: public social links and published catalog entries appear inside
+`Lihat detail lengkap` alongside full contact values. The existing artwork
+social links stay intact; catalog is rendered once, not duplicated outside the
+disclosure. Empty groups are hidden. Backend public visibility and tier limits
+remain authoritative; no private owner list is fetched on a public card.
+
 ## Starter journey
 
 1. Pengunjung mengisi form Starter tanpa login.

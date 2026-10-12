@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { ApiClient } from '../services/api-client.js';
+import { ApiClient, api } from '../services/api-client.js';
+import { contentService } from '../services/content-service.js';
 import { buildCatalogInput, buildSocialInput, validateCatalogInput, validateSocialInput } from '../validators/content-validator.js';
 
 test('social/catalog reads omit CSRF and mutations use access CSRF', async () => {
@@ -26,6 +27,50 @@ test('social/catalog reads omit CSRF and mutations use access CSRF', async () =>
   assert.equal(requests[1].body.platform, 'instagram');
   assert.equal(requests[4].body.isPublished, true);
 });
+
+for (const [method, suffix, input] of [
+  ['createSocial', 'social-links', { platform: 'facebook', url: 'https://example.test/profile', sortOrder: 0 }],
+  ['createCatalog', 'catalog-items', { title: 'Item', description: null, targetUrl: null, sortOrder: 0, isPublished: true }],
+]) {
+  for (const outcome of ['success', 'CSRF_INVALID', 'AUTH_REQUIRED', 'VALIDATION_ERROR', 'RATE_LIMITED', 'SERVER_ERROR', 'NETWORK_ERROR', 'REQUEST_TIMEOUT', 'bootstrap-failed', 'aborted']) {
+    test(`actual content service ${method}: ${outcome}, fresh access CSRF and no POST replay`, async t => {
+      const calls = [];
+      const abort = new AbortController();
+      const client = new ApiClient({
+        baseUrl: 'https://example.test/api/v1', cookieSource: () => 'csrf_token=stale-cookie; starter_csrf_token=wrong-context', timeoutMs: outcome === 'REQUEST_TIMEOUT' ? 40 : 12000,
+        fetchImpl: async (url, options) => {
+          const path = new URL(url).pathname;
+          calls.push({ path, method: options.method, csrf: options.headers.get('X-CSRF-Token'), credentials: options.credentials, body: options.body });
+          if (path.endsWith('/auth/csrf')) {
+            if (outcome === 'aborted') abort.abort();
+            return new Response(JSON.stringify(outcome === 'bootstrap-failed'
+              ? { success: false, code: 'AUTH_BUSY' } : { success: true, data: { csrfToken: 'current-session-token' } }), { status: outcome === 'bootstrap-failed' ? 503 : 200 });
+          }
+          assert.equal(options.headers.get('X-CSRF-Token'), 'current-session-token');
+          if (outcome === 'NETWORK_ERROR') throw new TypeError('mock network only');
+          if (outcome === 'REQUEST_TIMEOUT') return new Promise((_resolve, reject) => options.signal.addEventListener('abort', () => reject(new Error('mock timeout only')), { once: true }));
+          const status = ({ CSRF_INVALID: 403, AUTH_REQUIRED: 401, VALIDATION_ERROR: 422, RATE_LIMITED: 429, SERVER_ERROR: 500 })[outcome] ?? 201;
+          return new Response(JSON.stringify(status < 400 ? { success: true, data: { publicId: 'fixture-item' } } : { success: false, code: outcome }), { status });
+        },
+      });
+      t.mock.method(api, 'synchronizeAccessCsrf', () => client.synchronizeAccessCsrf());
+      const post = t.mock.method(api, 'post', (...args) => client.post(...args));
+      const request = contentService[method]('card/one', input, { signal: abort.signal });
+      if (outcome === 'success') await request;
+      else await assert.rejects(request, { code: outcome === 'bootstrap-failed' ? 'AUTH_BUSY' : outcome === 'aborted' ? 'REQUEST_ABORTED' : outcome });
+      const suppressed = ['bootstrap-failed', 'aborted'].includes(outcome);
+      assert.equal(post.mock.callCount(), suppressed ? 0 : 1);
+      assert.deepEqual(calls.map(call => call.method), suppressed ? ['GET'] : ['GET', 'POST']);
+      assert.ok(calls.every(call => call.credentials === 'include'));
+      if (!suppressed) {
+        assert.equal(calls[1].path, `/api/v1/cards/card%2Fone/${suffix}`);
+        assert.deepEqual(JSON.parse(calls[1].body), input);
+        assert.equal(post.mock.calls[0].arguments[2].forceAccessCsrf, true);
+        assert.equal(post.mock.calls[0].arguments[2].skipRefresh, true);
+      }
+    });
+  }
+}
 
 test('social and catalog validators match backend-facing minimum contract', () => {
   const social = buildSocialInput({ platform: 'linkedin', url: 'https://linkedin.com/in/demo', sortOrder: '2' });

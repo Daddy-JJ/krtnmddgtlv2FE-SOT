@@ -620,6 +620,33 @@ served production assets. This does not authorize backend/database changes,
 payment flag changes, real transactions or email; authenticated visual/device
 UAT and native browser zoom remain separate evidence.
 
+## FE-D-045 - Social/catalog CSRF preflight and full public details
+
+Date: 2026-10-12. Status: Accepted by owner after read-only source/hosted-asset
+investigation and isolated mock reproduction. Scope: frontend patch and QA only;
+no commit/push/deploy, backend/database mutation, real email or payment.
+
+Reuse access-CSRF synchronization already used for card saves/payment/logout
+before the two content create POSTs; force the fresh token and preserve the
+global no-POST-retry rule. Add a local guard, safe specific errors, preserved
+failed input, manual read-only recovery and clear already-saved/deleted feedback
+if the subsequent list refresh fails. Preserve existing delete confirmation,
+payloads, limits, ordering, authentication and financial behavior.
+
+Place public social links and the single existing catalog section inside
+`Lihat detail lengkap`. Keep all ten card artworks and their existing social
+links, contact/copy, QR/VCF and WhatsApp intact. Public data only, safe text/URLs,
+no draft catalog disclosure or empty groups. Frontend evidence proves a stale
+token failure path, not the precise production cookie/session cause; investigate
+backend separately if a fresh authenticated CSRF token remains rejected.
+
+Release follow-up 2026-10-12: owner explicitly requests commit/push/deploy of
+this approved frontend patch. Use the existing GitHub/Vercel integration,
+fast-forward main/development and verify exact commit status plus served assets.
+This does not authorize backend/database edits, payment configuration changes,
+real email or payment. Authenticated content creation/deletion and public-card
+UAT remain separate from local mocks and static deployment verification.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

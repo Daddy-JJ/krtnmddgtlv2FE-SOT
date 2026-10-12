@@ -58,3 +58,17 @@ test('public page allowlists registry templates and renders remote data through 
   assert.doesNotMatch(page, /\.innerHTML\s*=|\.outerHTML\s*=/);
   assert.doesNotMatch(page, /localStorage|sessionStorage/);
 });
+
+test('social and catalog share the full-details disclosure without changing artwork or adding private API calls', () => {
+  const details = shell.slice(shell.indexOf('<details'), shell.indexOf('</details>'));
+  assert.match(details, /data-social-section hidden/);
+  assert.match(details, /data-social-list/);
+  assert.match(details, /data-catalog-section hidden/);
+  assert.equal((shell.match(/data-catalog-list/g) ?? []).length, 1);
+  assert.match(page, /renderSocialLinks\(viewModel\.socialLinks\)/);
+  assert.match(page, /link\.rel = 'noopener noreferrer'/);
+  assert.match(page, /nodes\.catalogSection\.hidden = true/);
+  assert.match(page, /item\.isPublished === false/);
+  assert.match(page, /nodes\.detailsList\.childElementCount === 0/);
+  assert.doesNotMatch(page, /api\.(?:post|put|patch|delete)\(|\/social-links|\/catalog-items/);
+});

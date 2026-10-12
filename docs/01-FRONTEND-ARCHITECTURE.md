@@ -144,6 +144,17 @@ must check actual artwork/footer bounds inside the visible dialog, not merely
 card fit within its stage. Reduced CSS viewport/DPR pairs model desktop zoom;
 they are not proof of native browser zoom behavior.
 
+FE-D-045 keeps social/catalog mutations in `services/content-service.js` and
+form state in `pages/app/card-content.js`. Creates synchronize access CSRF and
+force the returned token through the existing API client, without POST replay.
+The controller owns an in-flight guard, read-only recovery after uncertain
+results, explicit login guidance, and lifecycle disposal; no parallel auth or
+storage boundary is introduced. Public social links and the existing catalog
+section share `Lihat detail lengkap`, using only the public card aggregate and
+safe DOM/URL helpers. Artwork, themes, VCF/QR, WhatsApp and payment remain intact.
+The existing local browser harness supports `--content-only` for focused checks;
+the default run retains payment/visual regressions and includes content checks.
+
 ## Configuration
 
 `config/app-config.js` reads `globalThis.__KND_CONFIG__` and defaults to:

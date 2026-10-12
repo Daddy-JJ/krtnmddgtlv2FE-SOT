@@ -5,6 +5,12 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- FE-D-045: sinkronisasi CSRF terbaru sebelum tambah sosial/katalog, guard
+  submit/hapus dan lifecycle, pesan error aman, input gagal tetap utuh, serta
+  pemulihan read-only untuk hasil ambigu atau refresh gagal setelah tersimpan.
+  Sosial dan katalog publik berada dalam `Lihat detail lengkap` tanpa duplikasi
+  katalog, perubahan artwork/QR/VCF/WhatsApp atau alur payment/auth global.
+
 - FE-D-044: membatasi tinggi dan memusatkan preview besar sesuai viewport agar
   seluruh kartu/footer terlihat pada layar pendek; mempertahankan proporsi,
   menyediakan header tutup sticky, dan mereset scroll saat dialog dibuka ulang.

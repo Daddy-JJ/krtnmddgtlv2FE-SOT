@@ -1,12 +1,51 @@
 # Frontend Repository Status
 
-Updated: 2026-10-10
+Updated: 2026-10-12
 
 Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
 and live local health/authorization guards verified. The approved session,
 data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
+
+## 2026-10-12 - FE-D-045 release authorization
+
+Owner subsequently requests commit/push/deploy of the approved content patch.
+Release targets the existing main/development GitHub branches and Vercel
+integration; synchronize through fast-forward history, without force-push.
+Verify the exact commit deployment status and production-served content service,
+controller, public shell and CSS after push. Local QA is not authenticated
+hosting UAT. Backend/database, payment configuration and real email/payment
+remain outside this release. The no-release note below records the patch phase,
+not this subsequent authorization.
+
+## 2026-10-12 - Social/catalog CSRF and public details (FE-D-045)
+
+Approved frontend-only patch uses the existing fresh access-CSRF preflight for
+social/catalog creation, one guarded POST, safe error feedback, preserved input,
+manual owned-list recovery and distinct saved/deleted-but-refresh-failed state.
+Existing delete confirmation/recovery, plan limits and payment/auth boundaries
+are unchanged. Session/page transitions dispose the content controller.
+Public social links and the single catalog section now share the full-details
+disclosure; safe URL/text rendering, empty-group hiding and publication checks
+preserve artwork, VCF/QR, WhatsApp and contact-copy functionality.
+
+Final local QA (all commands exit 0):
+- Focused API/content/cookie/public-card tests: 57 passed, 0 failed/skipped.
+- `npm.cmd run qa`: static/CSS build passed; 358 tests passed, 0 failed/skipped.
+- `npm.cmd run qa:payments:browser`: 115 grouped scenarios passed,
+  0 failed/skipped, including the 31 new content/public-detail scenarios and
+  existing payment/logout/visual coverage. Chromium/Edge headless, LOCAL API
+  MOCK only; not proof of authenticated hosting behavior.
+- Public detail bounds checked at 390/768/1440px; mobile/desktop screenshots
+  inspected. Unsafe URLs, unpublished catalog entries, malformed field errors,
+  double-submit, saved-but-refresh-failed, delete confirmation, SPA navigation
+  and session disposal have local regression coverage. Syntax/diff checks pass.
+
+No commit/push/deploy, backend/database mutation, email or real transaction.
+NOT VERIFIED: authenticated hosting UAT, real devices, Safari/Firefox, and the
+precise cause of the owner's production CSRF mismatch. Backend patch is not
+currently indicated by the proven frontend failure path.
 
 ## 2026-10-10 - FE-D-044 release authorization
 

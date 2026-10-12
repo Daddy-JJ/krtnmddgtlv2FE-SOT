@@ -18,6 +18,8 @@ const nodes = {
   whatsapp: document.querySelector('[data-whatsapp-link]'),
   catalogSection: document.querySelector('[data-catalog-section]'),
   catalogList: document.querySelector('[data-catalog-list]'),
+  socialSection: document.querySelector('[data-social-section]'),
+  socialList: document.querySelector('[data-social-list]'),
   detailsSection: document.querySelector('[data-full-details-section]'),
   detailsList: document.querySelector('[data-full-details-list]'),
   copyStatus: document.querySelector('[data-copy-status]'),
@@ -58,7 +60,9 @@ async function loadCard() {
     renderMeta(card, theme.name);
     renderActions(card, slug);
     renderFullDetails(viewModel);
+    renderSocialLinks(viewModel.socialLinks);
     renderCatalog(card.catalogItems);
+    nodes.detailsSection.hidden = nodes.detailsList.childElementCount === 0 && nodes.socialSection.hidden && nodes.catalogSection.hidden;
     nodes.loading.hidden = true;
     nodes.content.hidden = false;
   } catch (error) {
@@ -211,10 +215,33 @@ async function copyText(value) {
   if (!copied) throw new Error('Copy unavailable.');
 }
 
+function renderSocialLinks(items) {
+  nodes.socialList.replaceChildren();
+  nodes.socialSection.hidden = true;
+  for (const item of Array.isArray(items) ? items : []) {
+    const url = safeHttpUrl(item?.url);
+    if (!url) continue;
+    const row = document.createElement('li');
+    const label = document.createElement('strong');
+    label.textContent = item.label || item.platform || 'Tautan sosial';
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = url;
+    row.append(label, link);
+    nodes.socialList.append(row);
+  }
+  nodes.socialSection.hidden = nodes.socialList.childElementCount === 0;
+}
+
 function renderCatalog(items) {
   nodes.catalogList.replaceChildren();
+  nodes.catalogSection.hidden = true;
   if (!Array.isArray(items) || items.length === 0) return;
   for (const item of items) {
+    // The public endpoint owns publication filtering; preserve compatibility when old aggregates omit the flag.
+    if (!item || item.isPublished === false) continue;
     const article = document.createElement('article');
     article.className = 'public-card-catalog__item';
     const title = document.createElement('h3');
@@ -236,7 +263,7 @@ function renderCatalog(items) {
     }
     nodes.catalogList.append(article);
   }
-  nodes.catalogSection.hidden = false;
+  nodes.catalogSection.hidden = nodes.catalogList.childElementCount === 0;
 }
 
 function showNotFound() {

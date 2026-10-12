@@ -23,6 +23,7 @@ const cardFixture = { publicId: ID, slug: 'local-visual-card', themeCode: 'basic
 let visualCard = null;
 let frontendOrigin;
 const state = { user: USER, list: [], payment: { ...fixture }, capabilities: 'enabled', failList: false, reconcile: 'paid', checkout: 'ready', expose: false, delay: 0, retryAfter: '90', requestId: 'local-support-429', reports: {} };
+const content = { active: false, social: [], catalog: [], delay: 0, error: null, bootstrapError: false, bootstrapDelay: 0, failRead: false, failReadAfterSave: false };
 const api = createServer(async (request, response) => {
   const pathname = new URL(request.url, 'http://local.test').pathname;
   if (request.headers.origin === frontendOrigin) {
@@ -36,14 +37,17 @@ const api = createServer(async (request, response) => {
   let body = '';
   for await (const chunk of request) body += chunk;
   requests.push({ method: request.method, pathname, body, key: request.headers['idempotency-key'], csrf: request.headers['x-csrf-token'] });
-  const reply = (data, status = 200, code = '') => {
+  const reply = (data, status = 200, code = '', errors) => {
     response.writeHead(status, { 'content-type': 'application/json', ...(status === 429 && state.retryAfter !== null ? { 'retry-after': state.retryAfter } : {}), ...(state.requestId ? { 'x-request-id': state.requestId } : {}) });
-    response.end(JSON.stringify(status < 400 ? { success: true, data } : { success: false, code, message: 'Unsafe provider/private diagnostic' }));
+    response.end(JSON.stringify(status < 400 ? { success: true, data } : { success: false, code, message: 'Unsafe provider/private diagnostic', ...(errors === undefined ? {} : { errors }) }));
   };
   if (pathname === '/api/v1/me') return state.user ? reply({ user: { publicId: state.user, email: 'fixture@example.test', roles: ['super_admin'] } }) : reply(null, 401, 'AUTH_REQUIRED');
   if (pathname === '/api/v1/admin/statistics') return reply({ newFeedback: 0 });
   if (pathname === '/api/v1/admin/reports') return reply(state.reports);
-  if (pathname === '/api/v1/auth/csrf') return reply({ csrfToken: 'local-mock-csrf' });
+  if (pathname === '/api/v1/auth/csrf') {
+    if (content.bootstrapDelay) await new Promise(resolve => setTimeout(resolve, content.bootstrapDelay));
+    return content.bootstrapError ? reply(null, 503, 'AUTH_BUSY') : reply({ csrfToken: 'local-mock-csrf' });
+  }
   if (pathname === '/api/v1/auth/login') { state.user = USER; return reply({ user: { publicId: USER } }); }
   if (pathname === '/api/v1/auth/logout') { state.user = null; return reply(null); }
   if (pathname === '/api/v1/auth/refresh') return reply(null, 401, 'AUTH_REQUIRED');
@@ -78,8 +82,28 @@ const api = createServer(async (request, response) => {
   if (pathname === '/api/v1/subscriptions/current') return reply(state.payment.status === 'paid' ? { planCode: 'basic', endsAt: '2027-10-02T00:00:00.000Z' } : null);
   if (pathname === '/api/v1/cards') return reply(visualCard ? [visualCard] : []);
   if (pathname === `/api/v1/cards/${ID}`) return reply(visualCard);
+  const contentRoute = pathname.match(new RegExp(`^/api/v1/cards/${ID}/(social-links|catalog-items)(?:/([^/]+))?$`));
+  if (contentRoute) {
+    const mode = contentRoute[1] === 'social-links' ? 'social' : 'catalog';
+    if (request.method === 'GET') return content.failRead ? reply(null, 500, 'HTTP_ERROR') : reply(content[mode]);
+    if (request.headers['x-csrf-token'] !== 'local-mock-csrf') return reply(null, 403, 'CSRF_INVALID');
+    if (content.delay) await new Promise(resolve => setTimeout(resolve, content.delay));
+    if (content.error) return reply(null, content.error.status, content.error.code, content.error.code === 'VALIDATION_ERROR'
+      ? [null, { field: mode === 'social' ? 'url' : 'title', message: 'Isian tidak valid.' }, { field: '\"malformed-selector', message: 'Ignored unknown field' }]
+      : undefined);
+    if (request.method === 'DELETE') {
+      content[mode] = content[mode].filter(item => String(item.id ?? item.publicId) !== contentRoute[2]);
+      return reply(null, 204);
+    }
+    if (content[mode].length >= 2) return reply(null, 409, 'PLAN_LIMIT_REACHED');
+    const item = { ...JSON.parse(body), ...(mode === 'social' ? { id: content.social.length + 1 } : { publicId: ID }) };
+    content[mode].push(item);
+    if (content.failReadAfterSave) content.failRead = true;
+    return reply(item, 201);
+  }
   if (pathname === `/api/v1/cards/${ID}/themes`) return reply([{ code: 'starter-clean', isAvailable: true }, { code: 'basic-blue-line', isAvailable: false }]);
-  if (pathname === '/api/v1/public/cards/local-visual-card') return reply(visualCard);
+  // Include an explicit unpublished entry to exercise the frontend defensive guard too.
+  if (pathname === '/api/v1/public/cards/local-visual-card') return reply(content.active ? { ...visualCard, socialLinks: content.social, catalogItems: content.catalog } : visualCard);
   return reply(null, 404, 'PAYMENT_NOT_FOUND');
 });
 async function listen(server) { await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); return server.address().port; }
@@ -94,6 +118,12 @@ const pass = label => { passed += 1; console.log(`PASS ${label}`); };
 try {
   browser = await launchBrowser();
   const tab = await browser.tab();
+  const screenshots = await mkdtemp(path.join(os.tmpdir(), 'knd-visual-qa-'));
+  const screenshot = async name => {
+    const result = await tab.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+    await writeFile(path.join(screenshots, name + '.png'), Buffer.from(result.data, 'base64'));
+  };
+  if (!process.argv.includes('--content-only')) {
   async function page(route = '/app/billing/') {
     await tab.navigate(origin + route);
     await waitFor(async () => {
@@ -427,11 +457,6 @@ try {
 
   // Visual regressions use the same local server, API boundary and browser harness.
   await tab.send('Page.bringToFront');
-  const screenshots = await mkdtemp(path.join(os.tmpdir(), 'knd-visual-qa-'));
-  const screenshot = async name => {
-    const result = await tab.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
-    await writeFile(path.join(screenshots, name + '.png'), Buffer.from(result.data, 'base64'));
-  };
   state.payment = { ...fixture, environment: 'production' }; state.list = [{ ...state.payment }];
   await clearIntents();
   for (const palette of ['light', 'dark']) {
@@ -588,10 +613,160 @@ try {
     await writeFile(new URL('../assets/images/themes/basic-blue-line.png', import.meta.url), Buffer.from(image.data, 'base64'));
     pass('explicit local-only Bayu fallback PNG regenerated from the shared template and stylesheet');
   }
-  console.log(`Visual screenshot artifacts: ${screenshots}`);
   assert.deepEqual(corsTab.errors, []);
   assert.deepEqual(tab.errors, []); assert.deepEqual(second.errors, []);
-  console.log(`Browser QA: ${passed} passed, 0 failed, 0 skipped; Chromium/Edge headless, LOCAL API MOCK only.`);
+  }
+
+  // Content regressions reuse the real controllers, API boundary, local servers and browser.
+  content.active = true; state.user = USER; state.retryAfter = '1';
+  visualCard = { ...cardFixture, planCode: 'basic' };
+  const posts = () => requests.filter(request => request.method === 'POST' && /\/(social-links|catalog-items)$/.test(request.pathname));
+  const submit = () => tab.evaluate("(()=>{const f=document.querySelector('[data-content-form]');f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));})()");
+  const settled = () => waitFor(async () => await tab.evaluate("document.querySelector('[data-content-form]').getAttribute('aria-busy')==='false'"), 'content request settled');
+  async function contentPage(mode) {
+    await tab.navigate(origin + `/app/card/${mode}/`);
+    await waitFor(async () => await tab.evaluate("document.querySelector('[data-content-count]')?.textContent.includes('item') && document.querySelector('[data-content-form]')?.getAttribute('aria-busy')==='false'"), 'content page loaded');
+    await tab.evaluate("document.cookie='csrf_token=stale-readable-cookie;path=/';");
+  }
+  async function fillContent(mode) {
+    await tab.evaluate(mode === 'social'
+      ? "document.querySelector('[name=platform]').value='facebook';document.querySelector('[name=url]').value='https://example.test/profile';"
+      : "document.querySelector('[name=title]').value='Fixture item';document.querySelector('[name=description]').value='Fixture description';document.querySelector('[name=targetUrl]').value='https://example.test/catalog';");
+  }
+  for (const mode of ['social', 'catalog']) {
+    content[mode] = []; content.error = null; content.delay = 500;
+    await contentPage(mode); await fillContent(mode);
+    const before = posts().length;
+    const beforeBootstrap = requests.filter(request => request.pathname.endsWith('/auth/csrf')).length;
+    await submit();
+    await waitFor(() => posts().length === before + 1, 'one content POST started');
+    assert.equal(await tab.evaluate("document.querySelector('button[type=submit]').disabled"), true);
+    await settled();
+    assert.equal(posts().length, before + 1);
+    assert.equal(posts().at(-1).csrf, 'local-mock-csrf');
+    assert.equal(requests.filter(request => request.pathname.endsWith('/auth/csrf')).length, beforeBootstrap + 1);
+    assert.match(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /ditambahkan/);
+    assert.equal(await tab.evaluate("document.querySelector('[data-content-count]').textContent"), '1 item');
+    pass(`${mode}: fresh CSRF despite stale cookie, one POST for repeated submit, disabled in-flight and refreshed list`);
+    content.delay = 0;
+
+    for (const [status, code, message] of [[403,'CSRF_INVALID',/Sesi keamanan/], [401,'AUTH_REQUIRED',/login kembali/], [403,'FORBIDDEN',/tidak memiliki akses/], [409,'PLAN_LIMIT_REACHED',/Batas/], [422,'VALIDATION_ERROR',/Data tidak valid/], [429,'RATE_LIMITED',/Terlalu banyak/], [500,'HTTP_ERROR',/belum dapat dipastikan/]]) {
+      content.error = { status, code }; await contentPage(mode); await fillContent(mode);
+      const start = posts().length;
+      const refreshes = requests.filter(request => request.pathname.endsWith('/auth/refresh')).length;
+      await submit(); await settled();
+      const text = await tab.evaluate("document.querySelector('[data-form-status]').textContent");
+      assert.match(text, message); assert.doesNotMatch(text, /Unsafe provider/);
+      assert.equal(posts().length, start + 1);
+      assert.equal(requests.filter(request => request.pathname.endsWith('/auth/refresh')).length, refreshes);
+      assert.equal(await tab.evaluate(`document.querySelector('[name=${mode === 'social' ? 'url' : 'title'}]').value`), mode === 'social' ? 'https://example.test/profile' : 'Fixture item');
+      if (status === 422) {
+        assert.equal(await tab.evaluate(`document.querySelector('[name=${mode === 'social' ? 'url' : 'title'}]').getAttribute('aria-invalid')`), 'true');
+        assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-content-form]').textContent"), /Ignored unknown field/);
+      }
+      if (status === 401) assert.equal(await tab.evaluate("[...document.querySelector('[data-content-form]').querySelectorAll('a')].find(a=>a.textContent==='Login kembali')?.hidden"), false);
+      if (status === 429) {
+        assert.equal(await tab.evaluate("document.querySelector('button[type=submit]').disabled"), true);
+        await waitFor(async () => await tab.evaluate("document.querySelector('button[type=submit]').disabled===false"), 'content cooldown expires');
+        assert.equal(posts().length, start + 1);
+      }
+      if (status === 500) {
+        assert.equal(await tab.evaluate("document.querySelector('button[type=submit]').disabled"), true);
+        content.error = null;
+        await tab.evaluate("document.querySelector('[data-content-reload]').click()"); await settled();
+        assert.equal(posts().length, start + 1);
+        assert.equal(await tab.evaluate("document.querySelector('button[type=submit]').disabled"), false);
+      }
+      pass(`${mode}: ${code}, safe copy, preserved input and no replay/refresh loop`);
+    }
+    content.error = null; content[mode] = []; content.bootstrapError = true;
+    await contentPage(mode); await fillContent(mode);
+    const noPost = posts().length; await submit(); await settled();
+    assert.equal(posts().length, noPost);
+    assert.equal(await tab.evaluate(`document.querySelector('[name=${mode === 'social' ? 'url' : 'title'}]').value!==''`), true);
+    pass(`${mode}: failed CSRF preflight suppresses POST and preserves input`);
+    content.bootstrapError = false;
+
+    content.failReadAfterSave = true; await contentPage(mode); await fillContent(mode);
+    const saved = posts().length; await submit(); await settled();
+    assert.match(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /sudah tersimpan.*jangan tambahkan/);
+    await submit(); assert.equal(posts().length, saved + 1);
+    content.failReadAfterSave = false; content.failRead = false;
+    await tab.evaluate("document.querySelector('[data-content-reload]').click()"); await settled();
+    assert.equal(posts().length, saved + 1);
+    assert.equal(await tab.evaluate("document.querySelector('[data-content-count]').textContent"), '1 item');
+    pass(`${mode}: saved-but-refresh-failed is not reported as failed save; manual check is GET-only`);
+    const deletions = () => requests.filter(request => request.method === 'DELETE' && /\/(social-links|catalog-items)\//.test(request.pathname)).length;
+    const beforeDelete = deletions();
+    await tab.evaluate("window.confirm=()=>false;document.querySelector('[data-delete-id]').click()");
+    assert.equal(deletions(), beforeDelete);
+    await tab.evaluate("document.cookie='csrf_token=;Max-Age=0;path=/';window.confirm=()=>true;const b=document.querySelector('[data-delete-id]');b.click();b.click()");
+    await settled();
+    assert.equal(deletions(), beforeDelete + 1);
+    assert.equal(await tab.evaluate("document.querySelector('[data-content-count]').textContent"), '0 item');
+    pass(`${mode}: delete still requires confirmation, blocks repeated click and refreshes list`);
+  }
+
+  content.failRead = true; await contentPage('catalog');
+  const beforeReadCheck = posts().length;
+  assert.equal(await tab.evaluate("document.querySelector('button[type=submit]').disabled"), true);
+  content.failRead = false;
+  await tab.evaluate("document.querySelector('[data-content-reload]').click()"); await settled();
+  assert.equal(posts().length, beforeReadCheck);
+  assert.equal(await tab.evaluate("document.querySelector('button[type=submit]').disabled"), false);
+  await tab.evaluate("document.querySelector('[name=title]').value='   ';document.querySelector('[name=targetUrl]').value='javascript:alert(1)'");
+  await submit(); assert.equal(posts().length, beforeReadCheck);
+  assert.equal(await tab.evaluate("document.querySelector('[name=title]').getAttribute('aria-invalid')"), 'true');
+  pass('read failure locks save; manual read restores it; invalid input creates no request');
+
+  await contentPage('social');
+  await tab.evaluate("document.querySelector('a[data-app-link][href=\"/app/card/catalog/\"]').click()");
+  await waitFor(async () => await tab.evaluate("document.querySelector('[data-content-page]')?.dataset.contentPage==='catalog' && document.querySelector('[data-content-form]')?.getAttribute('aria-busy')==='false'"), 'SPA content navigation');
+  await fillContent('catalog'); await submit(); await settled();
+  assert.match(posts().at(-1).pathname, /catalog-items$/);
+  pass('existing SPA navigation from social to catalog binds only the current controller');
+
+  visualCard.planCode = 'starter'; await contentPage('social');
+  const starterPosts = posts().length; await submit(); assert.equal(posts().length, starterPosts);
+  assert.equal(await tab.evaluate("document.querySelector('button[type=submit]').disabled"), true);
+  pass('Starter remains locked: no content POST');
+  visualCard.planCode = 'basic';
+  await contentPage('social'); await fillContent('social'); content.bootstrapDelay = 500;
+  const leavePosts = posts().length; await submit();
+  await tab.evaluate("document.dispatchEvent(new Event('app:page-leave'))");
+  await tab.evaluate("new Promise(resolve=>setTimeout(resolve,800))");
+  assert.equal(posts().length, leavePosts);
+  pass('page leave during CSRF preflight aborts the controller and never posts stale content');
+  content.bootstrapDelay = 0;
+  await contentPage('social'); await fillContent('social');
+  await tab.evaluate("document.dispatchEvent(new Event('payment:session-changed'))");
+  await submit(); assert.equal(posts().length, leavePosts);
+  assert.equal(await tab.evaluate("document.querySelector('[name=url]').value"), '');
+  pass('account change clears content/draft and disables old controller');
+
+  content.social = [{ platform: 'facebook', label: '<img src=x onerror=alert(1)>', url: 'https://example.test/' + 'x'.repeat(200) }, { platform: 'other', url: 'javascript:alert(1)' }];
+  content.catalog = [{ title: '<img src=x onerror=alert(1)>', description: 'd'.repeat(350), targetUrl: 'https://example.test/product', isPublished: true }, { title: 'PRIVATE DRAFT FIXTURE', isPublished: false }];
+  for (const width of [390, 768, 1440]) {
+    await tab.send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 600 });
+    await tab.navigate(origin + '/local-visual-card');
+    await waitFor(async () => await tab.evaluate("document.querySelector('[data-public-content]')?.hidden===false"), 'public content loaded');
+    await tab.evaluate("document.querySelector('details').open=true;document.querySelector('details').scrollIntoView()");
+    const metrics = await tab.evaluate(`(()=>{const d=document.querySelector('details');return {social:d.querySelectorAll('[data-social-list] a').length,catalog:d.querySelectorAll('[data-catalog-list] article').length,copies:document.querySelectorAll('[data-catalog-list]').length,private:d.textContent.includes('PRIVATE DRAFT'),unsafe:!!d.querySelector('img,script,[href^="javascript:"]'),rel:d.querySelector('[data-social-list] a').rel,overflow:document.documentElement.scrollWidth>innerWidth+1};})()`);
+    assert.deepEqual(metrics, { social:1,catalog:1,copies:1,private:false,unsafe:false,rel:'noopener noreferrer',overflow:false });
+    assert.equal(await tab.evaluate("document.querySelector('[data-vcard-link]').hasAttribute('href') && document.querySelector('[data-qr-link]').hasAttribute('href') && document.querySelector('.theme-basic-blue-line')!==null"), true);
+    await screenshot(`content-details-${width}`);
+    await tab.evaluate("document.querySelector('[data-catalog-section]').scrollIntoView()");
+    await screenshot(`content-catalog-${width}`);
+    pass(`public detail ${width}px: social/catalog in one disclosure, safe URL/DOM, published only, no overflow; artwork/QR/VCF retained`);
+  }
+  content.social = []; content.catalog = [];
+  await tab.navigate(origin + '/local-visual-card');
+  await waitFor(async () => await tab.evaluate("document.querySelector('[data-public-content]')?.hidden===false"), 'empty public groups');
+  assert.equal(await tab.evaluate("document.querySelector('[data-social-section]').hidden && document.querySelector('[data-catalog-section]').hidden && !document.querySelector('details').hidden"), true);
+  pass('empty social/catalog groups stay hidden while full contact details remain');
+  assert.deepEqual(tab.errors, []);
+  console.log(`Visual screenshot artifacts: ${screenshots}`);
+  console.log(`Browser QA: ${passed} passed, 0 failed, 0 skipped within ${process.argv.includes('--content-only') ? 'content-only' : 'full'} scope; Chromium/Edge headless, LOCAL API MOCK only.`);
 } finally {
   await browser?.close();
   await Promise.all([new Promise(resolve => frontend.close(resolve)), new Promise(resolve => api.close(resolve))]);
