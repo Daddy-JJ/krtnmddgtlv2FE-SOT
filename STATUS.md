@@ -1,12 +1,99 @@
 # Frontend Repository Status
 
-Updated: 2026-10-12
+Updated: 2026-10-18
 
 Overall: **Frontend source and SOT aligned; automated frontend/local-stack QA
 and live local health/authorization guards verified. The approved session,
 data-protection, error/double-submit, navigation, visual, validation, URL-sink,
 accessibility, and social-metadata audit fixes are complete in source;
 production still requires frontend deploy and authenticated workflow UAT.**
+
+## 2026-10-18 - FE-D-046 frontend release authorization
+
+Owner requests commit/push/deploy of the verified frontend patch. Target is the
+current main branch and the existing Vercel production integration; development
+is left unchanged unless separately requested. Preserve the reviewed code,
+tests and SOT, rerun pre-release QA and verify the exact remote commit plus
+served production assets. Do not infer deployment from Git push alone.
+Backend/database and production create/claim/email/payment UAT remain outside
+this authorization. The no-release notes below record the earlier patch phase.
+
+## 2026-10-18 - FE-D-046 backend contract alignment
+
+Owner confirms backend ce53f53, migrations 014/015, cutover/health/login/existing
+dashboard/public-card checks live. Local Git contains the exact commit; backend
+handover/OpenAPI were read-only references. This task did not rerun migrations
+or independently test create/claim/email in production.
+
+Audit preserved the uncommitted frontend patch and found three remaining gaps:
+legacy login auto-claim, signup/OTP review mislabelled as expired credentials,
+and no dedicated recovery review handling. Corrected in frontend source:
+- First Starter remains anonymous and immediately published. Exact duplicate
+  409, including legacy holds, keeps Login/recovery CTA and differs from auth
+  registration EMAIL_ALREADY_EXISTS. Existing guard/uncertain lock/no POST replay
+  remain intact.
+- Starter login clears stale navigation context and opens Ringkasan without
+  claim. Existing dashboard selection/confirmation is the only claim controller;
+  successful claim rereads owned cards/subscription. OTP never claims/resends.
+- CARD_EMAIL_IDENTITY_REVIEW_REQUIRED shows support, never implies invalid
+  cookie, and blocks create/claim retries. Signup-context review blocks register,
+  verify and resend actions; true invalid-context 401 stays distinct. Empty
+  candidates explicitly retain legacy uncertainty and a visible support CTA.
+- Unused deprecated Starter PUT/legacy claim adapters removed. Post-claim edits
+  retain cardService PUT /cards/{publicId}, normal session and fresh access CSRF.
+  Non-Starter role/intent/returnTo login and payment behavior are preserved.
+
+QA commands, all final exit 0:
+- node --test tests/starter-create-guard.test.js tests/starter-email-contract.test.js
+  tests/starter-recovery.test.js tests/auth-starter-contract.test.js tests/api-client.test.js
+  -> 98 passed, 0 failed/skipped.
+- npm.cmd run qa -> static/CSS build passed; 395 passed, 0 failed/skipped.
+- npm.cmd run qa:payments:browser -> 142 grouped scenarios passed,
+  0 failed/skipped (27 Starter + 115 existing payment/visual/content).
+  Edge/Chromium headless, LOCAL MOCK API only. Includes register/OTP/login ->
+  explicit claim -> normal card edit, review paths and empty legacy recovery.
+- Syntax/diff checks pass. The initial full run found an obsolete static
+  claimPending assertion; updated to loginPending plus an explicit no-auto-claim
+  assertion, with behavioral coverage and successful full rerun.
+
+NOT VERIFIED here: production create/claim/email UAT, real devices,
+Safari/Firefox or database concurrency. These require separate approval.
+No backend/database edits, real email, production mutations, commit/push/deploy.
+The 2026-10-17 backend-pending note below is historical, superseded by the
+owner-provided deployment confirmation and this contract alignment.
+
+## 2026-10-17 - Starter duplicate-submit and recovery UX (FE-D-046)
+
+Frontend source implemented under owner approval. First Starter card still
+publishes anonymously without Login/OTP. The existing service/API boundary now
+validates the published-card envelope; the controller guards repeated submit,
+locks after success (also email delivery failure), handles ambiguous results
+without retry, preserves input, safely maps validation fields and honors 429
+deadlines. Exact proposed 409 STARTER_EMAIL_ALREADY_EXISTS offers fixed Login,
+verified-account recovery and Contact links without disclosing card identifiers.
+No email/token storage, public email lookup or automatic claim/mail resend.
+
+Final local QA (exit 0):
+- Focused Starter/create/recovery/auth/API tests: 85 passed, 0 failed/skipped.
+- `npm.cmd run qa`: static/CSS build passed; 382 tests passed, 0 failed/skipped.
+- `npm.cmd run qa:payments:browser`: 131 grouped scenarios passed,
+  0 failed/skipped (16 Starter plus 115 existing payment/visual/content).
+  Edge/Chromium headless with LOCAL API MOCK only; no real backend/email/payment.
+- Starter recovery checked in Light/Dark at 390/768/1440px, screenshots inspected;
+  preserved inputs, safe field focus and success focus, cooldown, lifecycle
+  disposal and no browser storage of fixture email covered. Diff check clean.
+  The first full run caught a missing shared URL sanitizer assertion; sanitizer
+  restored and the full build/test suite rerun successfully without weakening it.
+
+PARTIAL: one-email/one-card enforcement still requires atomic backend work and
+the proposed conflict contract. Frontend cannot stop reload/cross-tab/device or
+direct API duplicates. Local backend read-only review confirms generic duplicate
+key handling must not misclassify a new email constraint as a slug collision.
+Verified-email authorization across legacy claim/update routes and legacy-data
+resolution require backend audit. No automatic deletion/merge/reassignment.
+NOT VERIFIED: hosted backend patch/deployment, authenticated browser UAT, real
+mail delivery, real devices, Firefox/Safari or concurrency against a real DB.
+No backend/database edits, commit/push/deploy or production writes performed.
 
 ## 2026-10-12 - FE-D-045 release authorization
 

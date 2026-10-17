@@ -1,6 +1,6 @@
 # Tier Implementation Matrix
 
-Updated: 2026-10-09 (payment source gate; older backend evidence remains dated)
+Updated: 2026-10-18 (Starter backend-contract alignment; older backend evidence remains dated)
 
 Backend evidence paths are relative to the canonical sibling repository
 `C:\xampp\htdocs\krtnmdgtlv2API`. Database evidence was verified against
@@ -9,6 +9,7 @@ smoke used only the isolated `_test` database.
 
 | Fitur | Starter | Basic | Pro | Frontend Evidence | API Evidence | DB Evidence | Authorization Evidence | Test Evidence | Status | Gap/Conflict |
 | ----- | ------- | ----- | --- | ----------------- | ------------ | ----------- | ---------------------- | ------------- | ------ | ------------ |
+| One email, one card | First card published anonymously, no OTP gate | Upgrade existing card | Upgrade existing card | Create guards, login without auto-claim, dashboard confirmation and support review | ce53f53 contract: STARTER_EMAIL_ALREADY_EXISTS / CARD_EMAIL_IDENTITY_REVIEW_REQUIRED | 014/015 live per owner; NOT independently retested here | Verified account and explicit claim; normal /cards edit; no guest ownership disclosure | Starter/auth/recovery tests and isolated browser mocks | Source/mock aligned; production mutation UAT pending | FE-D-046; preserve reservations/legacy holds, no automatic cleanup or replacement |
 | Login/member area | Not required to create; required to manage/edit | Yes | Yes | `starter/manage/`, `register/`, `app/` | `starter/access`, `signup-context`, `claim`, `auth/*` | `users`, `cards.user_id` in migration 001 | Starter management cookie, verified account, then claim; account session for Basic/Pro | backend `starter-http.test.ts`, `starter-email.test.ts`; frontend signup tests | Verified | FE-D-016 confirms anonymous creation and account-bound management |
 | Public URL | Random 7 letters | Custom | Custom | `public-card/index.html`, `pages/app/card-settings.js` | `GET /public/cards/:slug`, custom slug routes | `cards.slug` binary unique in migration 001 and live schema | Starter DTO excludes slug; SQL update permits Basic/Pro only | `starter-slug.test.ts`, `custom-slug.test.ts`, `card-http.test.ts`; isolated HTTP E2E | Verified | Starter exact case returned 200 and changed case returned 404 |
 | QR Code | Yes | Yes | Yes | public QR action uses configured API base | `GET /public/cards/:slug/qr`; `rendering/qr/` | N/A (content-addressed file cache, no QR table) | Published/active public card lookup; rate limit | `qr-rendering.test.ts`, `qr-http.test.ts`, frontend public route tests; HTTP 200/304 smoke | Verified | PNG unit decode equals the exact canonical URL |

@@ -14,6 +14,9 @@ const loginLink = document.querySelector('a[href="/login/"]');
 const emailInput = form?.elements.email;
 const submitButton = form?.querySelector('button[type="submit"]');
 const existingAccountLink = createExistingAccountLink();
+const identitySupport = document.querySelector('[data-starter-identity-support]');
+let starterContextReady = !starterId;
+let submitting = false;
 
 if (loginLink) loginLink.href = withAuthContext('/login/', { returnTo, intent });
 if (starterId) {
@@ -24,6 +27,7 @@ if (starterId) {
 
 form?.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (submitting || !starterContextReady) return;
   const input = formValues(form);
   input.email = normalizeEmail(input.email);
   const errors = validateRegister(input);
@@ -32,6 +36,7 @@ form?.addEventListener('submit', async (event) => {
     showStatus(status, 'Periksa field yang ditandai.', 'error');
     return;
   }
+  submitting = true;
   clearFieldErrors(form);
   existingAccountLink?.setAttribute('hidden', '');
   setBusy(form, true);
@@ -52,7 +57,9 @@ form?.addEventListener('submit', async (event) => {
     }
     showStatus(status, authErrorMessage(error, 'Pendaftaran belum dapat diproses.'), 'error');
   } finally {
+    submitting = false;
     setBusy(form, false);
+    if (submitButton) submitButton.disabled = !starterContextReady;
   }
 });
 
@@ -66,11 +73,17 @@ async function prepareStarterSignup() {
     const context = await starterService.signupContext(starterId);
     emailInput.value = normalizeEmail(context?.email);
     if (!emailInput.value) throw new Error('Starter signup context did not include an email.');
+    starterContextReady = true;
     submitButton.disabled = false;
     showStatus(status, 'Email sudah terisi. Buat password untuk melanjutkan.', 'success');
     form?.elements.password?.focus();
-  } catch {
-    showStatus(status, 'Link pengelolaan tidak valid atau sudah kedaluwarsa. Buka kembali link terbaru dari email Anda.', 'error');
+  } catch (error) {
+    if (error.code === 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED') {
+      showStatus(status, authErrorMessage(error), 'error');
+      identitySupport?.removeAttribute('hidden');
+    } else {
+      showStatus(status, 'Link pengelolaan tidak valid atau sudah kedaluwarsa. Buka kembali link terbaru dari email Anda.', 'error');
+    }
   }
 }
 

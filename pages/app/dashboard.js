@@ -161,7 +161,7 @@ async function loadCandidates(offset = recoveryState.offset) {
     }
     recovery.querySelector('[data-recovery-verify]').hidden = true;
     setText(recoveryStatus, data.items.length ? 'Kartu yang cocok dengan email akun ditemukan. Pilih hanya kartu yang Anda buat.'
-      : 'Tidak ada kandidat kartu pada halaman ini. Jika sudah membuat kartu, buka link Kelola kartu dari email.');
+      : 'Tidak ada kandidat kartu pada halaman ini. Kartu lama mungkin masih ada dan memerlukan peninjauan identitas. Gunakan link Kelola kartu dari email atau hubungi bantuan; jangan membuat kartu pengganti.');
   } catch (error) { if (live(version)) recoveryError(error); }
   finally { if (live(version)) { recoveryState.busy = false; recoveryControls(); } }
 }
@@ -196,7 +196,7 @@ async function recoveryAction(event) {
     }
   } catch (error) {
     if (!live(version)) return;
-    if (error.status === 409 || error.code === 'STARTER_NOT_ELIGIBLE') {
+    if ((error.status === 409 && error.code !== 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED') || error.code === 'STARTER_NOT_ELIGIBLE') {
       await load();
       if (!live(version)) return;
       recoveryState.busy = false;
@@ -211,6 +211,7 @@ function recoveryError(error) {
     dispose(); location.assign('/login/?returnTo=%2Fapp%2F'); return;
   }
   const messages = {
+    CARD_EMAIL_IDENTITY_REVIEW_REQUIRED: 'Identitas kartu memerlukan peninjauan oleh support. Hubungi bantuan; jangan membuat kartu pengganti.',
     EMAIL_VERIFICATION_REQUIRED: 'Verifikasi email akun sebelum menghubungkan kartu.',
     CSRF_INVALID: 'Sesi keamanan tidak sinkron. Muat ulang halaman sebelum mencoba kembali.',
     STARTER_NOT_ELIGIBLE: 'Kartu tidak lagi tersedia untuk dihubungkan. Periksa daftar terbaru atau hubungi support.',
@@ -219,6 +220,11 @@ function recoveryError(error) {
     VALIDATION_ERROR: 'Permintaan tidak valid. Periksa kembali pilihan kartu.',
     RATE_LIMITED: 'Terlalu banyak permintaan. Tunggu sebelum mencoba secara manual.',
   };
+  if (error.code === 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED') {
+    recoveryState.blocked = true;
+    recoveryState.items = [];
+    recoveryList.replaceChildren();
+  }
   if (error.code === 'EMAIL_VERIFICATION_REQUIRED') {
     recovery.querySelector('[data-recovery-verify]').hidden = false;
     recoveryState.blocked = true;

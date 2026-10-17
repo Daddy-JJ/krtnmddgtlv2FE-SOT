@@ -19,6 +19,11 @@ Tier terkunci: Starter, Basic, Pro.
 ## Locked owner decisions
 
 - Starter dibuat anonim, tetapi edit hanya setelah Login/Signup dan claim kartu.
+- FE-D-046: satu email untuk satu kartu; kartu pertama tetap langsung published
+  tanpa Login/OTP. Backend ce53f53 dan migration 014/015 dilaporkan live oleh owner
+  (2026-10-18). Guard/recovery frontend mengikuti kontrak tersebut; review identitas
+  menuju support. Login/OTP tidak auto-claim; claim dipilih/dikonfirmasi di Ringkasan.
+  Mutating production UAT tetap menunggu approval; frontend tidak menjalankan migration.
 - Resume source wajib DOCX maksimal 10 MB.
 - Duitku POP redirect adalah gateway baru. FE-D-041 approves production source
   release, conditional on valid enabled account-scoped backend capabilities.

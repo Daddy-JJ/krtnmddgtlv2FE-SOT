@@ -55,6 +55,9 @@ Ini bukan pengujian sandbox Duitku nyata atau bukti production-ready.
 Suite yang sama juga memeriksa spacing hasil pembayaran, preview besar semua
 10 tema (Light/Dark), keyboard/fokus, dan kartu publik Bayu dengan data fixture.
 Screenshot QA dibuat di direktori temporary lokal, bukan data production.
+Untuk focused Starter guard/recovery QA gunakan
+`node scripts/qa-duitku-browser.mjs --starter-only`. Default suite mencakup
+Starter, payment/visual dan sosial/katalog; seluruh request memakai API mock lokal.
 Restricted sandbox memakai allowlist akun dummy hanya di backend. Capabilities
 per akun tidak mengaktifkan feature flag frontend yang masih false. Database
 sandbox tidak terisolasi: sandbox paid dapat mengubah subscription/kartu dummy.
@@ -110,6 +113,18 @@ Origin tersebut pada CORS. Jika CORS atau cookie gagal, gunakan URL kanonis
 Form `/create/` mewajibkan nama depan dan email. Sapaan Mr/Mrs/Ms, nama
 belakang, dan website bersifat opsional; nomor kontak menggunakan label
 `Nomor handphone`.
+
+FE-D-046 mempertahankan publikasi kartu pertama langsung tanpa Login/OTP;
+verifikasi email tetap diperlukan untuk claim/edit. Form mencegah submit ganda
+dan tetap terkunci setelah sukses atau hasil ambigu. Kontrak backend ce53f53
+409 `STARTER_EMAIL_ALREADY_EXISTS` menampilkan CTA Login/periksa kartu/bantuan.
+Owner mengonfirmasi backend/migration 014/015 live; frontend mengacu kontrak
+source secara read-only, bukan menjalankan ulang migration atau mutasi hosting.
+Login/OTP tidak auto-claim: pilih dan konfirmasikan kartu di Ringkasan. Setelah
+claim, edit memakai PUT /cards/{publicId}. CARD_EMAIL_IDENTITY_REVIEW_REQUIRED
+menuju bantuan, bukan pesan cookie invalid; kandidat kosong tetap menawarkan
+support karena kartu lama mungkin masih ada. UAT create/claim/email production
+menunggu approval terpisah; mock bukan bukti end-to-end production.
 
 Backend membuat slug Starter tepat tujuh huruf `A-Z`/`a-z`,
 case-sensitive, dan tidak dapat diedit oleh Starter. QR berasal dari endpoint

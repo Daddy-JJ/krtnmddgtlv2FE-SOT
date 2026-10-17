@@ -10,24 +10,32 @@ const candidate = value => recoveryId(value?.publicId) && typeof value.displayNa
   && typeof value.createdAt === 'string' && Number.isFinite(Date.parse(value.createdAt));
 
 export const starterService = {
-  create(input) {
-    return api.post('/starter/cards', input, {
+  async create(input, options = {}) {
+    const response = await api.post('/starter/cards', input, {
       csrfContext: null,
       skipRefresh: true,
       timeoutMs: STARTER_CREATE_TIMEOUT_MS,
+      signal: options.signal,
+      includeEnvelope: true,
     });
+    const card = response?.data;
+    let canonical;
+    try { canonical = new URL(card?.canonicalUrl); } catch { /* Fail closed below. */ }
+    if (response?.success !== true || !recoveryId(card?.publicId)
+      || typeof card.slug !== 'string' || !/^[A-Za-z]{7}$/.test(card.slug)
+      || card.planCode !== 'starter' || card.status !== 'published'
+      || !canonical || !['https:', 'http:'].includes(canonical.protocol)
+      || canonical.username || canonical.password || canonical.search || canonical.hash
+      || canonical.pathname !== `/${card.slug}`) {
+      throw Object.assign(new Error('Starter creation response cannot be verified.'), { code: 'STARTER_CREATE_INVALID' });
+    }
+    return { publicId: card.publicId, slug: card.slug, canonicalUrl: canonical.href, emailSent: card.emailSent === true };
   },
   openAccess(publicId, token) {
     return api.post('/starter/access', { publicId, token }, { csrfContext: null, skipRefresh: true });
   },
   signupContext(publicId) {
     return api.get(`/starter/cards/${encodeURIComponent(publicId)}/signup-context`, { skipRefresh: true });
-  },
-  update(publicId, input) {
-    return api.put(`/starter/cards/${encodeURIComponent(publicId)}`, input, { csrfContext: 'access' });
-  },
-  claim(publicId) {
-    return api.post(`/starter/cards/${encodeURIComponent(publicId)}/claim`, null, { csrfContext: 'starter' });
   },
   async claimCandidates(offset = 0, options = {}) {
     if (!Number.isInteger(offset) || offset < 0 || offset > 1000) throw invalidRecovery();

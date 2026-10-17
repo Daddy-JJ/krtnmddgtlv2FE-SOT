@@ -39,7 +39,7 @@ test('confirmed recovery uses fresh normal CSRF, cookies and confirm only; same-
   }
 });
 
-for (const [status, code] of [[401, 'AUTH_REQUIRED'], [403, 'CSRF_INVALID'], [404, 'STARTER_NOT_ELIGIBLE'], [409, 'STARTER_ALREADY_OWNED'], [422, 'VALIDATION_ERROR'], [429, 'RATE_LIMITED'], [500, 'HTTP_ERROR']]) {
+for (const [status, code] of [[401, 'AUTH_REQUIRED'], [403, 'CSRF_INVALID'], [404, 'STARTER_NOT_ELIGIBLE'], [409, 'STARTER_ALREADY_OWNED'], [409, 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED'], [422, 'VALIDATION_ERROR'], [429, 'RATE_LIMITED'], [500, 'HTTP_ERROR']]) {
   test(`recovery ${status}/${code} never retries POST or refreshes mutation`, async () => {
     const paths = [];
     const api = new ApiClient({ baseUrl: 'https://fixture.invalid/api/v1', cookieSource: () => '', fetchImpl: async url => {
@@ -121,8 +121,20 @@ for (const [status, code, message] of [[403, 'EMAIL_VERIFICATION_REQUIRED', /Ver
 test('empty candidates and pagination retain email management alternative without auto mutation', async () => {
   const offsets = []; const h = await harness({ candidates: async offset => { offsets.push(offset); return { items: [], limit: 20, offset, hasMore: offset === 0 }; } });
   assert.match(h.get('[data-recovery-status]').textContent, /Tidak ada kandidat/);
+  assert.match(h.get('[data-recovery-status]').textContent, /Kartu lama mungkin masih ada.*bantuan/);
   const next = h.get('[data-recovery-next]'); next.hasAttribute = name => name === 'data-recovery-next';
   await h.click(next); assert.deepEqual(offsets, [0, 20]); assert.equal(h.claims(), 0);
+});
+test('identity review during explicit claim blocks further mutation and keeps support; no automatic reread/retry', async () => {
+  const h = await harness({ claim: async () => { throw { status: 409, code: 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED' }; } });
+  await h.click(h.button());
+  assert.equal(h.claims(), 1); assert.equal(h.reads(), 1); assert.equal(h.candidateReads(), 1);
+  assert.match(h.get('[data-recovery-status]').textContent, /peninjauan.*support/);
+  assert.equal(h.get('[data-recovery-list]').children.length, 0);
+  assert.equal(h.get('[data-recovery-retry]').disabled, true); assert.equal(h.root.hidden, false);
+  const html = await readFile(new URL('../app/index.html', import.meta.url), 'utf8');
+  assert.match(html, /href="\/contact\/"[^>]*data-recovery-support/);
+  assert.doesNotMatch(html, /data-recovery-support[^>]*hidden/);
 });
 
 for (const code of ['STARTER_ALREADY_OWNED', 'PLAN_LIMIT_REACHED', 'STARTER_NOT_ELIGIBLE']) {

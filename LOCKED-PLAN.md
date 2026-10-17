@@ -34,6 +34,12 @@ dari backend. Browser tidak boleh mengaktifkan membership.
 ## Starter ownership
 
 - Form Starter dapat digunakan tanpa akun.
+- FE-D-046: kartu pertama langsung terbit tanpa verifikasi email; verifikasi
+  tetap untuk claim/edit. Satu email untuk satu kartu, bukan satu kartu per
+  sesi/tab atau tier. Akun terdaftar tanpa kartu tetap boleh membuat kartu pertama.
+- Backend wajib menegakkan keunikan atomik. Guard/CTA frontend saja tidak
+  menutup duplikasi lintas reload, perangkat atau direct API. Tidak ada penghapusan,
+  penggabungan atau reassignment otomatis untuk duplikat existing.
 - Backend membuat slug tujuh huruf `a-zA-Z`, case-sensitive.
 - Link email `Kelola kartu` boleh membawa token opaque untuk handoff aman.
 - Pengguna baru dari link email diarahkan langsung ke Signup dengan email kartu
@@ -41,6 +47,10 @@ dari backend. Browser tidak boleh mengaktifkan membership.
   mempunyai akun.
 - Pengguna wajib mempunyai akun terverifikasi sebelum claim.
 - Kartu wajib diklaim ke akun sebelum dapat diedit.
+- Login/OTP bukan persetujuan claim: pilih dan konfirmasikan kartu di Ringkasan.
+  Setelah claim, edit memakai PUT /cards/{publicId}, bukan legacy Starter PUT.
+- CARD_EMAIL_IDENTITY_REVIEW_REQUIRED diarahkan ke support, tanpa retry create
+  atau asumsi cookie invalid. Kandidat kosong tidak membuktikan kartu lama tidak ada.
 - Credential atau token handoff tidak boleh disimpan di Web Storage.
 
 ## Card capability

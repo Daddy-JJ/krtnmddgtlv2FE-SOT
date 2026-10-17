@@ -5,6 +5,16 @@ dokumentasi kanonis repository ini.
 
 ## Unreleased
 
+- FE-D-046: guard submit Starter sebelum await, kunci setelah sukses/hasil ambigu,
+  validasi respons kartu published, error aman dan jeda 429 tanpa retry otomatis.
+  CTA Login/pemulihan untuk kontrak backend email kartu duplikat tanpa
+  membocorkan identitas kartu. Publikasi pertama tetap anonim tanpa OTP;
+  backend ce53f53/migration 014/015 dilaporkan live oleh owner.
+  Follow-up 2026-10-18: login/OTP tanpa auto-claim, konfirmasi pengaitan di
+  Ringkasan, support untuk identity-review/daftar kosong, serta hapus adapter
+  legacy edit/auto-claim. Edit setelah claim tetap melalui /cards dengan CSRF.
+  UAT mutasi production tidak dijalankan; perubahan existing dipertahankan.
+
 - FE-D-045: sinkronisasi CSRF terbaru sebelum tambah sosial/katalog, guard
   submit/hapus dan lifecycle, pesan error aman, input gagal tetap utuh, serta
   pemulihan read-only untuk hasil ambigu atau refresh gagal setelah tersimpan.

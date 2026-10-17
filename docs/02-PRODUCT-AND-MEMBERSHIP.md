@@ -60,10 +60,38 @@ remain authoritative; no private owner list is fetched on a public card.
    Web Storage.
 6. Login baru ditawarkan bila registrasi ditolak dengan
    EMAIL_ALREADY_EXISTS.
-7. Akun wajib terverifikasi dan kartu wajib diklaim.
+7. Akun wajib terverifikasi. Login menuju Ringkasan tanpa auto-claim; pengguna
+   memilih kartu yang ditawarkan backend dan mengonfirmasi pengaitan secara eksplisit.
 8. Setelah claim berhasil, pengguna dapat mengedit melalui member workspace.
 
 Anonymous edit tidak diizinkan. Public slug bukan credential.
+
+### One email, one card (FE-D-046)
+
+Kartu pertama tetap langsung published tanpa Login/OTP. Satu email hanya untuk
+satu kartu; akun yang sudah terdaftar tetapi belum punya kartu tetap eligible
+untuk kartu pertama. Upgrade mengubah kartu existing, bukan memberi slot kedua.
+Normalisasi identitas email hanya trim/lowercase; titik dan plus-tag dipertahankan.
+
+Form menahan submit berulang sebelum await dan tetap terkunci setelah sukses,
+termasuk bila email pengelolaan gagal. Timeout/network/5xx atau respons tidak
+terverifikasi menampilkan status belum pasti dan CTA periksa kartu, bukan retry
+otomatis. Penolakan duplikat yang tegas menawarkan Login ke Ringkasan, email
+Kelola kartu, dan bantuan. Email typo boleh dikoreksi setelah penolakan; server
+tetap memeriksa permintaan berikutnya. Tidak ada lookup email publik atau
+penyimpanan email/token di browser storage/URL/log.
+
+Enforcement lintas tab/perangkat/direct API tetap authoritative di backend;
+owner melaporkan backend ce53f53/migration 014/015 live pada 2026-10-18. Kontrak
+source dibaca read-only; frontend mock bukan bukti mutating production UAT.
+Recovery tetap memerlukan akun email terverifikasi dan konfirmasi claim, bukan
+auto-claim/login. Jangan menghapus/menggabungkan duplikat lama otomatis.
+Kontrak backend CARD-EMAIL-IDENTITY.md mempertahankan reservasi/alias saat
+soft-delete, suspension, perubahan contact/account email, account deletion dan
+upgrade; frontend tidak melepaskan slot atau membuat kartu pengganti otomatis.
+Restore/review tetap terpisah. Karena publikasi tidak menuntut email proof, risiko email
+preemption dan inferensi keberadaan tidak dapat dihilangkan oleh guard UI;
+pemilik email sah harus tetap memiliki jalur pemulihan tanpa bocoran data tamu.
 
 ### Verified-email recovery (FE-D-039)
 
@@ -75,6 +103,14 @@ auto-selected. Email/ownership eligibility remains backend-authoritative.
 No candidates are cached in storage or reused across accounts. The existing
 email management link remains an alternative, including when recovery is not
 deployed or unavailable. After confirmed claim, reload owned cards/subscription.
+
+409 CARD_EMAIL_IDENTITY_REVIEW_REQUIRED pada create, signup-context atau claim
+menampilkan peninjauan support, bukan cookie/link invalid. Create/claim tidak
+diretry, daftar kandidat tidak direfresh otomatis untuk kode review, dan support
+tetap dapat diklik meski tombol mutasi diblokir. Daftar kosong tidak membuktikan
+kartu legacy tidak ada: tampilkan penjelasan serta bantuan. Tidak ada auto-resend
+email, auto-claim setelah OTP/login, atau edit memakai management credential saja.
+Edit setelah claim menggunakan normal PUT /cards/{publicId} dengan sesi/CSRF.
 
 ### Account-first without paid entitlement (FE-D-038)
 

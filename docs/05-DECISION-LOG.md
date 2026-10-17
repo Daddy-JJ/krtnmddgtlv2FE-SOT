@@ -647,6 +647,56 @@ This does not authorize backend/database edits, payment configuration changes,
 real email or payment. Authenticated content creation/deletion and public-card
 UAT remain separate from local mocks and static deployment verification.
 
+## FE-D-046 - One email, one card without pre-publication verification
+
+Date: 2026-10-17. Status: Accepted by owner for frontend implementation and
+backend handover. No backend/database edits, commit/push/deploy or real email.
+
+Preserve FE-D-002/016: anonymous first-card publication remains immediate,
+without Login/OTP. Verification and explicit claim remain required for editing.
+One normalized email (trim/lowercase, preserve dots/plus-tags) is limited to one
+card; a registered account without a card is not a duplicate. Upgrade does not
+create a new slot. Existing duplicates must not be auto-deleted, merged or
+reassigned; deletion/email-change identity policies require explicit coordination.
+
+Frontend adds synchronous submit guard, terminal success/uncertain states, safe
+validation/429 feedback and fixed Login/recovery/support CTAs. It prepares exact
+HTTP 409 STARTER_EMAIL_ALREADY_EXISTS, not an email-existence lookup. No automatic
+retry, ownership assignment or token/email persistence. Atomic unique enforcement
+and verified-email checks across create/claim/edit routes require backend work;
+frontend completion is not proof that the duplicate-email incident is resolved.
+Guest publication necessarily retains preemption/existence-inference risk;
+verified owner recovery must remain available without exposing management data.
+
+### FE-D-046 follow-up - Backend contract alignment, 2026-10-18
+
+Owner reports ce53f53 live, migrations 014/015 and cutover/health/existing flows
+confirmed. Read-only backend handover/OpenAPI are consistent with the duplicate
+envelope already prepared. This does not independently verify hosted mutations.
+Owner explicitly requires no automatic claim after login/OTP and review errors
+to support, including unknown legacy signup context and empty candidate lists.
+
+Audit found the legacy login auto-claim still active and signup/OTP review
+mislabelled as expired credentials. Align those gaps: Starter login -> Ringkasan
+-> existing explicit candidate confirmation; remove unused deprecated update/
+legacy claim adapters. CARD_EMAIL_IDENTITY_REVIEW_REQUIRED blocks create/claim
+retry and exposes support, never implies invalid cookie. Empty recovery retains
+support and legacy uncertainty. After claim use normal PUT /cards/{publicId}.
+Preserve anonymous immediate publication, duplicate guard/uncertain lock,
+no POST replay, auth/OTP, existing owned-card editing and payment behavior.
+Local/mock QA only; production create/claim/email and commit/push/deploy are
+not authorized. Existing uncommitted frontend patch is preserved.
+
+### FE-D-046 release authorization - 2026-10-18
+
+Owner explicitly requests commit, push and deploy of the completed frontend
+patch. Release the reviewed code/tests/SOT on the current main branch through
+the existing GitHub/Vercel production integration; no force-push or backend
+change. Development is not advanced by this request. Verify remote commit and
+production-served changed assets, not merely a successful push. Public static
+checks are allowed; production create/claim/email/payment UAT is not authorized.
+The preceding no-release statements describe the patch/verification phase.
+
 ## Decision change procedure
 
 A superseding entry must identify the decision being changed, describe migration

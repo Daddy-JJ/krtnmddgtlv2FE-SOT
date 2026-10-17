@@ -105,8 +105,11 @@ logging cookie/token/signature/payment URLs or queries. Never use `no-cors`.
   fields only. Candidates stay in page memory, cleared on session/page change;
   pending reads are aborted/late responses discarded. No publicId proves ownership.
 - On success clear pending management navigation and reread GET /cards and
-  /subscriptions/current. No local ownership assignment. On 409 or
+  /subscriptions/current. No local ownership assignment. On ordinary 409 or
   STARTER_NOT_ELIGIBLE reread dashboard/candidates without replaying POST.
+  Exception: CARD_EMAIL_IDENTITY_REVIEW_REQUIRED blocks further claim/retry and
+  shows support without automatic reread. An empty list is not proof that no
+  legacy card exists; keep the support CTA visible.
 - Distinct errors: 401 AUTH_REQUIRED -> login; 403 EMAIL_VERIFICATION_REQUIRED
   -> verification; CSRF_INVALID -> reload; 404 STARTER_NOT_ELIGIBLE -> refreshed
   availability; 409 STARTER_ALREADY_OWNED/PLAN_LIMIT_REACHED -> safe ownership/
@@ -171,8 +174,12 @@ environment, atau latency.
 | POST | `/starter/cards` | Anonymous Starter creation |
 | POST | `/starter/access` | Exchange email management handoff |
 | GET | `/starter/cards/{publicId}/signup-context` | Read the cookie-authorized Starter email for Signup |
-| PUT | `/starter/cards/{publicId}` | Update after authorized account flow |
-| POST | `/starter/cards/{publicId}/claim` | Claim into verified account |
+
+Legacy PUT /starter/cards/{publicId} is disabled/deprecated in backend ce53f53;
+frontend no longer has that adapter. Legacy management-credential claim is not
+called by login or any frontend controller. Use explicit dashboard candidate
+selection/confirmation, POST /starter/claim-candidates/{publicId}/claim, then
+normal PUT /cards/{publicId} after ownership is confirmed by backend.
 
 The UI must not expose anonymous edit controls. Handoff tokens must not persist in
 the URL or Web Storage.
@@ -194,9 +201,71 @@ context is unavailable. A registration response with HTTP 409 code
 `EMAIL_ALREADY_EXISTS` reveals the Login recovery route while preserving the
 safe `returnTo`.
 
+409 CARD_EMAIL_IDENTITY_REVIEW_REQUIRED from signup-context means a legacy
+registration identity needs support review, NOT necessarily an invalid cookie.
+Keep register/verify/resend actions blocked and expose /contact/ without retrying
+context, creating a card or sending email automatically. Actual invalid-context
+401 remains distinct. Successful OTP still leads to Login; Starter login leads
+to /app/ for explicit candidate selection/confirmation, not an automatic claim.
+
 Starter creation sends one backend `contact.fullName` assembled from optional
 Mr/Mrs/Ms, required first name, and optional last name. An omitted website is
 sent as `websiteUrl: ""`; non-empty websites still require HTTP(S).
+
+#### Starter create guard and duplicate contract (FE-D-046)
+
+Existing POST /starter/cards stays anonymous (`csrfContext:null`, cookie
+credentials included, skipRefresh:true, timeout 30s); no auth/OTP prerequisite,
+email lookup, polling or new idempotency contract. No automatic POST replay.
+The adapter validates success:true and data.publicId UUID, seven-letter ASCII
+slug, planCode:starter, status:published and canonicalUrl. URL must be HTTP(S),
+without credentials/query/fragment, with path exactly /{slug}. Only publicId,
+slug, canonicalUrl and the explicit boolean emailSent are passed to the page.
+Malformed success is STARTER_CREATE_INVALID and treated as ambiguous: the card
+may already exist. Publication is not undone by emailSent:false/absent.
+
+Confirmed source contract in backend ce53f53, read-only
+docs/FRONTEND-INTEGRATION.md and STARTER-EMAIL-IDENTITY.openapi.json. Owner reports
+backend/migrations 014/015 live; no mutating production verification in this task:
+
+```json
+{
+  "success": false,
+  "message": "A card already exists for this email.",
+  "code": "STARTER_EMAIL_ALREADY_EXISTS",
+  "data": null
+}
+```
+
+Use HTTP 409 only for a duplicate card email. Do not conflate it with auth
+registration EMAIL_ALREADY_EXISTS or unrelated 409 errors. Guest responses must
+not expose existing card identifiers, URL, owner details or management credentials;
+frontend deliberately ignores such conflict data. Show fixed Login -> /app/
+and Contact links, retain input and allow correction of a genuinely different
+email. Same normalized rejected email cannot resubmit in the current page.
+No claim or mail resend is triggered automatically.
+
+Both fresh duplicates and held legacy emails use this exact 409 envelope.
+409 CARD_EMAIL_IDENTITY_REVIEW_REQUIRED instead locks create, shows safe support
+guidance, and hides generic login-recovery instructions. No retry on email change
+and no assumption that cookies are invalid. Neither conflict response discloses
+existing card identity. A 503 CARD_EMAIL_GUARD_UNAVAILABLE uses the existing
+uncertain-result lock and never automatically replays POST.
+
+After validated success the form stays locked. Network/timeout/5xx/unverifiable
+result also blocks further create in that page and offers email/account recovery;
+it never claims definite failure or generates another request. 422 accepts only
+allowlisted field names with safe local messages and permits manual correction.
+429 uses the API client's validated Retry-After, minimum 1s UX pause, fallback
+30s; absolute deadline, manual retry only, no per-second live announcement.
+Page leave aborts/discards late responses and cleans timer/listeners; bfcache
+restoration reloads current state. No email/token storage or URL parameters.
+
+These are UX controls only: cross-reload/tab/device uniqueness, atomic writes,
+safe legacy-data remediation and verified-email ownership enforcement remain
+backend responsibilities. Do not deploy an email-lookup workaround. Backend
+deployment confirmation is owner-provided; end-to-end create/claim/email UAT
+still requires separate approval and cannot be inferred from mock success.
 
 ### Cards and design
 

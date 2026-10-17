@@ -12,11 +12,15 @@ const returnTo = safeReturnTo(params.get('returnTo'));
 const intent = safeMembershipIntent(params.get('intent'));
 const starterId = starterPublicIdFromReturnTo(returnTo) || pendingStarterClaim();
 const emailInput = form?.elements.email;
+const submitButton = form?.querySelector('button[type="submit"]');
+const identitySupport = document.querySelector('[data-starter-identity-support]');
+let starterContextReady = !starterId;
+let submitting = false;
 if (emailInput && params.get('email')) emailInput.value = normalizeEmail(params.get('email'));
 const loginLink = document.querySelector('a[href="/login/"]');
 if (loginLink) loginLink.href = withAuthContext('/login/', { returnTo, intent });
 if (starterId) {
-  document.querySelector('.auth-intro')?.replaceChildren(document.createTextNode('Masukkan kode 6 digit. Sesudah login, kartu Starter akan otomatis muncul di workspace.'));
+  document.querySelector('.auth-intro')?.replaceChildren(document.createTextNode('Masukkan kode 6 digit, lalu login. Pilih kartu Anda di Ringkasan dan konfirmasikan pengaitan; kartu tidak dihubungkan otomatis.'));
   prepareStarterVerification();
 }
 
@@ -26,6 +30,7 @@ form?.elements.code?.addEventListener('input', (event) => {
 
 form?.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (submitting || !starterContextReady) return;
   const input = formValues(form);
   input.email = normalizeEmail(input.email);
   input.code = String(input.code ?? '').replace(/\D/g, '').slice(0, 6);
@@ -35,22 +40,27 @@ form?.addEventListener('submit', async (event) => {
     showStatus(status, 'OTP belum valid.', 'error');
     return;
   }
+  submitting = true;
   clearFieldErrors(form);
   setBusy(form, true);
   showStatus(status, 'Memverifikasi email...', 'info');
   try {
     await authService.verifyEmailOtp(input);
-    showStatus(status, 'Email berhasil diverifikasi. Lanjutkan ke login untuk menghubungkan kartu.', 'success');
+    showStatus(status, 'Email berhasil diverifikasi. Lanjutkan ke login, lalu pilih dan konfirmasikan kartu di Ringkasan.', 'success');
     location.assign(withAuthContext('/login/', { returnTo, intent }));
   } catch (error) {
     showFieldErrors(form, mapApiFieldErrors(error.details));
     showStatus(status, authErrorMessage(error, 'Kode OTP belum dapat diverifikasi.'), 'error');
   } finally {
+    submitting = false;
     setBusy(form, false);
+    if (submitButton) submitButton.disabled = !starterContextReady;
+    if (!starterContextReady && resend) resend.disabled = true;
   }
 });
 
 resend?.addEventListener('click', async () => {
+  if (!starterContextReady || submitting || resend.disabled) return;
   const email = normalizeEmail(form?.elements.email?.value);
   const emailError = validateEmail(email);
   const errors = emailError ? { email: emailError } : {};
@@ -87,14 +97,24 @@ async function prepareStarterVerification() {
   if (!emailInput) return;
   emailInput.readOnly = true;
   emailInput.setAttribute('aria-readonly', 'true');
+  if (submitButton) submitButton.disabled = true;
+  if (resend) resend.disabled = true;
   showStatus(status, 'Memuat email kartu Starter...', 'info');
   try {
     const context = await starterService.signupContext(starterId);
     emailInput.value = normalizeEmail(context?.email);
     if (!emailInput.value) throw new Error('Starter signup context did not include an email.');
+    starterContextReady = true;
+    if (submitButton) submitButton.disabled = false;
+    if (resend) resend.disabled = false;
     showStatus(status, 'Email kartu siap. Masukkan kode OTP yang telah dikirim.', 'success');
     form?.elements.code?.focus();
-  } catch {
-    showStatus(status, 'Konteks kartu tidak tersedia. Buka kembali link pengelolaan terbaru dari email Anda.', 'error');
+  } catch (error) {
+    if (error.code === 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED') {
+      showStatus(status, authErrorMessage(error), 'error');
+      identitySupport?.removeAttribute('hidden');
+    } else {
+      showStatus(status, 'Konteks kartu tidak tersedia. Buka kembali link pengelolaan terbaru dari email Anda.', 'error');
+    }
   }
 }

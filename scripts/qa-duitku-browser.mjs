@@ -24,6 +24,7 @@ let visualCard = null;
 let frontendOrigin;
 const state = { user: USER, list: [], payment: { ...fixture }, capabilities: 'enabled', failList: false, reconcile: 'paid', checkout: 'ready', expose: false, delay: 0, retryAfter: '90', requestId: 'local-support-429', reports: {} };
 const content = { active: false, social: [], catalog: [], delay: 0, error: null, bootstrapError: false, bootstrapDelay: 0, failRead: false, failReadAfterSave: false };
+const starter = { mode: 'success', emailSent: true, delay: 0, context: 'ready', candidates: 'empty', claimed: false, claim: 'success' };
 const api = createServer(async (request, response) => {
   const pathname = new URL(request.url, 'http://local.test').pathname;
   if (request.headers.origin === frontendOrigin) {
@@ -41,6 +42,29 @@ const api = createServer(async (request, response) => {
     response.writeHead(status, { 'content-type': 'application/json', ...(status === 429 && state.retryAfter !== null ? { 'retry-after': state.retryAfter } : {}), ...(state.requestId ? { 'x-request-id': state.requestId } : {}) });
     response.end(JSON.stringify(status < 400 ? { success: true, data } : { success: false, code, message: 'Unsafe provider/private diagnostic', ...(errors === undefined ? {} : { errors }) }));
   };
+  if (pathname === '/api/v1/starter/cards' && request.method === 'POST') {
+    if (starter.delay) await new Promise(resolve => setTimeout(resolve, starter.delay));
+    if (starter.mode === 'network') { response.destroy(); return; }
+    if (starter.mode === 'duplicate') return reply(null, 409, 'STARTER_EMAIL_ALREADY_EXISTS');
+    if (starter.mode === 'review') return reply(null, 409, 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED');
+    if (starter.mode === 'unavailable') return reply(null, 503, 'SERVICE_UNAVAILABLE');
+    if (starter.mode === 'limited') return reply(null, 429, 'RATE_LIMITED');
+    if (starter.mode === 'validation') return reply(null, 422, 'VALIDATION_ERROR', [null, { field: 'contact.fullName', message: 'Unsafe provider/private diagnostic' }, { field: '\"malformed-selector', message: 'Ignored' }]);
+    return reply(starter.mode === 'malformed' ? {} : { publicId: ID, slug: 'AbcDefg', planCode: 'starter', status: 'published', canonicalUrl: `${frontendOrigin}/AbcDefg`, emailSent: starter.emailSent }, 201);
+  }
+  if (pathname === `/api/v1/starter/cards/${ID}/signup-context`) return starter.context === 'review'
+    ? reply(null, 409, 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED') : reply({ email: 'fixture@example.test' });
+  if (pathname === '/api/v1/starter/claim-candidates') return starter.candidates === 'review'
+    ? reply(null, 409, 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED')
+    : reply({ items: starter.candidates === 'ready' && !starter.claimed ? [{ publicId: ID, displayName: 'Starter fixture', slug: 'AbcDefg', createdAt: '2026-10-17T00:00:00Z' }] : [], limit: 20, offset: 0, hasMore: false });
+  if (pathname === `/api/v1/starter/claim-candidates/${ID}/claim`) {
+    assert.deepEqual(JSON.parse(body), { confirm: true }); assert.equal(request.headers['x-csrf-token'], 'local-mock-csrf');
+    if (starter.claim === 'review') return reply(null, 409, 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED');
+    starter.claimed = true;
+    visualCard = { ...cardFixture, themeCode: 'starter-clean', slug: 'AbcDefg', canonicalUrl: `${frontendOrigin}/AbcDefg` };
+    return reply({ card: { publicId: ID, displayName: 'Starter fixture', slug: 'AbcDefg', createdAt: '2026-10-17T00:00:00Z' }, alreadyOwned: false });
+  }
+  if (['/api/v1/auth/register', '/api/v1/auth/email/verify-otp', '/api/v1/auth/email/resend-otp'].includes(pathname)) return reply(null);
   if (pathname === '/api/v1/me') return state.user ? reply({ user: { publicId: state.user, email: 'fixture@example.test', roles: ['super_admin'] } }) : reply(null, 401, 'AUTH_REQUIRED');
   if (pathname === '/api/v1/admin/statistics') return reply({ newFeedback: 0 });
   if (pathname === '/api/v1/admin/reports') return reply(state.reports);
@@ -81,7 +105,10 @@ const api = createServer(async (request, response) => {
   }
   if (pathname === '/api/v1/subscriptions/current') return reply(state.payment.status === 'paid' ? { planCode: 'basic', endsAt: '2027-10-02T00:00:00.000Z' } : null);
   if (pathname === '/api/v1/cards') return reply(visualCard ? [visualCard] : []);
-  if (pathname === `/api/v1/cards/${ID}`) return reply(visualCard);
+  if (pathname === `/api/v1/cards/${ID}`) {
+    if (request.method === 'PUT') assert.equal(request.headers['x-csrf-token'], 'local-mock-csrf');
+    return reply(visualCard);
+  }
   const contentRoute = pathname.match(new RegExp(`^/api/v1/cards/${ID}/(social-links|catalog-items)(?:/([^/]+))?$`));
   if (contentRoute) {
     const mode = contentRoute[1] === 'social-links' ? 'social' : 'catalog';
@@ -123,7 +150,7 @@ try {
     const result = await tab.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
     await writeFile(path.join(screenshots, name + '.png'), Buffer.from(result.data, 'base64'));
   };
-  if (!process.argv.includes('--content-only')) {
+  if (!process.argv.includes('--content-only') && !process.argv.includes('--starter-only')) {
   async function page(route = '/app/billing/') {
     await tab.navigate(origin + route);
     await waitFor(async () => {
@@ -618,6 +645,7 @@ try {
   }
 
   // Content regressions reuse the real controllers, API boundary, local servers and browser.
+  if (!process.argv.includes('--starter-only')) {
   content.active = true; state.user = USER; state.retryAfter = '1';
   visualCard = { ...cardFixture, planCode: 'basic' };
   const posts = () => requests.filter(request => request.method === 'POST' && /\/(social-links|catalog-items)$/.test(request.pathname));
@@ -764,9 +792,212 @@ try {
   await waitFor(async () => await tab.evaluate("document.querySelector('[data-public-content]')?.hidden===false"), 'empty public groups');
   assert.equal(await tab.evaluate("document.querySelector('[data-social-section]').hidden && document.querySelector('[data-catalog-section]').hidden && !document.querySelector('details').hidden"), true);
   pass('empty social/catalog groups stay hidden while full contact details remain');
+  }
+
+  // Starter uses the same local server/browser boundary; no real email or backend writes.
+  if (!process.argv.includes('--content-only')) {
+    const starterPosts = () => requests.filter(request => request.method === 'POST' && request.pathname === '/api/v1/starter/cards');
+    const createSubmit = () => tab.evaluate("(()=>{const f=document.querySelector('[data-starter-create-form]');f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));})()");
+    const createSettled = () => waitFor(async () => await tab.evaluate("document.querySelector('[data-starter-create-form]').getAttribute('aria-busy')==='false'"), 'Starter settled');
+    async function createPage(mode = 'success') {
+      starter.mode = mode; starter.delay = 0; starter.emailSent = true; state.user = null;
+      await tab.navigate(origin + '/create/');
+      await waitFor(async () => await tab.evaluate("Boolean(document.querySelector('[data-starter-create-form] [type=submit]'))"), 'Starter form loaded');
+      // Wait for its ES module, not merely the HTML element.
+      await tab.evaluate("import('/pages/starter/create.js')");
+      await tab.evaluate("document.querySelector('[name=firstName]').value='Nama Fixture';document.querySelector('[name=email]').value='Person.Name+tag@example.test'");
+    }
+    await createPage();
+    const beforeGuest = requests.length;
+    const count = starterPosts().length;
+    starter.delay = 300;
+    await createSubmit();
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-form] [type=submit]').disabled"), true);
+    await createSettled(); await createSubmit();
+    assert.equal(starterPosts().length, count + 1);
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-result]').hidden"), false);
+    assert.equal(await tab.evaluate("document.activeElement===document.querySelector('[data-starter-result] h2')"), true);
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-form]').getAttribute('aria-busy')"), 'false');
+    assert.equal(requests.slice(beforeGuest).some(request => /auth|claim/.test(request.pathname)), false);
+    assert.equal(starterPosts().at(-1).csrf, undefined);
+    pass('Starter guest publication: one POST for repeated submits, no OTP/login/claim precondition, success remains locked');
+
+    await createPage(); starter.emailSent = false;
+    const beforeMail = starterPosts().length;
+    await createSubmit(); await createSettled(); await createSubmit();
+    assert.equal(starterPosts().length, beforeMail + 1);
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-result]').hidden"), false);
+    assert.match(await tab.evaluate("document.querySelector('[data-starter-email-status]').textContent"), /Kartu Anda tetap terbit/);
+    pass('Starter email delivery failure preserves public result and management, without creating again');
+
+    await createPage('duplicate');
+    const beforeDuplicate = starterPosts().length;
+    await createSubmit(); await createSettled(); await createSubmit();
+    assert.equal(starterPosts().length, beforeDuplicate + 1);
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-recovery]').hidden"), false);
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-form] [type=submit]').disabled"), true);
+    const navigation = await tab.evaluate("[...document.querySelector('[data-starter-create-recovery]').querySelectorAll('a')].map(a=>a.getAttribute('href'))");
+    assert.deepEqual(navigation, ['/login/?returnTo=%2Fapp%2F', '/contact/']);
+    assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /private|signature|SQL/);
+    pass('Starter duplicate contract: fixed login/support CTAs, no public card ID/link disclosure or auto claim');
+    for (const value of ['person.name+tag@EXAMPLE.test', 'different@example.test', 'person.name+tag@example.test']) {
+      await tab.evaluate(`(()=>{const e=document.querySelector('[name=email]');e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+      assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-form] [type=submit]').disabled"), value !== 'different@example.test');
+    }
+    await createSubmit(); assert.equal(starterPosts().length, beforeDuplicate + 1);
+    starter.mode = 'success';
+    await tab.evaluate("const e=document.querySelector('[name=email]');e.value='corrected@example.test';e.dispatchEvent(new Event('input',{bubbles:true}));");
+    await createSubmit(); await createSettled();
+    assert.equal(starterPosts().length, beforeDuplicate + 2);
+    pass('Starter duplicate: casing does not bypass local guard; correcting a different email allows explicit first creation');
+
+    for (const mode of ['unavailable', 'network', 'malformed']) {
+      await createPage(mode); const before = starterPosts().length;
+      await createSubmit(); await createSettled(); await createSubmit();
+      assert.equal(starterPosts().length, before + 1);
+      assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-recovery]').hidden"), false);
+      assert.match(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /belum dapat dipastikan/);
+      assert.equal(await tab.evaluate("document.querySelector('[name=firstName]').value"), 'Nama Fixture');
+      pass(`Starter ${mode}: uncertain result stays locked, preserves form and never retries POST`);
+    }
+
+    await createPage('validation');
+    await createSubmit(); await createSettled();
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-form] [type=submit]').disabled"), false);
+    assert.equal(await tab.evaluate("document.querySelector('[name=firstName]').getAttribute('aria-invalid')"), 'true');
+    assert.equal(await tab.evaluate("document.querySelector('[data-field-error=firstName]').textContent"), 'Periksa isian ini.');
+    assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-starter-create-form]').textContent"), /Unsafe provider|private diagnostic/);
+    pass('Starter 422: safe field mapping/focus, preserved input and an editable form');
+
+    await createPage('limited'); state.retryAfter = '1';
+    const beforeLimit = starterPosts().length;
+    await createSubmit(); await createSettled();
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-form] [type=submit]').disabled"), true);
+    await createSubmit();
+    await waitFor(async () => await tab.evaluate("document.querySelector('[data-starter-create-form] [type=submit]').disabled===false"), 'Starter rate cooldown');
+    assert.equal(starterPosts().length, beforeLimit + 1);
+    assert.equal(await tab.evaluate("document.querySelector('[data-form-status]').getAttribute('role')"), 'alert');
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-form] [type=submit]').closest('[aria-live]')===null"), true);
+    pass('Starter 429: disabled during deadline, no live countdown announcements or automatic POST at expiry');
+
+    await createPage(); starter.delay = 400;
+    await createSubmit();
+    await tab.evaluate("dispatchEvent(new PageTransitionEvent('pagehide'));");
+    await createSettled();
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-result]').hidden"), true);
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-form] [type=submit]').disabled"), true);
+    pass('Starter page leave: abort and discard late response; old controller stays disabled');
+
+    await createPage('review');
+    const beforeReview = starterPosts().length;
+    await createSubmit(); await createSettled(); await createSubmit();
+    assert.equal(starterPosts().length, beforeReview + 1);
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-recovery-login]').hidden && document.querySelector('[data-starter-recovery-instructions]').hidden"), true);
+    assert.equal(await tab.evaluate("document.querySelector('[data-starter-create-recovery] a[href=\"/contact/\"]').getBoundingClientRect().height>0"), true);
+    assert.match(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /peninjauan.*support/);
+    pass('Starter identity review: create stays locked, support CTA replaces login/retry instructions');
+
+    const handoff = encodeURIComponent(`/starter/manage/?publicId=${ID}`);
+    const claimPosts = () => requests.filter(request => request.method === 'POST' && /\/claim$/.test(request.pathname));
+    const authPosts = () => requests.filter(request => request.method === 'POST' && /^\/api\/v1\/auth\/(register|email\/verify-otp|email\/resend-otp)$/.test(request.pathname));
+    for (const route of ['register', 'verify-email']) {
+      starter.context = 'review'; const before = authPosts().length;
+      await tab.navigate(origin + `/${route}/?returnTo=${handoff}`);
+      await waitFor(async () => await tab.evaluate("document.querySelector('[data-starter-identity-support]')?.hidden===false"), 'identity support CTA');
+      assert.match(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /peninjauan.*support/);
+      assert.doesNotMatch(await tab.evaluate("document.querySelector('[data-form-status]').textContent"), /kedaluwarsa|tidak valid/);
+      await tab.evaluate("document.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));document.querySelector('[data-resend-otp]')?.click()");
+      assert.equal(authPosts().length, before);
+      assert.equal(await tab.evaluate("document.querySelector('button[type=submit]').disabled"), true);
+      assert.equal(await tab.evaluate("document.querySelector('[data-starter-identity-support] a').getAttribute('href')"), '/contact/');
+      pass(`Starter ${route} legacy review: valid context is not called invalid; support visible, no register/verify/resend POST`);
+    }
+
+    // Login is not confirmation: only dashboard selection may initiate the claim.
+
+    starter.context = 'ready';
+    const beforeJourneyAuth = authPosts().length;
+    const beforeJourneyClaim = claimPosts().length;
+    await tab.navigate(origin + `/register/?returnTo=${handoff}`);
+    await waitFor(async () => await tab.evaluate("document.querySelector('button[type=submit]').disabled===false"), 'Starter signup ready');
+    assert.equal(authPosts().length, beforeJourneyAuth);
+    await tab.evaluate("document.querySelector('[name=password]').value='dummy-password';document.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))");
+    await waitFor(async () => await tab.evaluate("location.pathname==='/verify-email/' && document.querySelector('button[type=submit]')?.disabled===false"), 'Starter OTP ready');
+    assert.deepEqual(authPosts().slice(beforeJourneyAuth).map(request => request.pathname), ['/api/v1/auth/register']);
+    assert.equal(claimPosts().length, beforeJourneyClaim);
+    pass('Starter signup success: only explicit registration POST, OTP form loads without claim/resend');
+    await tab.evaluate("document.querySelector('[name=code]').value='123456';document.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))");
+    await waitFor(async () => await tab.evaluate("location.pathname==='/login/' && Boolean(document.querySelector('[data-login-form]'))"), 'Starter OTP login destination');
+    assert.deepEqual(authPosts().slice(beforeJourneyAuth).map(request => request.pathname), ['/api/v1/auth/register', '/api/v1/auth/email/verify-otp']);
+    assert.equal(claimPosts().length, beforeJourneyClaim);
+    pass('Starter OTP success reaches login without automatic claim, email resend or implicit ownership');
+    starter.context = 'ready'; starter.candidates = 'ready'; starter.claimed = false; starter.claim = 'success';
+    visualCard = null; state.payment.status = 'pending'; state.user = null;
+    const beforeClaim = claimPosts().length;
+    await tab.navigate(origin + `/login/?returnTo=${handoff}`);
+    await tab.evaluate("import('/pages/auth/login.js')");
+    await tab.evaluate("document.querySelector('[name=email]').value='fixture@example.test';document.querySelector('[name=password]').value='dummy-password';const f=document.querySelector('form');f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));");
+    await waitFor(async () => await tab.evaluate("location.pathname==='/app/' && document.querySelector('[data-recovery-list]')?.children.length===1"), 'explicit claim dashboard');
+    assert.equal(claimPosts().length, beforeClaim);
+    assert.equal(await tab.evaluate("sessionStorage.getItem('knd.pendingStarterClaim')"), null);
+    pass('Starter login handoff reaches dashboard candidates with zero automatic claim/email requests');
+    await tab.evaluate("window.confirm=()=>false;document.querySelector('[data-claim-candidate]').click()");
+    assert.equal(claimPosts().length, beforeClaim);
+    await tab.evaluate("window.confirm=()=>true;const b=document.querySelector('[data-claim-candidate]');b.click();b.click()");
+    await waitFor(async () => await tab.evaluate("document.querySelector('[data-starter-recovery]').hidden===true"), 'explicit claim completed');
+    assert.equal(claimPosts().length, beforeClaim + 1);
+    assert.deepEqual(JSON.parse(claimPosts().at(-1).body), { confirm: true });
+    assert.equal(claimPosts().at(-1).csrf, 'local-mock-csrf');
+    pass('Starter claim: cancel means no POST; explicit confirmed double-click sends one CSRF-protected claim then owned-card refetch');
+    const beforeEdit = requests.length;
+    await tab.evaluate(`(async()=>{const {cardService}=await import('/services/card-service.js');await cardService.update('${ID}',{contact:{fullName:'Owned fixture edited'}})})()`);
+    const edit = requests.slice(beforeEdit).find(request => request.method === 'PUT');
+    assert.equal(edit.pathname, `/api/v1/cards/${ID}`); assert.equal(edit.csrf, 'local-mock-csrf');
+    pass('Starter post-claim edit uses normal owned /cards PUT, never deprecated management-token edit');
+
+    visualCard = null; starter.claimed = false; starter.candidates = 'empty';
+    await tab.navigate(origin + '/app/');
+    await waitFor(async () => await tab.evaluate("/Tidak ada kandidat/.test(document.querySelector('[data-recovery-status]')?.textContent)"), 'empty legacy candidates');
+    assert.match(await tab.evaluate("document.querySelector('[data-recovery-status]').textContent"), /Kartu lama mungkin masih ada/);
+    assert.equal(await tab.evaluate("document.querySelector('[data-recovery-support]').getBoundingClientRect().height>0"), true);
+    pass('Starter empty recovery does not deny legacy card existence; support remains visible');
+    starter.candidates = 'review';
+    await tab.navigate(origin + '/app/');
+    await waitFor(async () => await tab.evaluate("/peninjauan/.test(document.querySelector('[data-recovery-status]')?.textContent)"), 'candidate review');
+    assert.equal(await tab.evaluate("document.querySelector('[data-recovery-retry]').disabled && document.querySelector('[data-recovery-support]').getBoundingClientRect().height>0"), true);
+    pass('Starter candidate review: blocked mutation/retry controls but support navigation remains available');
+    starter.candidates = 'ready'; starter.claim = 'review';
+    await tab.navigate(origin + '/app/');
+    await waitFor(async () => await tab.evaluate("Boolean(document.querySelector('[data-claim-candidate]'))"), 'review candidate selection');
+    const reviewReads = requests.filter(request => request.pathname === '/api/v1/starter/claim-candidates').length;
+    const reviewClaims = claimPosts().length;
+    await tab.evaluate("window.confirm=()=>true;document.querySelector('[data-claim-candidate]').click()");
+    await waitFor(async () => await tab.evaluate("/peninjauan/.test(document.querySelector('[data-recovery-status]')?.textContent)"), 'claim identity review');
+    await tab.evaluate("document.querySelector('[data-recovery-retry]').click()");
+    assert.equal(claimPosts().length, reviewClaims + 1);
+    assert.equal(requests.filter(request => request.pathname === '/api/v1/starter/claim-candidates').length, reviewReads);
+    assert.equal(await tab.evaluate("document.querySelector('[data-recovery-support]').getBoundingClientRect().height>0"), true);
+    pass('Starter explicit claim review: one POST, no automatic reread/retry/create and support remains accessible');
+
+    for (const theme of ['light', 'dark']) {
+      for (const width of [390, 768, 1440]) {
+        await tab.send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 600 });
+        await createPage('duplicate');
+        await tab.evaluate(`if(document.documentElement.dataset.siteTheme!=='${theme}')document.querySelector('[data-site-theme-toggle]').click();document.documentElement.style.scrollBehavior='auto';document.querySelectorAll('*').forEach(n=>n.style.scrollBehavior='auto');`);
+        await createSubmit(); await createSettled();
+        const metrics = await tab.evaluate("(()=>{const r=document.querySelector('[data-starter-create-recovery]');r.scrollIntoView();return {overflow:document.documentElement.scrollWidth>innerWidth+1,visible:!r.hidden,links:[...r.querySelectorAll('a')].every(a=>a.getBoundingClientRect().width>40),emailSaved:[...Object.values(sessionStorage),...Object.values(localStorage)].some(v=>/person.name|example.test/i.test(v))};})()");
+        assert.deepEqual(metrics, { overflow: false, visible: true, links: true, emailSaved: false });
+        assert.equal(await tab.evaluate("document.documentElement.dataset.siteTheme"), theme);
+        await tab.evaluate("new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
+        await screenshot(`starter-duplicate-${theme}-${width}`);
+        pass(`Starter recovery ${theme}/${width}px: no horizontal overflow, accessible links, no email in storage`);
+      }
+    }
+  }
+
   assert.deepEqual(tab.errors, []);
   console.log(`Visual screenshot artifacts: ${screenshots}`);
-  console.log(`Browser QA: ${passed} passed, 0 failed, 0 skipped within ${process.argv.includes('--content-only') ? 'content-only' : 'full'} scope; Chromium/Edge headless, LOCAL API MOCK only.`);
+  console.log(`Browser QA: ${passed} passed, 0 failed, 0 skipped within ${process.argv.includes('--starter-only') ? 'starter-only' : process.argv.includes('--content-only') ? 'content-only' : 'full'} scope; Chromium/Edge headless, LOCAL API MOCK only.`);
 } finally {
   await browser?.close();
   await Promise.all([new Promise(resolve => frontend.close(resolve)), new Promise(resolve => api.close(resolve))]);

@@ -155,6 +155,22 @@ safe DOM/URL helpers. Artwork, themes, VCF/QR, WhatsApp and payment remain intac
 The existing local browser harness supports `--content-only` for focused checks;
 the default run retains payment/visual regressions and includes content checks.
 
+FE-D-046 keeps anonymous Starter creation in the existing page/service/API
+boundary. The service validates the published-card envelope; the page owns a
+memory-only in-flight/success/uncertain guard, duplicate-email recovery CTA and
+rate-limit deadline. No preflight email lookup, storage or new auth/business
+service is introduced. Backend still owns atomic email uniqueness. The same
+isolated browser harness adds `--starter-only`; default QA includes Starter,
+payment/visual and content regressions.
+
+FE-D-046 follow-up (2026-10-18) routes Starter login to the existing dashboard;
+the dashboard is the only frontend claim controller, after user selection and
+confirmation. Deprecated management-only edit/legacy auto-claim adapters are
+removed; claimed edits keep cardService/account CSRF. Shared safe error copy
+defines identity review; page controllers expose support and block mutation
+without treating the management cookie as invalid or retrying. Ordinary login
+role/returnTo/intent routing and the global auth/CSRF transport remain unchanged.
+
 ## Configuration
 
 `config/app-config.js` reads `globalThis.__KND_CONFIG__` and defaults to:

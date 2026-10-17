@@ -86,7 +86,8 @@ test('async retry, admin search, and Resume detail expose guarded states', async
     source('pages/app/resume-enhancement-detail.js'),
     source('app/resume-enhancement/request/index.html'),
   ]);
-  assert.match(login, /if \(claimPending\) return/);
+  assert.match(login, /if \(loginPending\) return/);
+  assert.doesNotMatch(login, /claimStarter|starterService\.claim/);
   assert.match(admin, /searchSequence/);
   assert.match(admin, /submit\.disabled=true/);
   assert.match(detail, /Detail tidak dapat dimuat/);

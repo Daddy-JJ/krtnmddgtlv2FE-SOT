@@ -1,6 +1,7 @@
 import { starterService } from '../../services/starter-service.js';
 import { rememberStarterClaim, withAuthContext } from '../../utils/auth-flow.js';
 import { showStatus } from '../../components/forms/form-utils.js';
+import { apiErrorMessage } from '../../utils/api-error-message.js';
 
 const status = document.querySelector('[data-form-status]');
 const params = new URLSearchParams(location.search);
@@ -29,6 +30,11 @@ async function openEmailAccess() {
     showStatus(status, 'Link terverifikasi. Membuka pendaftaran akun...', 'success');
     location.replace(withAuthContext('/register/', { returnTo }));
   } catch (error) {
-    showStatus(status, 'Link pengelolaan tidak valid atau sudah kedaluwarsa. Minta link baru melalui support.', 'error');
+    if (error.code === 'CARD_EMAIL_IDENTITY_REVIEW_REQUIRED') {
+      showStatus(status, apiErrorMessage(error), 'error');
+      document.querySelector('[data-starter-identity-support]')?.removeAttribute('hidden');
+    } else {
+      showStatus(status, 'Link pengelolaan tidak valid atau sudah kedaluwarsa. Minta link baru melalui support.', 'error');
+    }
   }
 }
